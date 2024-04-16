@@ -117,7 +117,7 @@ class UserController extends Controller
             dd($pelicula);
             // y así sucesivamente...
         } else {
-            echo 'No se encontraron resultados para la búsqueda.';
+            echo 'No se encontraron resultados para la búsqueda.'; 
         }
     }
 
