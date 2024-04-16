@@ -29,4 +29,4 @@ Route::middleware([
 
 Route::post('/login-user', 'Admin\UserController@loginUser')->name('user.login');
 Route::get('/users', 'Admin\UserController@getUserQB')->name('user.index');
-Route::get('/testt', 'Admin\UserController@test');
+// Route::get('/testt', 'Admin\UserController@test');
