@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\{Auth};
 class UserController extends Controller
 {
 
-    //funcion login Users 
+    //funcion login Users  
     public function loginUser(Request $request){
         
         $validatedData = $request->validate([
