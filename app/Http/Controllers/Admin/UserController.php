@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\{Auth};
 class UserController extends Controller
 {
 
+    public function preparePost(Request $request){
+        dd( $request );
+    }
+
     //funcion login Users  
     public function loginUser(Request $request){
         
