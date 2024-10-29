@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\BranchUser;
 
 class User extends Authenticatable
 {
@@ -59,4 +60,56 @@ class User extends Authenticatable
     protected $appends = [
         'profile_photo_url',
     ];
+
+    //funcion para saber si tiene asignada la sucursal
+    public function hasBranch($branch_id){
+        $branch = BranchUser::where('branch_id', $branch_id)->where('user_id', $this->id)->first();
+        if(is_object($branch)){
+            return true;
+        }
+        return false;
+    }
+
+    //funcion para obtener el roles
+    public function getTurno(){
+        return $this->hasOne('App\Models\Turno', 'id', 'turno_id');
+    }
+
+    //funcion para obtener los roles
+    public function getRoles(){
+        return $this->hasMany('App\Models\UserRole', 'user_id', 'id');
+    }
+
+    //Incializamos roles para el uso en hasRoles y hasAnyRole
+    public function roles(){
+        return $this->belongsToMany('App\Models\Role')->withTimesTamps();
+    }
+
+    //funcion para saber si tiene varios roles
+    public function hasAnyRole($roles)
+    {
+        if (is_array($roles)) {
+            foreach ($roles as $role) {
+                if ($this->hasRole($role)) {
+                    return true;
+                }
+            }
+        } else {
+            if ($this->hasRole($roles)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    //funcion para saber si tiene un rol en especifico
+    public function hasRole($roles)
+    {   
+        if($this->roles()->where('name', $roles)->first()) {
+            return true;
+        }
+        return false;
+    }
+
 }

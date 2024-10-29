@@ -13,10 +13,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
@@ -28,37 +24,39 @@ Route::middleware([
 });
 
 Route::post('/login-user', 'Admin\UserController@loginUser')->name('user.login');
-Route::get('/users', 'Admin\UserController@getUserQB')->name('user.index');
-// Route::get('/testt', 'Admin\UserController@test');
+Route::get('/users', 'Admin\UserController@getUserQB')->name('user.getUserQB');
+Route::get('/get-products', 'Admin\UserController@getProducts')->name('user.getProducts');
+Route::get('/get-brands', 'Admin\UserController@getBrands')->name('user.getBrands');
+Route::get('/get-customers', 'Admin\UserController@getCustomers')->name('user.getCustomers');
+Route::get('/get-payment-methods', 'Admin\UserController@getPaymentMethods')->name('user.getPaymentMethods');
+Route::get('/get-unidades-sat', 'Admin\UserController@getUnidadesSat')->name('user.getUnidadesSat');
 
 
-Route::get('/home', function(){
-    return view('dashboard');
-})->name('dashboard');
+Route::get('/login', function(){
+    return view('auth.login');
+})->name('login');
 
-Route::get('/products', function(){
-    return view('products');
-})->name('products');
-
-Route::get('/sales', function(){
-    return view('sales');
-})->name('sales');
+// Route::get('/sales', function(){
+//     return view('sales');
+// })->name('sales');
 
 
-Route::get('/billing', function(){
-    return view('billing');
-})->name('billing');
+// Route::get('/billing', function(){
+//     return view('billing');
+// })->name('billing');
 
-Route::get('/tickets', function(){
-    return view('tickets');
-})->name('tickets');
+// Route::get('/tickets', function(){
+//     return view('tickets');
+// })->name('tickets');
 
-Route::get('/stock', function(){
-    return view('stock');
-})->name('stock');
+// Route::get('/stock', function(){
+//     return view('stock');
+// })->name('stock');
 
-Route::get('/order', function(){
-    return view('order-form');
-})->name('order');
+// Route::get('/order', function(){
+//     return view('order-form');
+// })->name('order');
 
-Route::post('/product', 'Admin\UserController@preparePost')->name('productPost');
+// Route::get('/category', function(){
+//     return view('admin.category.index');
+// })->name('category');

@@ -1,0 +1,10 @@
+.reportrange{
+    background: #fff; 
+    cursor: pointer; 
+    padding: 5px 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 5px;
+    width: 100%; 
+    font-size: 0.8rem !important;
+    height: calc(2.25rem + 2px);
+}

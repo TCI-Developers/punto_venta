@@ -193,7 +193,7 @@ return [
     'classes_content_wrapper' => '',
     'classes_content_header' => '',
     'classes_content' => '',
-    'classes_sidebar' => 'sidebar-dark-primary elevation-4',
+    'classes_sidebar' => 'sidebar-light-primary elevation-4',
     'classes_sidebar_nav' => '',
     'classes_topnav' => 'navbar-white navbar-light',
     'classes_topnav_nav' => 'navbar-expand',
@@ -212,7 +212,7 @@ return [
     */
 
     'sidebar_mini' => 'lg',
-    'sidebar_collapse' => false,
+    'sidebar_collapse' => true,
     'sidebar_collapse_auto_size' => false,
     'sidebar_collapse_remember' => false,
     'sidebar_collapse_remember_no_transition' => true,
@@ -291,60 +291,77 @@ return [
     */
 
     'menu' => [
-        [
-            'type'         => 'fullscreen-widget',
-            'topnav_right' => true,
-        ],
-
-        // Sidebar items:
-        [
-            'type' => 'sidebar-menu-search',
-            'text' => 'Buscar',
-        ],
         ['header' => 'Menú General'],
         [
             'text' => 'Productos',
-            'url'  => 'products',
+            'route'  => 'product.index',
+            'icon' => 'icons/folder.svg',
+            // 'icon' => 'fas fa-inbox',
+        ],
+        [
+            'text' => 'Clientesss',
+            'url'  => 'customers',
             'icon' => 'fas fa-inbox',
         ],
         [
             'text' => 'Ventas',
-            // 'url'  => 'sales',
+            'route'  => 'sale.index',
             'icon' => 'fas fa-shopping-basket',
-            'submenu' => [
-                [
-                    'text' => 'Vender',
-                    'url'  => 'order',
-                    'icon' => 'fas fa-cart-plus',
-                ],
-                [
-                    'text' => 'Mis ventas',
-                    'url'  => 'sales',
-                    'icon' => 'fas fa-clipboard-list',
-                ],
-            ]
         ],
+        ['header' => 'Menú Productos'],
         [
-            'text' => 'Facturación',
-            'url'  => 'billing',
-            'icon' => 'fas fa-file-invoice',
+            'text' => 'Presentationes de productos',
+            'route'  => 'product.indexPartProduct',
+            'icon' => 'fas fa-inbox',
         ],
-        ['header' => 'Documentos'],
-        [
-            'text'       => 'Tickets / Facturas',
-            'url'        => 'tickets',
-            'icon' => 'fas fa-ticket-alt',
-        ],
-        [
-            'text'       => 'Almacén',
-            'icon' => 'fas fa-cubes',
-            'url'        => 'stock',
-        ],
-        [
-            'text'       => 'Registro de cambio',
-            'icon' => 'fas fa-file-invoice-dollar',
-            'url'        => '#',
-        ],
+        // [
+        //     'type'         => 'fullscreen-widget',
+        //     'topnav_right' => true,
+        // ],
+
+        // Sidebar items:
+        // [
+        //     'type' => 'sidebar-menu-search',
+        //     'text' => 'Buscar',
+        // ],
+        // [
+        //     'text' => 'Ventas',
+        //     // 'url'  => 'sales',
+        //     'icon' => 'fas fa-shopping-basket',
+        //     'submenu' => [
+        //         [
+        //             'text' => 'Vender',
+        //             'url'  => 'order',
+        //             'icon' => 'fas fa-cart-plus',
+        //         ],
+        //         [
+        //             'text' => 'Mis ventas',
+        //             'url'  => 'sales',
+        //             'icon' => 'fas fa-clipboard-list',
+        //         ],
+        //     ]
+        // ],
+        // [
+        //     'text' => 'Facturación',
+        //     'url'  => 'billing',
+        //     'icon' => 'fas fa-file-invoice',
+        // ],
+        // ['header' => 'Documentos'],
+        // [
+        //     'text'       => 'Tickets / Facturas',
+        //     'url'        => 'tickets',
+        //     'icon' => 'fas fa-ticket-alt',
+        // ],
+        // [
+        //     'text'       => 'Almacén',
+        //     'icon' => 'fas fa-cubes',
+        //     'url'        => 'stock',
+        // ],
+        // [
+        //     'text'       => 'Registro de cambio',
+        //     'icon' => 'fas fa-file-invoice-dollar',
+        //     'url'        => '#',
+        // ],
     ],
 
     /*
@@ -386,18 +403,33 @@ return [
             'files' => [
                 [
                     'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js',
+                    'asset' => true,
+                    'location' => 'js/assets/data-tables.min.js',
+                    // 'location' => '//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js',
                 ],
                 [
                     'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js',
+                    'asset' => true,
+                    'location' => 'js/assets/data-tables.bootstrap4.min.js',
+                    // 'location' => '//cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js',
                 ],
                 [
                     'type' => 'css',
-                    'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css',
+                    'asset' => true,
+                    'location' => 'css/assets/dataTables.bootstrap4.min.css',
+                    // 'location' => '//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'css/assets/bootstrap-table.min.css'
+                    // 'location' => '//cdn.jsdelivr.net/npm/bootstrap-table@1.22.6/dist/bootstrap-table.min.css'
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'js/assets/bootstrap-table.min.js'
+                    // 'location' => '//cdn.jsdelivr.net/npm/bootstrap-table@1.22.6/dist/bootstrap-table.min.js'
                 ],
             ],
         ],
@@ -406,13 +438,32 @@ return [
             'files' => [
                 [
                     'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js',
+                    'asset' => true,
+                    'location' => 'js/assets/select2.min.js',
+                    // 'location' => '//cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js',
                 ],
                 [
                     'type' => 'css',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.css',
+                    'asset' => true,
+                    'location' => 'css/assets/select2.min.css',
+                    // 'location' => '//cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css',
+                ],
+            ],
+        ],
+        'selectpicker' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'js/assets/bootstrap-select.min.js',
+                    // 'location' => '//cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'css/assets/bootstrap-select.min.css',
+                    // 'location' => '//cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css',
                 ],
             ],
         ],
@@ -427,12 +478,63 @@ return [
             ],
         ],
         'Sweetalert2' => [
-            'active' => false,
+            'active' => true,
             'files' => [
                 [
                     'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
+                    'asset' => true,
+                    'location' => 'js/assets/sweetalert2@11.js',
+                    // 'location' => '//cdn.jsdelivr.net/npm/sweetalert2@11',
+                ],
+            ],
+        ],
+        'DateRangePicker' => [ //Rangepicker Filtro de fechas
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'js/assets/moment.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'js/assets/daterangepicker.min.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'css/assets/daterangepicker.css',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'css/datarangepicker/datarangepicker.css',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'js/daterangepicker/daterangepicker.js',
+                ],
+            ],
+        ],
+        'manual_styles' => [ //Agregamos estilos manuales para todas las vistas
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'css/buttons.css',
+                ],
+            ],
+        ],
+        'manual_js' => [ //Agregamos estilos manuales para todas las vistas
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'js/tooltips.js',
                 ],
             ],
         ],

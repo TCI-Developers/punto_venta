@@ -24,27 +24,25 @@
 </x-header-nav>
     <div class="container-order">
         <div class="row">
-            <div class="col-sm-4">
-            <div class="form-group">
-                <label for="sltCustomer">Cliente</label>
-                <select class="custom-select select-customer" id="sltCustomer" required onChange="changeCustomer(this.value)">
-                    <option value="1">Publico en general</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
-                </select>
-                </div>
+            <div class="col-lg-4 col-md-4 col-sm-12">
+                <label for="sltCustomer" class="col-lg-12 col-md-12 col-sm-12">Cliente <br>
+                    <select class="custom-select select-seller" id="listPrice" required>
+                        <option value="1">Publico en general</option>
+                        <option value="2">Two</option>
+                        <option value="3">Three</option>
+                    </select>
+                </label>
             </div>
-            
-            
-            <div class="form-group col-md-4">
-                    <label for="txtInformation">Información del cliente</label>
+            <div class="form-group col-lg-8 col-md-8 col-sm-12">
+                <label for="txtInformation" class="col-lg-12 col-md-12 col-sm-12">Información del cliente <br>
                     <textarea class="form-control" id="txtInformation" rows="2" readonly></textarea>
+                </label>
             </div> 
         </div>
-
+            
         <div class="row">
-            <div class="col-md-6">
-                <div class="form-group col-md-12">
+            <div class="col-lg-6 col-md-6 col-sm-12">
+                <div class="form-group col-lg-12 col-md-12 col-sm-12">
                     <label for="listPrice">Vendedor</label>
                     <select class="custom-select select-seller" id="listPrice" required>
                         <option disabled selected>Elige una opción</option>

@@ -6,14 +6,13 @@
 @section('modal-title', 'Agregar producto')
 
 @section('modal-body')
-  <form action="{{route('productPost')}}" method="post">
+  <form action="{{route('product.store')}}" method="post">
     @CSRF
     @include('components.form-products')
 
     <div class="modal-footer row"> 
-      <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-primary" >Guardar</button>
-        <button type="button" class="btn btn-primary" data-dismiss="modal">Guardar y salir</button>
+      <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+      <button type="submit" class="btn btn-primary" >Guardar</button>
     </div>
   </form>
 @stop
@@ -53,24 +52,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <th scope="row">1</th>
-      <td>Mark</td>
-      <td>Otto</td>
-      <td>@mdo</td>
-    </tr>
-    <tr>
-      <th scope="row">2</th>
-      <td>Jacob</td>
-      <td>Thornton</td>
-      <td>@fat</td>
-    </tr>
-    <tr>
-      <th scope="row">3</th>
-      <td>Larry</td>
-      <td>the Bird</td>
-      <td>@twitter</td>
-    </tr>
+    <tr><td colspan="4" class="text-center table-warning">Sin registros.</td></tr>
   </tbody>
 </table>
 @stop

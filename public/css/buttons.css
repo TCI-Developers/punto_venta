@@ -1,0 +1,17 @@
+.text_color{
+    color:#000;
+}
+
+button .icon_img{
+    width:23px;
+    margin-right:5px;
+}
+
+a .icon_img{
+    width:23px;
+    margin-right:5px;
+}
+
+.card-header h2{
+    margin-bottom: 0;
+}

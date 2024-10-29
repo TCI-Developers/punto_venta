@@ -13,20 +13,25 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100);
-            $table->string('description');
-            $table->unsignedBigInteger('category_id');
+            $table->string('code_product', 100)->nullable();
+            $table->string('description')->nullable();
             $table->string('barcode')->nullable();
             $table->string('image_path')->nullable();
-            $table->string('unit', 100);
-            $table->double('existence');
+            $table->string('taxes', 10)->nullable();
+            $table->double('amount_taxes')->default(0);
+            $table->string('unit', 100)->nullable();
+            $table->string('unit_description', 100)->nullable();
+            $table->double('existence')->nullable();
             $table->boolean('activo')->default(1);
             $table->text('comments')->nullable();
             $table->double('segment_units')->nullable();
-            $table->string('unit_presentation');
+            $table->string('unit_presentation')->nullable();
+            $table->unsignedBigInteger('branch_id');
             $table->unsignedBigInteger('brand_id');
+            $table->unsignedBigInteger('category_id')->nullable();
             $table->foreign('category_id')->references('id')->on('categories');
             $table->foreign('brand_id')->references('id')->on('brands');
+            $table->foreign('branch_id')->references('id')->on('branchs');
             $table->timestamps();
         });
     }

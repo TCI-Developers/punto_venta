@@ -63,6 +63,17 @@ return [
             ]) : [],
         ],
 
+        // Conexión a la base de datos de Hostinger
+        'db_externa' => [
+            'driver' => 'mysql',
+            'host' => env('DB_HOST_EXTERNO', 'externo_host'),
+            'port' => env('DB_PORT_EXTERNO', '3306'),
+            'database' => env('DB_DATABASE_EXTERNO', 'externo_db_name'),
+            'username' => env('DB_USERNAME_EXTERNO', 'externo_user'),
+            'password' => env('DB_PASSWORD_EXTERNO', 'externo_password'),
+            // Otros parámetros de conexión...
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),

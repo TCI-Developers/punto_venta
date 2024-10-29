@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->string('name',100);
-            $table->string('address1',100);
-            $table->string('address2',100)->nullable();
-            $table->string('state',100)->nullable();
-            $table->string('city',100);
-            $table->string('postal_code',100);
+            $table->string('razon_social', 255)->nullable();
+            $table->string('rfc', 255)->nullable();
+            $table->string('postal_code',100)->nullable();
+            $table->string('regimen_fiscal', 255)->nullable();
+            $table->boolean('status')->default(1);
             $table->timestamps();
         });
     }

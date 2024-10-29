@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 50);
             $table->string('description', 50);
-            $table->boolean('status');
+            $table->boolean('status')->default(1);
             $table->rememberToken();
             $table->timestamps();
         });

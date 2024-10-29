@@ -6,13 +6,13 @@
         <div class="form-row">
             <div class="form-group col-md-12">
                 <label for="inputEmail4">Descripción</label>
-                <textarea class="form-control" id="exampleFormControlTextarea1" rows="2"></textarea>
+                <textarea class="form-control" id="exampleFormControlTextarea1" name="description" rows="2" required></textarea>
             </div>
         </div>
         <div class="form-row">
             <div class="form-group col-md-4">
                 <label for="inputPassword4">Linea</label>
-                <input type="text" class="form-control" id="inputPassword4">
+                <input type="text" class="form-control" id="inputPassword4" name="linea" required>
             </div>
             <div class="form-group col-md-4">
                 <label for="inputPassword4">Marca</label>

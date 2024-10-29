@@ -14,12 +14,13 @@ return new class extends Migration
         Schema::create('prices', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id');
-            $table->date('start_date');
-            $table->date('end_date');
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->double('discount')->default(0);
-            $table->double('price');
-            $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('customer_id');
+            $table->double('price')->default(0);
+            $table->integer('type')->default(1);
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('customer_id')->nullable();
             $table->foreign('product_id')->references('id')->on('products');
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('customer_id')->references('id')->on('customers');
