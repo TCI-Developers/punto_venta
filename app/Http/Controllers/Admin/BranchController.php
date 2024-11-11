@@ -141,9 +141,9 @@ class BranchController extends Controller
         }
 
         if(!$user->hasRole('root')){
-           $user_model = User::find($user->id);
-           $user_model->branch_id = $branch_id;
-           $user_model->save();
+            $user_model = User::find($user->id);
+            $user_model->branch_id = $branch_id;
+            $user_model->save();
         }
 
         return redirect()->route('sale.index');

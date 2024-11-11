@@ -22,6 +22,7 @@ return new class extends Migration
             $table->double('amount_received')->default(0);
             $table->double('change')->default(0);
             $table->string('sat_document_type')->nullable();
+            $table->double('total_sale')->default(0);
             $table->string('coin', 10)->default('MXN');
             $table->integer('status')->default(1); //1 activa, 0 cancelada, 2 cerrada
             $table->unsignedBigInteger('customer_id');

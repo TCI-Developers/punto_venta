@@ -4,19 +4,40 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\PartToProduct;
 
 class SaleDetail extends Model
 {
     use HasFactory;
     protected $table = 'sales_detail';
 
-    //Funcion para obtener marca (linea) del producto
+    //Funcion para obtener producto por presentacion
     public function getPartToProduct(){
         return $this->hasOne('App\Models\PartToProduct', 'id', 'part_to_product_id');
     }
 
-    //Funcion para obtener marca (linea) del producto
+    //Funcion para obtener producto por presentacion
+    public function getPartToProductId($id){
+        $part_to_product = PartToProduct::find($id);
+        if(is_object($part_to_product)){
+            return $part_to_product;
+        }
+        return null;
+    }
+
+    //Funcion para obtener producto
     public function product(){
         return $this->belongsTo('App\Models\Product');
     }
+
+    //Funcion para obtener producto
+    public function getProductId($id){
+        $product = Product::find($id);
+        if(is_object($product)){
+            return $product;
+        }
+        return null;
+    }
+
+
 }

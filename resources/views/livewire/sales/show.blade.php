@@ -10,7 +10,7 @@
             <input type="hidden" name="status" value="">
             <div class="row">
                 <!-- Cliente y fecha -->
-                <label for="customer_id" class="col-lg-8 col-md-8 col-sm-12">Cliente*<br>
+                <label for="customer_id" class="col-lg-4 col-md-4 col-sm-12">Cliente*<br>
                     <select name="customer_id" id="customer_id" class="form-control selectpicker show-tick input_sale" data-live-search="true" 
                             data-size="8" title="Selecciona un cliente" disabled required>
                         @forelse($customers as $item)
@@ -22,14 +22,9 @@
                         <span class="text-danger error displayNone" value="customer_id" >Campo requerido</span>
                     </div>
                 </label>
-                <label for="date" class="col-lg-4 col-md-4 col-sm-12" wire:ignore>Fecha* <br>
-                    <input type="date" class="form-control" name="date" id="date" value="{{$sale->date}}" disabled required>
-                    <div class="col-lg-12 col-md-12 col-sm-12">
-                        <span class="text-danger error displayNone" value="date" >Campo requerido</span>
-                    </div>
-                </label>
+
                 <!-- Tipo de pago, metodo de pago y moneda -->
-                <label for="payment_method_id" class="col-lg-4 col-md-4 col-sm-12">Metodo de Pago* <br>
+                <label for="payment_method_id" class="col-lg-2 col-md-2 col-sm-12">Metodo de Pago* <br>
                     <select name="payment_method_id" id="payment_method_id" class="form-control selectpicker show-tick input_sale" data-live-search="true" 
                             data-size="8" title="Metodo de pago" disabled required>
                         @forelse($payment_methods as $item)s
@@ -41,20 +36,27 @@
                         <span class="text-danger error displayNone" value="payment_method_id" >Campo requerido</span>
                     </div>
                 </label>
-                <label for="type_payment" class="col-lg-4 col-md-4 col-sm-12">Tipo de Pago* <br>
+                <label for="type_payment" class="col-lg-2 col-md-2 col-sm-12">Tipo de Pago* <br>
                     <select name="type_payment" id="type_payment" class="form-control selectpicker input_sale show-tick" 
                             data-size="8" title="Metodo de pago" disabled>
                             <option value="efectivo" {{$sale->type_payment == 'efectivo' ? 'selected':''}}>Efectivo</option>
                             <option value="tarjeta" {{$sale->type_payment == 'tarjeta' ? 'selected':''}}>Tarjeta</option>
                     </select>
                 </label>
-                <label for="coin" class="col-lg-4 col-md-4 col-sm-12">Moneda* <br>
+                <label for="coin" class="col-lg-2 col-md-2 col-sm-12">Moneda* <br>
                     <select name="coin" id="coin" class="form-control selectpicker show-tick input_sale" data-live-search="true" disabled required>
                             <option value="MXN" {{$sale->coin == 'MXN' ? 'selected':''}}>MXN</option>
                             <option value="USD" {{$sale->coin == 'USD' ? 'selected':''}} disabled>USD</option>
                     </select>
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         <span class="text-danger error displayNone" value="coin" >Campo requerido</span>
+                    </div>
+                </label>
+
+                <label for="date" class="col-lg-2 col-md-2 col-sm-12" wire:ignore>Fecha* <br>
+                    <input type="date" class="form-control" name="date" id="date" value="{{$sale->date}}" disabled required>
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <span class="text-danger error displayNone" value="date" >Campo requerido</span>
                     </div>
                 </label>
                 <!-- Amounts -->

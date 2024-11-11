@@ -1,4 +1,17 @@
 <div class="col-lg-12 col-md-12 col-sm-12">
+    <div class="row col-lg-12 col-md-12 col-sm-12">
+        <label for="presentation_id" class="col-lg-6 col-md-6 col-sm-12">Presentación* <br>
+            <input type="text" class="form-control" name="presentation_id" id="presentation_id" placeholder="Presentación"
+            wire:change="scaner_codigo" wire:model="scan_presentation_id" autofocus>
+            <div class="col-lg-12 col-md-12 col-sm-12">
+                <span class="text-danger error" value="presentation_id" style="display:none;">Campo requerido</span>
+            </div>
+        </label>
+        <label for="presentation_id" class="col-lg-6 col-md-6 col-sm-12"><br>
+            <input type="text" class="form-control" readonly>
+        </label>
+    </div>
+
     <div class="table-responsive">
     <table class="table table-striped table-bordered datatable">
         <thead>
@@ -16,7 +29,7 @@
                 @endif
             </tr>
         </thead>
-        <tbody>
+        <tbody id="tbody_details">
             @forelse($sales_detail as $item)
             <tr class="text-center">
                 <td>{{$item->getPartToProduct->getProduct->code_product}}</td>
@@ -35,13 +48,23 @@
                 <td>${{number_format($item->amount, 2)}}</td>
                 @if($sale->amount_received == 0) 
                 <td>
-                    <button type="button" class="btn btn-warning btn-sm btnEditMov" wire:click="updateMovDetail({{$item->id}})"><i class="fa fa-edit"></i></button>
+                    <button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct({{$item->id}},{{$item->cant}})"><i class="fa fa-edit"></i></button>
+                    <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct({{$item->id}})"><i class="fa fa-trash"></i></button>
                 </td>
                 @endif
             </tr>
             @empty
-            <tr id="trEmpty"><td colspan="9" class="table-warning text-center">Sin Ventas</td></tr>
+            <tr id="trEmpty"><td colspan="9" class="table-warning text-center">Sin movimientos.</td></tr>
             @endforelse
+        </tbody>
+        <tbody id="tbody_total">
+            <tr class="table-info"><td colspan="6"></td>
+                <td class="text-right text-bold">Total</td>
+                <td class="text-center" >$ <span id="total_sale">{{number_format($total_sale, 2)}}</span></td>
+                @if($sale->amount_received == 0)
+                <td></td>
+                @endif
+            </tr>
         </tbody>
     </table>
     </div>

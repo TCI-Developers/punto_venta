@@ -91,7 +91,7 @@ class UserController extends Controller
                 $new_user = $this->storeUser($userArray['datos_empleado___nombre'], $userArray['id_usuario'], $userArray['telefono'], $userArray['password']);
                 Auth::login($new_user);      
             }else{
-                Auth::login($exist_user);
+                Auth::login($exist_user); 
             }
 
             // $this->getCustomers(); Ya no se ocupan
@@ -141,6 +141,11 @@ class UserController extends Controller
         if(!$user->hasAnyRole(['root', 'admin'])){
             return redirect()->route('box.turnOff');
         }
+
+        $user_model = User::find($user->id);
+        $user_model->branch_id = null;
+        $user_model->save();
+
         Auth::logout();
         return redirect()->route('branchs.index');
     }

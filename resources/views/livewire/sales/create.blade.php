@@ -9,7 +9,7 @@
             @csrf
             <div class="row" wire:ignore>
                 <!-- Cliente y fecha -->
-                <label for="customer_id" class="col-lg-8 col-md-8 col-sm-12">Cliente* <br>
+                <label for="customer_id" class="col-lg-3 col-md-3 col-sm-12">Cliente* <br>
                     <select name="customer_id" id="customer_id" class="form-control selectpicker show-tick" data-live-search="true" 
                             data-size="8" title="Selecciona un cliente" required>
                         @forelse($customers as $item)s
@@ -21,14 +21,14 @@
                         <span class="text-danger error" value="customer_id" style="display:none;">Campo requerido</span>
                     </div>
                 </label>
-                <label for="date" class="col-lg-4 col-md-4 col-sm-12" wire:ignore>Fecha* <br>
+                <label for="date" class="col-lg-3 col-md-3 col-sm-12" wire:ignore>Fecha* <br>
                     <input type="date" class="form-control " name="date" id="date" value="{{date('Y-m-d')}}" readonly required>
                     <div class="col-lg-12 col-md-12 col-sm-12">
                         <span class="text-danger error" value="date" style="display:none;">Campo requerido</span>
                     </div>
                 </label>
                 <!-- Tipo de pago, metodo de pago y moneda -->
-                <label for="payment_method_id" class="col-lg-4 col-md-4 col-sm-12">Metodo de Pago* <br>
+                <label for="payment_method_id" class="col-lg-2 col-md-2 col-sm-12">Metodo de Pago* <br>
                     <select name="payment_method_id" id="payment_method_id" class="form-control selectpicker show-tick " data-live-search="true" 
                             data-size="8" title="Metodo de pago" required>
                         @forelse($payment_methods as $item)
@@ -40,14 +40,14 @@
                         <span class="text-danger error" value="payment_method_id" style="display:none;">Campo requerido</span>
                     </div>
                 </label>
-                <label for="type_payment" class="col-lg-4 col-md-4 col-sm-12">Tipo de Pago* <br>
+                <label for="type_payment" class="col-lg-2 col-md-2 col-sm-12">Tipo de Pago* <br>
                     <select name="type_payment" id="type_payment" class="form-control selectpicker show-tick" 
                             data-size="8" title="Metodo de pago">
                             <option value="efectivo" selected>Efectivo</option>
                             <option value="tarjeta">Tarjeta</option>
                     </select>
                 </label>
-                <label for="coin" class="col-lg-4 col-md-4 col-sm-12">Moneda* <br>
+                <label for="coin" class="col-lg-2 col-md-2 col-sm-12">Moneda* <br>
                     <select name="coin" id="coin" class="form-control selectpicker show-tick " data-live-search="true" required>
                             <option value="MXN" selected>MXN</option>
                             <option value="USD" disabled>USD</option>
