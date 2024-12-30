@@ -49,7 +49,10 @@
             <table class="table table-striped table-bordered">
                 <thead>
                     <tr class="text-center">
-                        <th class="w-15">Folio</th>
+                        @if(Auth::User()->hasRole('admin'))
+                        <th class="w-10">Usuario</th>
+                        @endif
+                        <th class="w-10">Folio</th>
                         <th class="w-20">Fecha</th>
                         <th class="w-20">Metodo de Pago</th>
                         <th class="w-15">Monto</th>
@@ -60,6 +63,7 @@
                 <tbody>
                     @forelse($sales as $item)
                     <tr class="text-center {{$item->status == 2 ? 'table-success':''}}">
+                        @if(Auth::User()->hasRole('admin'))<td class="text-sm">{{$item->getUser->name}}</td>@endif
                         <td>{{$item->folio}}</td>
                         <td>{{date('d-m-Y', strtotime($item->date))}}</td>
                         <td>{{$item->getPaymentMethod->pay_method}}</td> 
@@ -71,7 +75,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr id="trEmpty"><td colspan="6" class="table-warning text-center">Sin Ventas</td></tr>
+                    <tr id="trEmpty"><td colspan="{{Auth::User()->hasRole('admin') ? '7':'6'}}" class="table-warning text-center">Sin Ventas</td></tr>
                     @endforelse
                 </tbody>
             </table>

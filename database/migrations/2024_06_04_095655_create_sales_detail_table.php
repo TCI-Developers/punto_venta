@@ -21,7 +21,9 @@ return new class extends Migration
             $table->double('ieps')->default(0);
             $table->unsignedBigInteger('sale_id');
             $table->double('unit_price')->default(0);
+            $table->double('descuento')->default(0);
             $table->double('total')->default(0);
+            $table->text('notes')->nullable();
             $table->foreign('part_to_product_id')->references('id')->on('parts_to_product');
             $table->foreign('sale_id')->references('id')->on('sales');
             $table->timestamps();

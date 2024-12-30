@@ -15,6 +15,11 @@ class Sale extends Model
     public function getClient(){
         return $this->hasOne('App\Models\Customer', 'id', 'customer_id');
     }
+
+    //Funcion para obtener el usuario que creo la venta
+    public function getUser(){
+        return $this->hasOne('App\Models\User', 'id', 'user_id');
+    }
     
     //Funcion para obtener marca (linea) del producto
     public function getDetails(){
@@ -35,7 +40,9 @@ class Sale extends Model
 
     //Funcion para obtener la suma de todos los movimientos de la venta
     public function getAmount($id){
-        $details = SaleDetail::where('sale_id', $id)->sum('amount');
+        $details_amount = SaleDetail::where('sale_id', $id)->sum('amount');
+        $details_descuento = SaleDetail::where('sale_id', $id)->sum('descuento');
+        $details = $details_amount - $details_descuento;
         // $details = $this->hasMany('App\Models\SaleDetail', 'sale_id', 'id');
         return $details;
     }

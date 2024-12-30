@@ -8,6 +8,9 @@ Route::get('/products-add-presentation/{product_id}', 'Admin\ProductController@c
 Route::post('/products-store-presentation/{product_id}', 'Admin\ProductController@store')->name('product.store'); //funcion para guardar las presentaciones/devoluciones/promociones asignadas
 Route::post('/products-update-presentation', 'Admin\ProductController@update')->name('product.update'); //funcion para guardar las presentaciones/devoluciones/promociones asignadas
 
+Route::get('/products-show-upload-excel', 'Admin\ProductController@showUploadExcel')->name('product.showUploadExcel'); 
+Route::post('/products-upload-excel', 'Admin\ProductController@uploadExcel')->name('product.uploadExcel'); 
+
 Route::get('/presentation-product', 'Admin\ProductController@indexPartProduct')->name('product.indexPartProduct'); //vista principal productos
 Route::get('/presentation-product-disabled', 'Admin\ProductController@indexPartProductDisabled')->name('product.indexPartProductDisabled'); //vista principal productos
 Route::post('/presentation-store', 'Admin\ProductController@storePresentationProduct')->name('product.storePresentationProduct');

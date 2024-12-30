@@ -23,6 +23,7 @@
                 <th>Precio Unitario</th>
                 <th>Importe Impuesto</th>
                 <th>Subtotal</th>
+                <th>Descuento</th>
                 <th>Total</th>
                 @if($sale->amount_received == 0) 
                 <th>Acciones</th>
@@ -45,7 +46,8 @@
                 <td>${{number_format($item->unit_price,2)}}</td>
                 <td>${{$item->iva != 0 ? number_format($item->iva,2):number_format($item->ieps,2)}}</td>
                 <td>${{number_format($item->subtotal,2)}}</td>
-                <td>${{number_format($item->amount, 2)}}</td>
+                <td>$ {{ number_format($item->descuento, 2) }}</td>
+                <td>$ {{number_format(($item->amount - $item->descuento), 2)}}</td>
                 @if($sale->amount_received == 0) 
                 <td>
                     <button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct({{$item->id}},{{$item->cant}})"><i class="fa fa-edit"></i></button>
@@ -54,13 +56,14 @@
                 @endif
             </tr>
             @empty
-            <tr id="trEmpty"><td colspan="9" class="table-warning text-center">Sin movimientos.</td></tr>
+            <tr id="trEmpty"><td colspan="10" class="table-warning text-center">Sin movimientos.</td></tr>
             @endforelse
         </tbody>
         <tbody id="tbody_total">
             <tr class="table-info"><td colspan="6"></td>
-                <td class="text-right text-bold">Total</td>
-                <td class="text-center" >$ <span id="total_sale">{{number_format($total_sale, 2)}}</span></td>
+                <td class="text-right text-bold">Totales</td>
+                <td class="text-center text-bold" >$ <span id="total_desc" class="badge badge-success">{{number_format($total_desc, 2)}}</span></td>
+                <td class="text-center text-bold" >$ <span id="total_sale">{{number_format($total_sale, 2)}}</span></td>
                 @if($sale->amount_received == 0)
                 <td></td>
                 @endif

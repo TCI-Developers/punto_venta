@@ -12,10 +12,11 @@
 
 @section('js')
     @include('components.use.notification_success_error')
-
     <script>
         //funcion para asignar valores a los inputs
         function update(product){
+            // console.log('*', product);
+            
             swal.fire('Actualización habilitada.', '', 'success');
             $('input[name=part_product_id]').val(product.id);
 
@@ -28,12 +29,13 @@
             $('#presentation_type_id').val(product.presentation_product_id).selectpicker('refresh');
             $('#price').val(product.price);
             $('#code_bar').val(product.code_bar);
+            $('#stock').val(product.stock);
             //descuento
-            $('#tipo_descuento').val(product.tipo_descuento);
+            $('#tipo_descuento').val(product.tipo_descuento).selectpicker('refresh');
             $('#title_monto_porcentaje').html(product.tipo_descuento == 'monto' ? 'Monto':'Porcentaje');
             $('#basic-addon1').html(product.tipo_descuento == 'monto' ? '$':'%');
             $('#monto_porcentaje').val(product.monto_porcentaje);
-            $('#vigencia_cantidad_fecha').val(product.vigencia_cantidad_fecha);
+            $('#vigencia_cantidad_fecha').val(product.vigencia_cantidad_fecha).selectpicker('refresh');
             if(product.vigencia_cantidad_fecha == 'fecha'){
                 $('#vigencia_fecha').val(product.vigencia);
                 $('#title_vigencia').html('Fecha');
@@ -57,14 +59,24 @@
             }else if(type == 'cant_fecha'){
                 $('#title_vigencia').html(value == 'fecha' ? 'Fecha':'Cantidad');
                 if(value == 'fecha'){
-                    $('#vigencia_cantidad').fadeOut(function(){
-                        $('#vigencia_fecha').fadeIn();
+                    $('#vigencia_cantidad').addClass('displayNone').fadeOut(function(){
+                        $('#vigencia_fecha').removeClass('displayNone').fadeIn();
                     });
                 }else{
-                    $('#vigencia_fecha').fadeOut(function(){
-                        $('#vigencia_cantidad').fadeIn();
+                    $('#vigencia_fecha').addClass('displayNone').fadeOut(function(){
+                        $('#vigencia_cantidad').removeClass('displayNone').fadeIn();
                     });
                 }
+            }
+        }
+
+        //funcion para validar si la cantidad es mayor o menor que el stock
+        function validateCantidadDescuento(cant){
+            let stock = $('#stock').val() ?? 0;
+            
+            if(stock < cant){
+                swal.fire('No tienes suficiente stock disponible.', '', 'info');
+                $('#vigencia_cantidad').val('');
             }
         }
 
@@ -107,8 +119,11 @@
                 <label for="price" class="col-lg-4 col-md-4 col-sm-12">Precio* <br>
                     <input type="number" name="price" id="price" class="form-control inputModal" placeholder="0">
                 </label>
-                <label for="code_bar" class="col-lg-12 col-md-12 col-sm-12">Codigo <br>
+                <label for="code_bar" class="col-lg-8 col-md-8 col-sm-12">Codigo <br>
                     <input type="text" name="code_bar" id="code_bar" class="form-control inputModal" placeholder="Codigo" value="">
+                </label>
+                <label for="stock" class="col-lg-4 col-md-4 col-sm-12">Stock
+                    <input type="number" class="form-control inputModal" name="stock" id="stock" placeholder="0">
                 </label>
             </div>
             </div>
@@ -152,8 +167,8 @@
                     </select>
                 </label>
                 <label for="vigencia" class="col-lg-6 col-md-6 col-sm-12"><span id="title_vigencia">Fecha</span>
-                    <input type="date" class="form-control inputModal" name="vigencia" id="vigencia_fecha" min="{{ date('Y-m-d') }}" value="{{date('Y-m-d')}}">
-                    <input type="number" class="form-control  inputModal displayNone" name="vigencia" id="vigencia_cantidad" placeholder="0">
+                    <input type="date" class="form-control inputModal" name="vigencia_fecha" id="vigencia_fecha" min="{{ date('Y-m-d') }}" value="{{date('Y-m-d')}}">
+                    <input type="number" class="form-control  inputModal displayNone" name="vigencia" id="vigencia_cantidad" onchange="validateCantidadDescuento(this.value)" placeholder="0">
                 </label>
             </div>
             </div>
@@ -172,6 +187,7 @@
                                 <tr>
                                     <th>Presentación</th>
                                     <th class="text-center">Precio</th>
+                                    <th class="text-center">Stock</th>
                                     <th class="text-center">Descuento</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
@@ -181,6 +197,7 @@
                                     <tr>
                                         <td>{{$presentation_name[$index]}}</td>
                                         <td class="text-center">$ {{$item->price}}</td>
+                                        <td class="text-center">{{$item->stock}}</td>
                                         <td class="text-center">
                                             @if($item->monto_porcentaje > 0)
                                                 {{ $item->tipo_descuento == 'monto' ? '$ '.$item->monto_porcentaje: '% '.$item->monto_porcentaje }}

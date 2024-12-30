@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\{Product, PresentationProduct, UnidadSat, Box, Promotion, PartToProduct};
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\ProductsImport;
 
 class ProductController extends Controller
 {
@@ -56,12 +58,13 @@ class ProductController extends Controller
                 $presentation->tipo_descuento = $request->tipo_descuento;
                 $presentation->monto_porcentaje = $request->monto_porcentaje;
                 $presentation->vigencia_cantidad_fecha = $request->vigencia_cantidad_fecha;
-                $presentation->vigencia = $request->vigencia;
+                $presentation->vigencia = $request->vigencia_cantidad_fecha == 'fecha' ? $request->vigencia_fecha:$request->vigencia;
             }
 
             $presentation->presentation_product_id = (int)$request->presentation_type_id;
             $presentation->price = $request->price;
             $presentation->code_bar = $request->code_bar;
+            $presentation->stock = $request->stock;
             $presentation->save();
 
             return redirect()->back()->with('success', 'Presentación '.$message.' a producto.');
@@ -133,4 +136,20 @@ class ProductController extends Controller
         return redirect()->back()->with('success', 'Presentacion '.$message.' con exito.');
     }
 
+    //funcion para abrir vista de carga de excel
+    public function showUploadExcel(){
+        return view('Admin.products.import_excel');
+    }
+
+    //funcion para cargar el excel y procesarlo
+    public function uploadExcel(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|mimes:xlsx,xls',
+        ]);
+
+        Excel::import(new ProductsImport, $request->file('excel_file'));
+
+        return back()->with('success', 'Archivo procesado correctamente.');
+    }
 }

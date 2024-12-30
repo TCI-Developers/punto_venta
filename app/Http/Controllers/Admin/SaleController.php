@@ -73,7 +73,7 @@ class SaleController extends Controller
      */
     public function update(Request $request, string $id)
     {   
-       
+        
         $validated = $request->validate($this->rulesSales($request->status), $this->messagesError()); 
 
         $sale = Sale::find($id);
@@ -87,15 +87,20 @@ class SaleController extends Controller
             $sale->total_sale = $request->total_sale ?? 0;
             $sale->change = $request->change ?? 0;
             $sale->status = 2;
+
+            $message = 'realizada';
         }else{
             $sale->customer_id = $request->customer_id;
             $sale->payment_method_id = $request->payment_method_id;
             $sale->type_payment = $request->type_payment;
             $sale->coin = $request->coin;
+
+            $message = 'actualizada';
         }        
         $sale->save();
 
-        return redirect()->back()->with('success', 'Venta actualizada con exito.');
+        return redirect()->route('sale.index')->with('success', 'Venta '.$message.' con exito.');
+        // return redirect()->back()->with('success', 'Venta '.$message.' con exito.');
 
     }
 

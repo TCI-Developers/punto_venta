@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\{User, Product, Brand, Customer, PaymentMethod, UnidadSat, Role, Turno, UserRole, Box};
 use Illuminate\Support\Facades\{Auth};
+use Illuminate\Support\Carbon;
 
 class UserController extends Controller
 {
@@ -78,6 +79,13 @@ class UserController extends Controller
                 'password' => 'required|min:8',   
                 // 'start_amount_box' => 'required',   validar dependiendo el rol 
         ]);
+       
+        $today = Carbon::now();
+        if ($today->isLastOfMonth()) {
+            if (!$this->hasInternetConnection()) {
+                return redirect()->back()->with('error', 'Licencia vencida.');
+            }
+        }
 
         $user = $this->getUserQB($request->phone, $request->password);
 
@@ -284,6 +292,23 @@ class UserController extends Controller
 
             return redirect()->back()->with($icon, $message);
         }
+    }
+
+    //funcion para saber si existe conexion a internet
+    private function hasInternetConnection(): bool
+    {
+        try {
+            // Intentar conectarse a Google
+            $connected = @fsockopen("www.google.com", 80);
+            if ($connected) {
+                fclose($connected);
+                return true;
+            }
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        return false;
     }
 
     //funcion para obtener las clientes (No se ocupan los clientes de QUICKBASE)

@@ -226,18 +226,32 @@
     </script>
 
     <script>
-        window.addEventListener('scan', event => {
+        window.addEventListener('scan', event => {           
             let sale_detail = event.detail[0].sales_detail;
             let product = event.detail[0].product;
-            let presentation = event.detail[0].presentation;
+            let presentation = event.detail[0].persentation;
             let unidad_sat = event.detail[0].unidad_sat;
             let tipo = event.detail[0].tipo;
             let total = 0.00;
+            let descuento = 0.00;
+
+            if(presentation.length > 0 && presentation[presentation.length - 1].stock < 0){
+                swal.fire('Sin existencias en sistema.', '', 'info');
+                Livewire.dispatch('stockOff', {'sale_detail_id' : sale_detail[sale_detail.length - 1].id,
+                                                'code': presentation[presentation.length - 1].code_bar});
+            }
+            
             $('#tbody_details').empty();
             
+            if(sale_detail.length){
+                $('#btnCobro').fadeIn();
+            }else{
+                $('#btnCobro').fadeOut();
+            }
 
             $.each(sale_detail, function(index, val){
                 total += val.total;
+                descuento += val.descuento;
                 
                 let tipo_impuesto = '';
                 let impuesto = '0.00';
@@ -257,7 +271,8 @@
                     <td class="text-center">$ ${number_format(val.unit_price)}</td>
                     <td class="text-center">$ ${impuesto}</td>
                     <td class="text-center">$ ${number_format(val.subtotal)}</td>
-                    <td class="text-center">$ ${number_format(val.total)}</td>
+                    <td class="text-center">$ ${number_format(val.descuento)}</td>
+                    <td class="text-center">$ ${number_format(val.total - val.descuento)}</td>
                     <td class="text-center">
                         <button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct(${val.id}, ${val.cant})"><i class="fa fa-edit"></i></button>
                         <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct(${val.id})"><i class="fa fa-trash"></i></button>
@@ -266,12 +281,11 @@
                 `);
             });
             
-            console.log('total', total);
-            
             $('#tbody_total').empty().append(`
                 <tr class="table-info"><td colspan="6"></td>
-                    <td class="text-right text-bold">Total</td>
-                    <td class="text-center" >$ <span>${number_format(total)}</span></td>
+                    <td class="text-right text-bold">Totales</td>
+                    <td class="text-center" >$ <span class="badge badge-success">${number_format(descuento)}</span></td>
+                    <td class="text-center text-bold" >$ <span>${number_format(total - descuento)}</span></td>
                     <td></td>
                 </tr>
             `);
@@ -280,7 +294,7 @@
             $('#update_cant_prod').val('');
             $('#update_sale_detail_id').val('');
             $('#modal_cant').fadeOut();
-            $('#total_sale').text(total);
+            $('#total_sale').val(total - descuento);
 
             if(tipo == 'destroy'){
                 Swal.fire('Producto eliminado con exito.', '', 'success');
@@ -289,7 +303,6 @@
 
         //funcion para modificar cantidad de productos registrados
         function btnCantProduct(sale_detail_id, cant){
-            console.log('cant', cant);
             $('#update_cant_prod').val(cant);
             $('#update_sale_detail_id').val(sale_detail_id);
             $('#modal_cant').fadeIn();
@@ -299,7 +312,6 @@
         function updateCant(){
             let sale_detail_id = $('#update_sale_detail_id').val();
             let cant = $('#update_cant_prod').val();
-            console.log('entras', sale_detail_id, cant);
             
             Livewire.dispatch('updateCant', {'sale_detail_id' : sale_detail_id, 'cant' : cant});
         }

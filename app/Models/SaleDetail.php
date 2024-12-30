@@ -39,5 +39,12 @@ class SaleDetail extends Model
         return null;
     }
 
+    //funcion para saber si tiene descuento
+    public function hasDescuento(){
+        // $sale_detail_con = $this::where('sale_id', $this->id)
+        //                     ->where('part_to_product_id', $presentation->id)
+        //                     ->where('unit_price', $presentation->price)->get();
+        
+    }
 
 }

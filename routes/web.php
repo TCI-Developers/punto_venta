@@ -18,9 +18,9 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    // Route::get('/dashboard', function () {
+    //     return view('dashboard');
+    // })->name('dashboard');
 });
 
 Route::post('/login-user', 'Admin\UserController@loginUser')->name('user.login');
@@ -31,32 +31,7 @@ Route::get('/get-customers', 'Admin\UserController@getCustomers')->name('user.ge
 Route::get('/get-payment-methods', 'Admin\UserController@getPaymentMethods')->name('user.getPaymentMethods');
 Route::get('/get-unidades-sat', 'Admin\UserController@getUnidadesSat')->name('user.getUnidadesSat');
 
-
 Route::get('/login', function(){
+   
     return view('auth.login');
 })->name('login');
-
-// Route::get('/sales', function(){
-//     return view('sales');
-// })->name('sales');
-
-
-// Route::get('/billing', function(){
-//     return view('billing');
-// })->name('billing');
-
-// Route::get('/tickets', function(){
-//     return view('tickets');
-// })->name('tickets');
-
-// Route::get('/stock', function(){
-//     return view('stock');
-// })->name('stock');
-
-// Route::get('/order', function(){
-//     return view('order-form');
-// })->name('order');
-
-// Route::get('/category', function(){
-//     return view('admin.category.index');
-// })->name('category');

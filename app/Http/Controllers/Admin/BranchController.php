@@ -122,7 +122,7 @@ class BranchController extends Controller
             
             $product = new Product();
             $respuesta_proudct = $product->setProducs($response, $branch_id); //esto me devuelve un true o false dependiendo de si logro guardar o no
-            
+             
             if($respuesta_proudct){
                 return redirect()->back()->with('success', 'Importacion de productos correcta.');
             }else{

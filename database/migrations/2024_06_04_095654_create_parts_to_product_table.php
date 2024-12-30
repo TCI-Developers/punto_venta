@@ -16,6 +16,14 @@ return new class extends Migration
             $table->unsignedBigInteger('product_id');
             $table->string('code_bar')->nullable();
             $table->double('price')->default(0);
+            $table->double('stock')->default(0);
+            
+            //campos descuentos
+            $table->string('tipo_descuento')->nullable();
+            $table->double('monto_porcentaje')->nullable();
+            $table->string('vigencia_cantidad_fecha')->nullable();
+            $table->string('vigencia')->nullable();
+
             $table->unsignedBigInteger('presentation_product_id');
             $table->boolean('status')->default(1);
             $table->foreign('product_id')->references('id')->on('products');
