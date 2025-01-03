@@ -68,7 +68,7 @@
                     {{ __('adminlte::menu.profile') }}
                 </a>
             @endif
-            <a href="{{route('logout')}}" class="btn btn-default btn-flat float-right @if(!$profile_url) btn-block @endif">
+            <a href="{{route('logout_')}}" class="btn btn-default btn-flat float-right @if(!$profile_url) btn-block @endif">
                 Cerrar Sesión &nbsp;
                 <i class="fa fa-fw fa-power-off text-red"></i>
             </a>

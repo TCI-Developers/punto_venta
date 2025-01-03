@@ -53,7 +53,7 @@ Route::post('/users-update', 'Admin\UserController@update')->name('users.update'
 Route::get('/users-destroy/{id}/{status}', 'Admin\UserController@destroy')->name('users.destroy');
 Route::post('/users-turnos-roles', 'Admin\UserController@rolesTurnos')->name('users.setRolesTurnos');
 Route::post('/users-update-turnos-roles', 'Admin\UserController@updateRolesTurnos')->name('users.updateRolesTurnos');
-Route::get('/users-logout', 'Admin\UserController@logout')->name('logout');
+Route::get('/users-logout', 'Admin\UserController@logout')->name('logout_');
 
 //turnos
 Route::get('/turnos/{status}', 'Admin\TurnoController@index')->name('turnos.index');
