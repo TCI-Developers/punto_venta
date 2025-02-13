@@ -47,4 +47,34 @@ class SaleDetail extends Model
         
     }
 
+    //funcion para saber si es el mismo registro con descuento
+    public function mismoRegDescuento($saleDetail, $presentation){
+        if($saleDetail->descuento > 0 && $presentation->vigencia > 0 && $presentation->vigencia_cantidad_fecha == 'cantidad'){
+            return true;
+        }else if($saleDetail->descuento > 0 && $presentation->vigencia.'23:59:59' >= date('Y-m-d H:i:s') && $presentation->vigencia_cantidad_fecha == 'fecha'){
+            return true;
+        }
+        return false;
+    }
+
+    //funcion para saber si es el mismo registro con descuento
+    public function mismoSinRegDescuento($saleDetail, $presentation){
+        if($saleDetail->descuento == 0 && $presentation->vigencia == 0 && $presentation->vigencia_cantidad_fecha == 'cantidad'){
+            return true;
+        }else if($saleDetail->descuento == 0 && $presentation->vigencia.'23:59:59' < date('Y-m-d H:i:s') && $presentation->vigencia_cantidad_fecha == 'fecha'){
+            return true;
+        }
+        return false;
+    }
+
+    //funcion para saber si es el mismo registro con descuento
+    public function nuevoReg($saleDetail, $presentation){
+        if($saleDetail->descuento > 0 && $presentation->vigencia == 0 && $presentation->vigencia_cantidad_fecha == 'cantidad'){
+            return true;
+        }else if($saleDetail->descuento > 0 && $presentation->vigencia.'23:59:59' < date('Y-m-d H:i:s') && $presentation->vigencia_cantidad_fecha == 'fecha'){
+            return true;
+        }
+        return false;
+    }
+
 }

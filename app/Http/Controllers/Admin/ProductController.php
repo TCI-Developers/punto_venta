@@ -30,6 +30,8 @@ class ProductController extends Controller
         $presentations = PresentationProduct::where('status', 1)->get();
         $promotions = Promotion::where('status', 1)->get();
         $part_to_products = PartToProduct::where('product_id', (int)$product_id)->where('status', 1)->get();
+        $unidades_sat = UnidadSat::where('status', 1)->get();
+
         $arr_presentations = [];
         if(count($part_to_products)){
             foreach($part_to_products as $index => $item){
@@ -38,7 +40,8 @@ class ProductController extends Controller
         }
 
         return view('Admin.products.asignar_presentacion_desc_promo', ['product_id' => $product_id,'presentations' => $presentations, 
-                    'promotions' => $promotions, 'part_to_products' => $part_to_products, 'presentation_name' => $arr_presentations]);
+                    'promotions' => $promotions, 'part_to_products' => $part_to_products, 'presentation_name' => $arr_presentations,
+                    'unidades_sat' => $unidades_sat]);
     }
 
     //funcion para guardar la presentacion/devolucion/promociones asignadas al producto
@@ -89,7 +92,6 @@ class ProductController extends Controller
 
     //funcion guardar presentacion de productos
     public function storePresentationProduct(Request $request){
-
         $validatedData = $request->validate([
             'type' => 'required',
             'unidad_sat_id' => 'required',

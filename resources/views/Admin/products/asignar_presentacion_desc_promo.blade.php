@@ -92,6 +92,18 @@
             swal.fire('Actualización Cancelada.', '', 'success');
         }
 
+        //funcion para mostrar modal agregar presentacion
+        function selectPresentation(value){
+            if(value == 'new'){
+                $('#modal_presentations').modal('show');
+            }
+        }
+
+        //funcion para cerrar modal de cancelar
+        function cancelModal(){
+            $('.inputModal').val('');
+            $('#modal_presentations').modal('hide');
+        }
     </script>
 @stop
 
@@ -108,7 +120,7 @@
             <div class="row">
                 <h3 class="col-12 table-info">Presentaciones</h3>
                 <label for="presentation_type_id" class="col-lg-8 col-md-8 col-sm-12">Presentación* <br>
-                    <select id="presentation_type_id" name="presentation_type_id" class="form-control selectpicker inputModal" title="Selecciona una presentación">
+                    <select id="presentation_type_id" name="presentation_type_id" class="form-control selectpicker inputModal" title="Selecciona una presentación" onchange="selectPresentation(this.value)">
                         <option value="new" style="background-color:#32c4fed9;">- Crear presentación</option>
                         @forelse($presentations as $item)
                             <option value="{{$item->id}}">{{$item->type}}</option>
@@ -133,6 +145,7 @@
                 <h3 class="col-12 table-info">Promociones</h3>
                 <label for="promotion_id" class="col-lg-12 col-md-12 col-sm-12">Promociones <br> {{-- Revisar aqui como se guardara si es muchas a 1 o muchas a muchas --}}
                     <select id="promotion_id" class="form-control selectpicker inputModal" title="Selecciona un descuento">
+                        <option value=""></option>
                         @forelse($promotions as $item)
                             <option value="{{$item->id}}">{{$item->description}}</option>
                         @empty
@@ -189,6 +202,7 @@
                                     <th class="text-center">Precio</th>
                                     <th class="text-center">Stock</th>
                                     <th class="text-center">Descuento</th>
+                                    <th class="text-center">Stock/Vigencia Desc</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
@@ -205,13 +219,14 @@
                                                 N/A
                                             @endif
                                         </td>
+                                        <td class="text-center">{{$item->vigencia}}</td>
                                         <td class="text-center">
                                             <button type="button" class="btn btn-warning btn-sm" 
                                             onClick="update({{$item}})"><i class="fa fa-edit"></i></button>
                                         </td>
                                     </tr>
                                 @empty
-                                <tr><td colspan="4" class="table-warning text-center">Sin presentaciones.</td></tr>
+                                <tr><td colspan="6" class="table-warning text-center">Sin presentaciones.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -220,4 +235,5 @@
             </div>
        </div>
 </form>
+@include('Admin.products._modal_part')
 @stop

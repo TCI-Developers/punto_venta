@@ -65,7 +65,7 @@
                         <p>Promociones</p>
                     </a>
                 </li>
-                <li class="nav-item"> <!--Promociones -->
+                <li class="nav-item"> <!--Devoluciones -->
                     <a class="nav-link" href="{{route('devoluciones.index')}}">
                         <i class="fas fa-undo"></i>
                         <p>Devoluciones</p>
@@ -87,7 +87,7 @@
                         <p>Turnos</p>
                     </a>
                 </li>
-                <li class="nav-item"> <!-- Turnos -->
+                <li class="nav-item"> <!-- Roles -->
                     <a class="nav-link" href="{{route('roles.index', 1)}}">
                         <img src="{{asset('icons/turnos.svg')}}" alt="Icono de turnos" width="23">
                         <p>Roles</p>
@@ -100,7 +100,7 @@
                     </a>
                 </li>
                 @if(Auth::User()->hasAnyRole(['root','admin']))
-                <li class="nav-item"> <!-- Cortes de Caja -->
+                <li class="nav-item"> <!-- Sucursales -->
                     <a class="nav-link" href="{{route('branch.index')}}">
                         <img src="{{asset('icons/home.svg')}}" alt="Icono de close" width="23">
                         <p>Opciones Sucursal</p>

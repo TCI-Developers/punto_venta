@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Auth;
+use App\Models\{User, Product, Brand, Customer, PaymentMethod, UnidadSat, Role, Turno, UserRole, Box};
 
 class Controller extends BaseController
 {
@@ -83,5 +84,64 @@ class Controller extends BaseController
     public function sucursalUser(){
             $user = Auth::user();
             return $user && $user->branch_id ? true : false;
+    }
+
+    //funcion para obtener las marcas (linea productos)
+    function getBrands(){
+        $db = 'brer52xt3';
+        $query = '';
+        $clist = '3.6.7';
+        $response = $this->getQuickBase('brands');
+
+        $brand = new Brand();
+        $brand2 = $brand->setBrands($response);
+    }
+
+    //funcion para obtener todos los proudctos
+    function getProducts(){
+        $db = 'bqa4qy4jd';
+        $query = '{86.EX.0}AND{82.EX.0}';
+        $clist = '3.13.29.154.43.92.86.49.155.64.65.66.67.44.79.60';
+        $response = $this->getQuickBase('productos');
+        $product = new Product();
+        $product2 = $product->setProducs($response);
+    }
+
+    //funcion para obtener las metodos de pago
+    function getPaymentMethods(){
+        $db = 'bqgubmjca';
+        $query = '';
+        $clist = '3.6.7';
+        $response = $this->getQuickBase('payment_methods');
+        
+        $payment_method = new PaymentMethod();
+        $payment_method2 = $payment_method->setPaymentMethods($response);
+    }
+
+    //funcion para obtener las unidades de sat
+    function getUnidadesSat(){
+        $db = 'bqgt9zstu';
+        $query = '';
+        $clist = '3.6.7.8';
+        $response = $this->getQuickBase('unidades_sat');
+        $unidadSat = new UnidadSat();
+        $unidadSat2 = $unidadSat->setUnidades($response);
+    }
+
+    //funcion para saber si existe conexion a internet
+    function hasInternetConnection(): bool
+    {
+        try {
+            // Intentar conectarse a Google
+            $connected = @fsockopen("www.google.com", 80);
+            if ($connected) {
+                fclose($connected);
+                return true;
+            }
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        return false;
     }
 }

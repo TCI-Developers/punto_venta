@@ -78,7 +78,7 @@ Route::get('/branchs-show/{branch_id}', 'Admin\BranchController@show')->name('br
 Route::get('/branchs-destroy/{id}/{status?}', 'Admin\BranchController@destroy')->name('branchs.destroy');
 Route::get('/branchs-set-branch/{branch_id}', 'Admin\BranchController@setSucursalUser')->name('branchs.setSucursalUser');
 
-Route::get('/branch', 'Admin\BranchController@index')->name('branch.index');
+Route::get('/branch/{status?}', 'Admin\BranchController@index')->name('branch.index'); //vista listado de suscursales para usuario
 Route::post('/branch-store', 'Admin\BranchController@store')->name('branch.store');
 Route::get('/products-import/{branch_id}', 'Admin\BranchController@getProducts')->name('import.products'); //ruta para importar productos de quickbase y almacenar en la DB local
 // Route::get('/brands-import', 'Admin\UserController@getBrands'); //ruta para importar productos de quickbase y almacenar en la DB local

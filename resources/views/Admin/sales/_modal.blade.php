@@ -6,7 +6,7 @@
         <h5 class="modal-title" id="modal_cantLabel"><span id="titleSale">Agregar</span> Movimiento Almacen</h5>
       </div>
       <div class="modal-body col-12">
-          <label for="new_cant_prod" class="col-12 text-center">Cantidad
+          <label for="new_cant_prod" id="label_cant_prod" class="col-12 text-center">Cantidad
               <input type="number" class="form-control text-center" id="update_cant_prod" min="1">
               <input type="hidden" class="form-control text-center" id="update_sale_detail_id" >
           </label>

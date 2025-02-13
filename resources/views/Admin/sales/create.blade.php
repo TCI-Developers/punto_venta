@@ -39,6 +39,8 @@
                     $('.input_amounts').attr('disabled', false);
                 }
             });
+
+            btnOrEnableDisable();
         })
 
         //funcion para agregar precios del producto seleccionado
@@ -207,6 +209,8 @@
 
         //funcion boton de cobrar
         function cobrar(){
+            console.log('*');
+            
             $('#btnEnableEdit').fadeOut(function(){
                 $('#div_amounts').fadeIn();
                 $('#btnCancelSale').fadeIn();
@@ -219,9 +223,30 @@
                 $('#amount_received').val($('#total_sale').val()).attr('readonly', true);
                 getChange($('#total_sale').val());
             }
-            $('#btnAddMov').fadeOut();
+            // $('#btnAddMov').fadeOut();
             $('#btnCobro').fadeOut();
             $('input[name=status]').val('cobro');
+        }
+
+        //fucnion para deshabilitar botones editar y eliminar de la tabla
+        function btnOrEnableDisable(){
+            let grupos = {};
+            $("#tbody_details tr").each(function () {
+                let clase = $(this).attr("ident");
+                if (!grupos[clase]) {
+                    grupos[clase] = [];
+                }
+                grupos[clase].push($(this));
+            });
+            
+            $.each(grupos, function (clase, trs) {
+                let total = trs.length;       
+                if (total > 1) {
+                for (let i = 0; i < total-1; i++) {
+                        trs[i].find("button").prop("disabled", true);
+                    }
+                }
+            });
         }
     </script>
 
@@ -263,7 +288,7 @@
                 }
 
                 $('#tbody_details').append(`
-                <tr>
+                <tr class="text-center" ident="tr-${product[index]['code_product']}">
                     <td>${product[index]['code_product']}</td>
                     <td class="text-center">${val.cant}</td>
                     <td class="text-center">${unidad_sat[index]}</td>
@@ -299,6 +324,14 @@
             if(tipo == 'destroy'){
                 Swal.fire('Producto eliminado con exito.', '', 'success');
             }
+
+            btnOrEnableDisable();
+        });
+
+        //funcion para mostrar alerta de stock
+        window.addEventListener('alert', event => {   
+            swal.fire(event.detail[0].message, '', 'info');
+            // $('#label_cant_prod input').val('');
         });
 
         //funcion para modificar cantidad de productos registrados
@@ -350,6 +383,6 @@
 
 @section('content')
         @livewireStyles
-        @livewire('sales.sale', [$type, $id])
+        @livewire('sales.sale', [$type, $id]) 
         @livewireScripts
 @stop

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\{Price, Product as ProductModel, Brand};
+use Illuminate\Support\Facades\Auth;
 
 class Product extends Model
 {
@@ -12,7 +13,7 @@ class Product extends Model
     protected $table = 'products';
 
     //funcion para guardar todos los productos de quick en local
-    public function setProducs($products, $branch_id) {
+    public function setProducs($products) {
         if(count($products)){
             foreach($products as $item){
                 $product = ProductModel::find((int)$item->record_id_);
@@ -34,7 +35,7 @@ class Product extends Model
                     $product->activo = $item->baja == 0 ? 1:0;
                     $product->comments = $item->notas;
                     $product->brand_id = (int)$item->linea___record_id_;
-                    $product->branch_id = (int)$branch_id;
+                    $product->branch_id = (int)Auth::User()->branch_id;
                     $product->save();
                 
                     $con=1;

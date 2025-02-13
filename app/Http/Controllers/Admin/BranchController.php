@@ -112,7 +112,7 @@ class BranchController extends Controller
     }
 
     //funcion para obtener todos los proudctos
-    function getProducts($branch_id){
+    function getProducts2($branch_id){
         $response = $this->getQuickBase('brands');
         $brand = new Brand();
         $respuesta_brand = $brand->setBrands($response);
@@ -140,10 +140,15 @@ class BranchController extends Controller
             return redirect()->back()->with('error', 'No puedes cambiar de sucursal, hasta no cerrar sesión.');
         }
 
-        if(!$user->hasRole('root')){
-            $user_model = User::find($user->id);
-            $user_model->branch_id = $branch_id;
-            $user_model->save();
+        $user_model = User::find($user->id);
+        $user_model->branch_id = $branch_id;
+        $user_model->save();
+
+        if ($this->hasInternetConnection()) {
+            $this->getBrands();
+            $this->getProducts(); 
+            $this->getPaymentMethods();
+            $this->getUnidadesSat();
         }
 
         return redirect()->route('sale.index');

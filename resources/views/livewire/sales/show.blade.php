@@ -92,8 +92,8 @@
             </div> <br>
                 <!-- Si no se a cobrado, podemos agregar mas movimientos -->
                 @if((int)$sale->amount_received == 0) 
-                <button type="button" class="btn btn-info float-left" onClick="btnOpenModal()" id="btnAddMov">Agregar Movimiento Almacen</button>
-                <button type="button" class="btn btn-primary float-right" onClick="editSale()" id="btnEnableEdit">Habilitar Edición</button>
+                {{-- <button type="button" class="btn btn-info float-left" onClick="btnOpenModal()" id="btnAddMov">Agregar Movimiento Almacen</button>--}}
+                <button type="button" class="btn btn-primary float-right" onClick="editSale()" id="btnEnableEdit">Habilitar Edición</button> 
 
                 <button type="submit" class="btn btn-success float-right mr-2 displayNone" id="btnAcept">Aceptar</button> 
                 <button type="submit" class="btn btn-success float-right mr-5 displayNone" id="btnUpdateSale">Actualizar venta</button> 
