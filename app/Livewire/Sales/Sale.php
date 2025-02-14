@@ -150,17 +150,15 @@ class Sale extends Component
     public function scaner_codigo(){
         $presentation = PartToProduct::where('code_bar', $this->scan_presentation_id)->first();
         //     $test = $presentation->getPresentation->getPartToProduct($presentation->id, $this->scan_presentation_id);
-
         $this->scan_presentation_id = '';
         if(is_object($presentation)){
                 $product = $presentation->getProducto($presentation->product_id);
-
                 $this->saveDetail($presentation, $product, 'scan');
-                
                 $data = $this->getDataSales();
-               
+
                 $this->dispatch('scan', ['product' => $data['product_detail'], 'persentation' => $data['presentation_detail'], 
-                                        'sales_detail' => $this->sales_detail, 'unidad_sat' => $data['unidad_sat']]);
+                                        'sales_detail' => $this->sales_detail, 'unidad_sat' => $data['unidad_sat'],
+                                        'promotions' => $data['promotions']]);
         }else{
             $this->dispatch('scan', ['error' => true]);
         }
@@ -172,47 +170,67 @@ class Sale extends Component
                             ->where('part_to_product_id', $presentation->id)
                             ->where('unit_price', $presentation->price)->get();
 
-        if(count($sale_detail_con)){
-            $index = count($sale_detail_con)-1; //obtenemos la ultima poscición del array
-           
-            if($sale_detail_con[$index]->mismoRegDescuento($sale_detail_con[$index], $presentation)){ //mismo registro con descuento
-                $this->addProduct($sale_detail_con[$index], $presentation, $product);
-            }else if($sale_detail_con[$index]->mismoSinRegDescuento($sale_detail_con[$index], $presentation)){ //mismo registro sin descuento
-                $this->addProduct($sale_detail_con[$index], $presentation, $product);
-            }else if($sale_detail_con[$index]->nuevoReg($sale_detail_con[$index], $presentation)){ // nuevo registro
-                $this->saveDetailFunc($product, $presentation);
-            }
-            
-            if($type == 'scan'){
-                $this->descStock($presentation);
-            }
-        }else{
-            $this->saveDetailFunc($product, $presentation);
+        $index = count($sale_detail_con)-1; //obtenemos la ultima poscición del array           
+        $this->addProduct($sale_detail_con[$index] ?? null, $presentation, $product);
+
+        if($type == 'scan'){
+            $this->descStock($presentation);
         }
     }
 
     //funcion para actualizar registro si ya existe con el mismo precio
     function addProduct($sale_detail_con, $presentation, $product){
-        $item = $sale_detail_con;
-        $cant = $item->cant+1; //cantidad de productos
-        $amount = $item->unit_price * $cant;
-        $subtotal = $amount;
-        $data = $this->calculoDatos($item, $product, $cant);
+        if($sale_detail_con == null){
+            $subtotal = $presentation->price;
+            $iva = $product->taxes == 'IVA' ? ($presentation->price * $product->amount_taxes):0;
+            $ieps = $product->taxes == 'IE3' ? ($presentation->price * $product->amount_taxes):0;
+            $total = ($subtotal + $iva + $ieps);
+            $cant = 1;
+            $sale_detail = new SaleDetail();
+            $sale_detail->part_to_product_id = $presentation->id;
+            $sale_detail->sale_id = $this->id;
+            $sale_detail->unit_price = $presentation->price;
 
-        $descuento = $this->descuentos($presentation);
+            $descuento = $this->descuentos($presentation);
+        }else{
+            $item = $sale_detail_con;
+            $cant = $item->cant+1; //cantidad de productos
+            $amount = $item->unit_price * $cant;
+            $subtotal = $amount;
 
-        $sale_detail_update = SaleDetail::find($item->id);
-        $sale_detail_update->cant = $cant;
-        $sale_detail_update->amount = $data['amount'];
-        $sale_detail_update->iva = $data['iva'];
-        $sale_detail_update->ieps = $data['ieps'];
-        $sale_detail_update->subtotal = $subtotal;
-        if($descuento){
-            $descuento *= $cant;
-            $sale_detail_update->descuento = $descuento;
+            $promotion = $presentation->getPromotion;
+            $promo_ban = false;
+            if($presentation->promotion_id){
+                if($promotion->vigencia_cantidad != null || $promotion->vigencia_cantidad > 0 || $promotion->vigencia_fecha.'23:59:59' >= date('Y-m-d H:i:s')){
+                    $data = $this->calculoDatosPromo($sale_detail_con, $presentation->getPromotion, $cant, $item, $product);
+                }else{
+                    $promo_ban = true;
+                }              
+            }
+
+            if(!isset($promotion) || $presentation->promotion_id == null || $promo_ban){
+                $data = $this->calculoDatos($item, $product, $cant);
+                $descuento = $this->descuentos($presentation);
+            }
+
+            $sale_detail = SaleDetail::find($item->id);
         }
-        $sale_detail_update->total = $data['total'];
-        $sale_detail_update->save();
+
+        $sale_detail->cant = $cant;
+        $sale_detail->amount = $data['amount'] ?? $subtotal;
+        $sale_detail->iva = $data['iva'] ?? $iva;
+        $sale_detail->ieps = $data['ieps'] ?? $ieps;
+        $sale_detail->subtotal = $subtotal;
+        if(isset($descuento) && $descuento){
+            if($presentation->promotion_id){
+
+            }
+            $descuento *= $cant;
+            $sale_detail->descuento = $descuento;
+        }
+
+        $sale_detail->total = $data['total'] ?? $total;
+        $sale_detail->save();
     }
 
     //funcion para agregar manual la cantidad de productos
@@ -249,7 +267,6 @@ class Sale extends Component
                 $this->dispatch('alert', ['message' => 'Stock insuficiente.']);
         }else{
             $cant_detail = $cant - $sale_detail->cant;
-            // dd($cant, $sale_detail->cant, $cant_detail);
             $product = $presentation->getProducto($presentation->product_id);
             for($i = 0; $i < $cant_detail; $i++){
                 $presentation = $sale_detail->getPartToProductId($sale_detail->part_to_product_id);
@@ -258,7 +275,8 @@ class Sale extends Component
                 $data = $this->getDataSales();
                 
                 $this->dispatch('scan', ['product' => $data['product_detail'], 'persentation' => $data['presentation_detail'], 
-                                    'sales_detail' => $this->sales_detail, 'unidad_sat' => $data['unidad_sat']]);
+                                    'sales_detail' => $this->sales_detail, 'unidad_sat' => $data['unidad_sat'],
+                                    'promotions' => $data['promotions']]);
             }
         }
     }
@@ -269,6 +287,23 @@ class Sale extends Component
         $data['iva'] = $sale_detail->iva == 0 ? 0:($sale_detail->unit_price * $product->amount_taxes);
         $data['ieps'] = $sale_detail->ieps == 0 ? 0:($sale_detail->unit_price * $product->amount_taxes);
         $data['total'] = $total = ($data['amount'] + $data['iva'] + $data['ieps']);
+
+        return $data;
+    }
+
+    //funcion para calculo con promocion
+    function calculoDatosPromo($sale_detail, $promotion, $cant, $item, $product){
+        $modulo_cantidad = $cant%$promotion->cantidad_producto; //obtenemos la cantidad sin de la promocion
+        if($modulo_cantidad > 0){
+            $data = $this->calculoDatos($item, $product, $modulo_cantidad);
+        }
+        $new_cant = (int)($cant/$promotion->cantidad_producto); //obtenemos la cantidad de productos con promo
+        $new_data = $this->calculoDatos($item, $product, $new_cant);
+
+        $data['amount'] = ($data['amount'] ?? 0) + $new_data['amount']; 
+        $data['iva'] = ($data['iva'] ?? 0) + $new_data['iva']; 
+        $data['ieps'] = ($data['ieps'] ?? 0) + $new_data['ieps']; 
+        $data['total'] = ($data['total'] ?? 0) + $new_data['total']; 
 
         return $data;
     }
@@ -284,6 +319,7 @@ class Sale extends Component
                 $getPartToProductId = $item->getPartToProductId($item->part_to_product_id);
 
                 $data['presentation_aux'] = $getPartToProductId->getPresentation->getUnidadSat;
+                $data['promotions'] = $getPartToProductId->getPromotion;
                 $data['presentation_detail'][] = $getPartToProductId;
                 $data['product_detail'][] = $item->getProductId($getPartToProductId->product_id);
                 $data['descuentos'][] = $item->descuentos;
@@ -296,6 +332,7 @@ class Sale extends Component
                 }
             }
         }
+
         return $data;
     } 
 
@@ -387,5 +424,10 @@ class Sale extends Component
             $sale_detail->notes = $sale_detail->notes.' *Presentación de producto sin existencia: '.$code;
             $sale_detail->save();
         }
+    }
+
+    //funcion para aplicar la promocion
+    function promos($presentation){
+
     }
 }

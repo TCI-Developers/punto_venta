@@ -208,9 +208,7 @@
         }
 
         //funcion boton de cobrar
-        function cobrar(){
-            console.log('*');
-            
+        function cobrar(){            
             $('#btnEnableEdit').fadeOut(function(){
                 $('#div_amounts').fadeIn();
                 $('#btnCancelSale').fadeIn();
@@ -255,10 +253,14 @@
             let sale_detail = event.detail[0].sales_detail;
             let product = event.detail[0].product;
             let presentation = event.detail[0].persentation;
+            let promotions = event.detail[0].promotions;
             let unidad_sat = event.detail[0].unidad_sat;
             let tipo = event.detail[0].tipo;
             let total = 0.00;
             let descuento = 0.00;
+
+            console.log('promos', promotions);
+            
 
             if(presentation.length > 0 && presentation[presentation.length - 1].stock < 0){
                 swal.fire('Sin existencias en sistema.', '', 'info');

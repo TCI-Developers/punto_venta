@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use App\Models\{Role, Customer};
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,11 +14,27 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
+        // Crear el rol
+        $role = Role::create([
+            'name' => 'root',
+            'description' => 'acceso maestro',
+            'status' => 1,
+        ]);
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // Asignar el rol al usuario en la tabla users_role
+        DB::table('role_user')->insert([
+            'user_id' => 1,
+            'role_id' => $role->id,
+        ]);
+
+        // Crear el cliente
+        $role = Customer::create([
+            'name' => 'PUBLICO EN GENERAL',
+            'razon_social' => '',
+            'rfc' => '',
+            'postal_code' => '',
+            'regimen_fiscal' => '',
+            'status' => 1,
+        ]);
     }
 }

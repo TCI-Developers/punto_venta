@@ -14,9 +14,7 @@
     @include('components.use.notification_success_error')
     <script>
         //funcion para asignar valores a los inputs
-        function update(product){
-            // console.log('*', product);
-            
+        function update(product){            
             swal.fire('Actualización habilitada.', '', 'success');
             $('input[name=part_product_id]').val(product.id);
 
@@ -49,6 +47,8 @@
                         $('#vigencia_cantidad').fadeIn();
                     });
             }
+            //Promocion
+            $('#promotion_id').val(product.promotion_id).selectpicker('refresh');
         }
 
         //funcion para validar campos de descuento
@@ -144,7 +144,7 @@
             <div class="row">
                 <h3 class="col-12 table-info">Promociones</h3>
                 <label for="promotion_id" class="col-lg-12 col-md-12 col-sm-12">Promociones <br> {{-- Revisar aqui como se guardara si es muchas a 1 o muchas a muchas --}}
-                    <select id="promotion_id" class="form-control selectpicker inputModal" title="Selecciona un descuento">
+                    <select id="promotion_id" name="promotion_id" class="form-control selectpicker inputModal" title="Selecciona un descuento">
                         <option value=""></option>
                         @forelse($promotions as $item)
                             <option value="{{$item->id}}">{{$item->description}}</option>

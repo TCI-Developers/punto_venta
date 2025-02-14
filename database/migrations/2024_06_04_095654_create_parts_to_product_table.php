@@ -25,9 +25,11 @@ return new class extends Migration
             $table->string('vigencia')->nullable();
 
             $table->unsignedBigInteger('presentation_product_id');
+            $table->unsignedBigInteger('promotion_id')->nullable();
             $table->boolean('status')->default(1);
             $table->foreign('product_id')->references('id')->on('products');
             $table->foreign('presentation_product_id')->references('id')->on('presentations_product');
+            $table->foreign('promotion_id')->references('id')->on('promotions');
             $table->timestamps();
         });
     }

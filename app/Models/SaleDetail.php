@@ -39,14 +39,6 @@ class SaleDetail extends Model
         return null;
     }
 
-    //funcion para saber si tiene descuento
-    public function hasDescuento(){
-        // $sale_detail_con = $this::where('sale_id', $this->id)
-        //                     ->where('part_to_product_id', $presentation->id)
-        //                     ->where('unit_price', $presentation->price)->get();
-        
-    }
-
     //funcion para saber si es el mismo registro con descuento
     public function mismoRegDescuento($saleDetail, $presentation){
         if($saleDetail->descuento > 0 && $presentation->vigencia > 0 && $presentation->vigencia_cantidad_fecha == 'cantidad'){
@@ -67,7 +59,7 @@ class SaleDetail extends Model
         return false;
     }
 
-    //funcion para saber si es el mismo registro con descuento
+    //funcion para saber si es el mismo registro con descuento pero ya no hay stock de descuento
     public function nuevoReg($saleDetail, $presentation){
         if($saleDetail->descuento > 0 && $presentation->vigencia == 0 && $presentation->vigencia_cantidad_fecha == 'cantidad'){
             return true;

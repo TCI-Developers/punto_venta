@@ -21,6 +21,11 @@ class PartToProduct extends Model
         return $this->hasOne('App\Models\Product', 'id', 'product_id');
     }
 
+    //obtenemos la promocion
+    public function getPromotion(){
+        return $this->hasOne('App\Models\Promotion', 'id', 'promotion_id');
+    }
+
     //obtenemos el producto
     public function getProducto($product_id){
         $product = Product::find($product_id);

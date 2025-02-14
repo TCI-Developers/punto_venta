@@ -65,6 +65,7 @@ class ProductController extends Controller
             }
 
             $presentation->presentation_product_id = (int)$request->presentation_type_id;
+            $presentation->promotion_id = (int)$request->promotion_id;
             $presentation->price = $request->price;
             $presentation->code_bar = $request->code_bar;
             $presentation->stock = $request->stock;

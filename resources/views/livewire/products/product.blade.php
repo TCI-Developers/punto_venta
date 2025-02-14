@@ -37,9 +37,9 @@
                         <td class="text-center">{{number_format($item->existence,2)}}</td>
                         @if(Auth::User()->hasAnyRole(['root', 'admin']))
                         <td class="text-center">
-                            <button type="button" class="btn btn-info btn-sm" onClick="modalAddPresentation({{$item->id}})">
+                            {{--<button type="button" class="btn btn-info btn-sm" onClick="modalAddPresentation({{$item->id}})">
                                 <img src="{{asset('icons/list.svg')}}" alt="icon list">
-                            </button>
+                            </button> --}}
                             <a href="{{route('product.create', $item->id)}}" class="btn btn-info btn-sm"><i class="fa fa-list"></i></a>
                         </td>
                         @endif

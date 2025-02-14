@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('promotions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('branch_id');
+            $table->string('description')->nullable();
             $table->double('cantidad_producto'); //3 productos
             $table->double('cantidad_productos_a_pagar'); //paga solo 2
             $table->double('vigencia_cantidad')->nullable(); //limite de productos para vender

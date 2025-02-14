@@ -35,6 +35,7 @@ class PromotionController extends Controller
         //hace falta validar algun campo vacio
         $promotion = new Promotion();
         $promotion->branch_id = $request->branch_id;
+        $promotion->description = $request->description;
         $promotion->cantidad_producto = $request->cantidad_producto;
         $promotion->cantidad_productos_a_pagar = $request->cantidad_productos_a_pagar;
         $promotion->vigencia_cantidad = $request->vigencia_cantidad;
