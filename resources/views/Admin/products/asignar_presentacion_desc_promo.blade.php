@@ -140,10 +140,10 @@
             </div>
             </div>
             <!-- Promociones -->
-            <div class="card card-body">
+            {{-- <div class="card card-body">
             <div class="row">
                 <h3 class="col-12 table-info">Promociones</h3>
-                <label for="promotion_id" class="col-lg-12 col-md-12 col-sm-12">Promociones <br> {{-- Revisar aqui como se guardara si es muchas a 1 o muchas a muchas --}}
+                <label for="promotion_id" class="col-lg-12 col-md-12 col-sm-12">Promociones <br>
                     <select id="promotion_id" name="promotion_id" class="form-control selectpicker inputModal" title="Selecciona un descuento">
                         <option value=""></option>
                         @forelse($promotions as $item)
@@ -153,7 +153,7 @@
                     </select>
                 </label>
             </div>
-            </div>
+            </div> --}}
             <!-- Descuentos -->
             <div class="card card-body">
             <div class="row">

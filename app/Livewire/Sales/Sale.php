@@ -5,7 +5,7 @@ namespace App\Livewire\Sales;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\{Sale as SaleModel, Customer, PaymentMethod, Product, Price, SaleDetail, PartToProduct, UnidadSat, Devolucion};
-use Illuminate\Support\Facades\{Auth};
+use Illuminate\Support\Facades\{Auth, Log};
 use Livewire\Attributes\Validate;
 
 class Sale extends Component
@@ -148,6 +148,8 @@ class Sale extends Component
 
     //funcion para obtener datos con scaner
     public function scaner_codigo(){
+        Log::error('Este es un error de prueba');
+
         $presentation = PartToProduct::where('code_bar', $this->scan_presentation_id)->first();
         //     $test = $presentation->getPresentation->getPartToProduct($presentation->id, $this->scan_presentation_id);
         $this->scan_presentation_id = '';
@@ -222,11 +224,8 @@ class Sale extends Component
         $sale_detail->ieps = $data['ieps'] ?? $ieps;
         $sale_detail->subtotal = $subtotal;
         if(isset($descuento) && $descuento){
-            if($presentation->promotion_id){
-
-            }
             $descuento *= $cant;
-            $sale_detail->descuento = $descuento;
+            $sale_detail->descuento = $descuento;    
         }
 
         $sale_detail->total = $data['total'] ?? $total;
@@ -270,6 +269,7 @@ class Sale extends Component
             $product = $presentation->getProducto($presentation->product_id);
             for($i = 0; $i < $cant_detail; $i++){
                 $presentation = $sale_detail->getPartToProductId($sale_detail->part_to_product_id);
+
                 $this->saveDetail($presentation, $product, 'manual');
                 !$desc_stock ? $this->descStock($presentation):'';
                 $data = $this->getDataSales();
@@ -293,12 +293,15 @@ class Sale extends Component
 
     //funcion para calculo con promocion
     function calculoDatosPromo($sale_detail, $promotion, $cant, $item, $product){
-        $modulo_cantidad = $cant%$promotion->cantidad_producto; //obtenemos la cantidad sin de la promocion
+        $modulo_cantidad = ($cant%$promotion->cantidad_producto); //obtenemos la cantidad sin de la promocion
+
         if($modulo_cantidad > 0){
-            $data = $this->calculoDatos($item, $product, $modulo_cantidad);
+            $data = $this->calculoDatos($item, $product, $modulo_cantidad);   
         }
         $new_cant = (int)($cant/$promotion->cantidad_producto); //obtenemos la cantidad de productos con promo
         $new_data = $this->calculoDatos($item, $product, $new_cant);
+
+        $data['modulo_cantidad'] = $modulo_cantidad; //con esto sabemos si hay sobrantes aparte de la promo
 
         $data['amount'] = ($data['amount'] ?? 0) + $new_data['amount']; 
         $data['iva'] = ($data['iva'] ?? 0) + $new_data['iva']; 

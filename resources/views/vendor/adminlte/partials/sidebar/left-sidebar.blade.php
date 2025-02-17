@@ -58,13 +58,14 @@
                 </li>
                 @endif
 
+                <!--Habilitar Promociones despues de las validaciones en ventas-->
                 @if(Auth::User()->hasAnyRole(['root','admin']))
-                <li class="nav-item"> <!--Promociones -->
+                {{--<li class="nav-item"> 
                     <a class="nav-link" href="{{route('promos.index', 1)}}">
                         <i class="fa fa-money-bill"></i>
                         <p>Promociones</p>
                     </a>
-                </li>
+                </li> --}}
                 <li class="nav-item"> <!--Devoluciones -->
                     <a class="nav-link" href="{{route('devoluciones.index')}}">
                         <i class="fas fa-undo"></i>

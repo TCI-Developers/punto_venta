@@ -1,0 +1,56 @@
+directories:
+  output: /var/www/html/dist
+  buildResources: build
+appId: com.nativephp.app
+productName: Laravel
+files:
+  - filter:
+      - '!**/.vscode/*'
+      - '!src/*'
+      - '!electron.vite.config.{js,ts,mjs,cjs}'
+      - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+      - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+asarUnpack:
+  - resources/**
+afterSign: build/notarize.js
+win:
+  executableName: laravel
+nsis:
+  artifactName: Laravel-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+protocols:
+  name: ''
+  schemes:
+    - ''
+mac:
+  entitlementsInherit: build/entitlements.mac.plist
+  artifactName: Laravel-${version}-${arch}.${ext}
+  extendInfo:
+    NSCameraUsageDescription: Application requests access to the device's camera.
+    NSMicrophoneUsageDescription: Application requests access to the device's microphone.
+    NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
+    NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+dmg:
+  artifactName: Laravel-${version}-${arch}.${ext}
+linux:
+  target:
+    - AppImage
+    - deb
+  maintainer: http://localhost
+  category: Utility
+appImage:
+  artifactName: Laravel-${version}.${ext}
+npmRebuild: false
+publish:
+  provider: spaces
+  name: ''
+  region: ''
+  path: null
+extraMetadata:
+  name: laravel
+  homepage: http://localhost
+  version: 1.0.0
+  author: ''
+electronVersion: 31.7.7
