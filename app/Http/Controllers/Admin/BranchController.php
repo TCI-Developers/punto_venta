@@ -142,13 +142,13 @@ class BranchController extends Controller
 
         $user_model = User::find($user->id);
         $user_model->branch_id = $branch_id;
-        $user_model->save();
+        $user_model->save(); 
 
         if ($this->hasInternetConnection()) {
             $this->getBrands();
-            $this->getProducts(); 
             $this->getPaymentMethods();
             $this->getUnidadesSat();
+            $this->getProducts(); 
         }
 
         return redirect()->route('sale.index');

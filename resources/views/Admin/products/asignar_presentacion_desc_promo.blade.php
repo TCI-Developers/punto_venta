@@ -74,7 +74,7 @@
         function validateCantidadDescuento(cant){
             let stock = $('#stock').val() ?? 0;
             
-            if(stock < cant){
+            if(parseInt(stock) < parseInt(cant)){
                 swal.fire('No tienes suficiente stock disponible.', '', 'info');
                 $('#vigencia_cantidad').val('');
             }

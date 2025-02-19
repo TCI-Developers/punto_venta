@@ -4,7 +4,7 @@ namespace App\Livewire\Sales;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\{Sale as SaleModel, Customer, PaymentMethod, Product, Price, SaleDetail, SaleDetailCant, PartToProduct, UnidadSat, Devolucion};
+use App\Models\{Sale as SaleModel, Customer, PaymentMethod, Product, Price, SaleDetail, PartToProduct, UnidadSat, Devolucion};
 use Illuminate\Support\Facades\{Auth, Log};
 use Livewire\Attributes\Validate;
 
@@ -148,8 +148,10 @@ class Sale extends Component
 
     //funcion para obtener datos con scaner
     public function scaner_codigo(){
-        $presentation = PartToProduct::where('code_bar', $this->scan_presentation_id)->first();
+        Log::error('Este es un error de prueba');
 
+        $presentation = PartToProduct::where('code_bar', $this->scan_presentation_id)->first();
+        //     $test = $presentation->getPresentation->getPartToProduct($presentation->id, $this->scan_presentation_id);
         $this->scan_presentation_id = '';
         if(is_object($presentation)){
                 $product = $presentation->getProducto($presentation->product_id);
@@ -186,12 +188,12 @@ class Sale extends Component
             $ieps = $product->taxes == 'IE3' ? ($presentation->price * $product->amount_taxes):0;
             $total = ($subtotal + $iva + $ieps);
             $cant = 1;
-
-            $sale_detail = new SaleDetail(); //guardamos el detalle de venta
+            $sale_detail = new SaleDetail();
             $sale_detail->part_to_product_id = $presentation->id;
             $sale_detail->sale_id = $this->id;
             $sale_detail->unit_price = $presentation->price;
 
+            $descuento = $this->descuentos($presentation);
         }else{
             $item = $sale_detail_con;
             $cant = $item->cant+1; //cantidad de productos
@@ -216,30 +218,18 @@ class Sale extends Component
             $sale_detail = SaleDetail::find($item->id);
         }
 
+        $sale_detail->cant = $cant;
         $sale_detail->amount = $data['amount'] ?? $subtotal;
         $sale_detail->iva = $data['iva'] ?? $iva;
         $sale_detail->ieps = $data['ieps'] ?? $ieps;
         $sale_detail->subtotal = $subtotal;
+        if(isset($descuento) && $descuento){
+            $descuento *= $cant;
+            $sale_detail->descuento = $descuento;    
+        }
 
         $sale_detail->total = $data['total'] ?? $total;
         $sale_detail->save();
-
-        $descuento = $this->descuentos($presentation, $sale_detail);
-
-        if(isset($descuento) && $descuento){
-            $detail_cant_aux = SaleDetailCant::where('sale_detail_id', $sale_detail->id)
-                                            ->where('part_to_product_id', $sale_detail->part_to_product_id)->first();
-
-            if(!is_object($detail_cant_aux)){
-                $detail_cant = new SaleDetailCant();
-                $detail_cant->sale_detail_id = $sale_detail->id;
-                $detail_cant->part_to_product_id = $sale_detail->part_to_product_id;
-            }
-            
-            $detail_cant->cant = $cant;
-            $detail_cant->descuento = $descuento;
-            $detail_cant->save(); 
-        }
     }
 
     //funcion para agregar manual la cantidad de productos
@@ -352,21 +342,17 @@ class Sale extends Component
     //funcion para eliminar un producto ya agregado en la venta
     public function destroyProduct($sale_detail_id){
         $sale_detail = SaleDetail::find($sale_detail_id);
-        $sale_detail_cant = SaleDetailCant::where('sale_detail_id', $sale_detail_id)
-                            ->where('part_to_product_id', $sale_detail->part_to_product_id)->first();
         
-        if(is_object($sale_detail) && is_object($sale_detail_cant)){
+        if(is_object($sale_detail)){
             $presentation = PartToProduct::find($sale_detail->part_to_product_id);
-
             if(is_object($presentation)){
-                    $presentation->stock = $presentation->stock + $sale_detail_cant->cant;
-                    if($presentation->vigencia_cantidad_fecha == 'cantidad' && (int)$sale_detail_cant->descuento > 0){
-                        $presentation->vigencia = $presentation->vigencia + $sale_detail_cant->cant;
+                    $presentation->stock = $presentation->stock + $sale_detail->cant;
+                    if($presentation->vigencia_cantidad_fecha == 'cantidad' && (int)$sale_detail->descuento > 0){
+                        $presentation->vigencia = $presentation->vigencia + $sale_detail->cant;
                     }
                     $presentation->save();
             }
 
-            $sale_detail_cant->delete();
             $sale_detail->delete();
 
             $data = $this->getDataSales();
@@ -399,28 +385,23 @@ class Sale extends Component
     }
 
     //funcion para aplicar descuentos
-    function descuentos($presentation, $sale_detail){
-        if($presentation->tipo_descuento == 'monto' || $presentation->tipo_descuento == 'porcentaje'){
-            $presentation = PartToProduct::find($presentation->id);
+    function descuentos($data){
+        if($data->tipo_descuento == 'monto' || $data->tipo_descuento == 'porcentaje'){
+            $presentation = PartToProduct::find($data->id);
             if(is_object($presentation)){
                 $descuento = null;
-
-                // $detail_cant_aux = SaleDetailCant::where('sale_detail_id', $sale_detail->id)
-                //                             ->where('part_to_product_id', $sale_detail->part_to_product_id)->first();
-
-                if($presentation->vigencia_cantidad_fecha == 'cantidad' && $presentation->vigencia > 0){
+                if($data->vigencia_cantidad_fecha == 'cantidad' && $presentation->vigencia > 0){
                     $presentation->vigencia = $presentation->vigencia - 1;
-
-                    if($presentation->tipo_descuento == 'porcentaje'){
-                        $descuento = ($presentation->monto_porcentaje/100) * $presentation->price;
+                    if($data->tipo_descuento == 'porcentaje'){
+                        $descuento = ($data->monto_porcentaje/100) * $data->price;
                     }else{
-                        $descuento = $presentation->monto_porcentaje;
+                        $descuento = $data->monto_porcentaje;
                     }
-                }else if($presentation->vigencia_cantidad_fecha == 'fecha' && $presentation->vigencia.' 23:59:59' >= date('Y-m-d H:i:s')){
-                    if($presentation->tipo_descuento == 'porcentaje'){
-                        $descuento = ($presentation->monto_porcentaje/100) * $presentation->price;
+                }else if($data->vigencia_cantidad_fecha == 'fecha' && $presentation->vigencia.' 23:59:59' >= date('Y-m-d H:i:s')){
+                    if($data->tipo_descuento == 'porcentaje'){
+                        $descuento = ($data->monto_porcentaje/100) * $data->price;
                     }else{
-                        $descuento = $presentation->monto_porcentaje;
+                        $descuento = $data->monto_porcentaje;
                     }
                 }
 

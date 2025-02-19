@@ -63,9 +63,12 @@ class ProductController extends Controller
                 $presentation->vigencia_cantidad_fecha = $request->vigencia_cantidad_fecha;
                 $presentation->vigencia = $request->vigencia_cantidad_fecha == 'fecha' ? $request->vigencia_fecha:$request->vigencia;
             }
+            
+            if(isset($request->promotion_id)){
+                $presentation->promotion_id = (int)$request->promotion_id ?? null;
+            }
 
             $presentation->presentation_product_id = (int)$request->presentation_type_id;
-            $presentation->promotion_id = (int)$request->promotion_id;
             $presentation->price = $request->price;
             $presentation->code_bar = $request->code_bar;
             $presentation->stock = $request->stock;

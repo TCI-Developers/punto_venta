@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\PartToProduct;
+use App\Models\{PartToProduct, SaleDetailCant};
 
 class SaleDetail extends Model
 {
@@ -28,6 +28,21 @@ class SaleDetail extends Model
     //Funcion para obtener producto
     public function product(){
         return $this->belongsTo('App\Models\Product');
+    }
+
+    //funcion para obtener las cantidades de los detalles de venta
+    public function getCantDetails($sale_detail_id, $part_to_product_id){
+        $cant_details = SaleDetailCant::where('sale_detail_cant', $sale_detail_id)
+                                        ->where('part_to_product_id', $part_to_product_id)->get();
+        $data = [];                     
+        if(count($cant_details)){
+            foreach($cant_details as $item){
+                $data['cant'] += $item->cant;
+                $data['descuento'] += $item->descuento ?? 0;
+            }
+        }
+
+        return $data;
     }
 
     //Funcion para obtener producto
