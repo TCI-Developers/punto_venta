@@ -16,6 +16,11 @@ class SaleDetail extends Model
         return $this->hasOne('App\Models\PartToProduct', 'id', 'part_to_product_id');
     }
 
+    //Funcion para obtener sales_detail_cant
+    public function getCantSalesDetail(){
+        return $this->hasMany('App\Models\SaleDetailCant', 'sale_detail_id', 'id');
+    }
+
     //Funcion para obtener producto por presentacion
     public function getPartToProductId($id){
         $part_to_product = PartToProduct::find($id);
@@ -28,21 +33,6 @@ class SaleDetail extends Model
     //Funcion para obtener producto
     public function product(){
         return $this->belongsTo('App\Models\Product');
-    }
-
-    //funcion para obtener las cantidades de los detalles de venta
-    public function getCantDetails($sale_detail_id, $part_to_product_id){
-        $cant_details = SaleDetailCant::where('sale_detail_cant', $sale_detail_id)
-                                        ->where('part_to_product_id', $part_to_product_id)->get();
-        $data = [];                     
-        if(count($cant_details)){
-            foreach($cant_details as $item){
-                $data['cant'] += $item->cant;
-                $data['descuento'] += $item->descuento ?? 0;
-            }
-        }
-
-        return $data;
     }
 
     //Funcion para obtener producto
@@ -76,12 +66,68 @@ class SaleDetail extends Model
 
     //funcion para saber si es el mismo registro con descuento pero ya no hay stock de descuento
     public function nuevoReg($saleDetail, $presentation){
-        if($saleDetail->descuento > 0 && $presentation->vigencia == 0 && $presentation->vigencia_cantidad_fecha == 'cantidad'){
+        if((float)$saleDetail->descuento > 0 && $presentation->vigencia == 0 && $presentation->vigencia_cantidad_fecha == 'cantidad'){
             return true;
-        }else if($saleDetail->descuento > 0 && $presentation->vigencia.'23:59:59' < date('Y-m-d H:i:s') && $presentation->vigencia_cantidad_fecha == 'fecha'){
+        }else if((float)$saleDetail->descuento > 0 && $presentation->vigencia.'23:59:59' < date('Y-m-d H:i:s') && $presentation->vigencia_cantidad_fecha == 'fecha'){
             return true;
         }
         return false;
+    }
+
+    //funcion para guardar cantidades y descuentos de los detalles de venta validando si ya existe alguno
+    function saveCantDetails($sale_detail_id, $part_to_product_id, $descuento){
+        $cant_details = SaleDetailCant::where('sale_detail_id', $sale_detail_id)
+                                        ->where('part_to_product_id', $part_to_product_id)->get();
+           
+        if(count($cant_details)){
+            $ban = false;
+            $descuento = $descuento == null ? 0.0:$descuento;
+            foreach($cant_details as $index => $item){
+
+                if((float)$item->descuento === $descuento){
+                    $cant_detail = SaleDetailCant::find($item->id);
+                    $cant_detail->cant += 1;
+                    $cant_detail->descuento = $descuento;
+                    $cant_detail->total_descuento = $cant_detail->cant * $descuento;
+                    $cant_detail->save();
+
+                    $ban = true;
+                    break;
+                }
+            }
+
+            if($ban == false){
+                $this->saveNewCantDetails($sale_detail_id, $part_to_product_id);
+            }
+
+            return $cant_details ?? null;
+        }
+    }
+
+    //funcion para guardar cantidades y descuentos de los detalles de venta
+    function saveNewCantDetails($sale_detail_id, $part_to_product_id){
+        $detail_cant = new SaleDetailCant();
+        $detail_cant->sale_detail_id = $sale_detail_id;
+        $detail_cant->part_to_product_id = $part_to_product_id;
+        $detail_cant->cant = 1;
+        $detail_cant->descuento = 0;
+        $detail_cant->save();
+
+        return $detail_cant;
+    }
+
+    //funcion para obtener las cantidades de los detalles de venta
+    function getCantDetails($sale_detail_id, $part_to_product_id){
+        $cant_details = SaleDetailCant::where('sale_detail_id', $sale_detail_id)
+                                        ->where('part_to_product_id', $part_to_product_id)->get();
+        $cant = 0;
+        if(count($cant_details)){
+            foreach($cant_details as $index => $item){
+                $cant += $item->cant;
+            }
+        }
+
+        return $cant;
     }
 
 }

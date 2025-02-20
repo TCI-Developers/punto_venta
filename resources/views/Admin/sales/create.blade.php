@@ -251,6 +251,7 @@
     <script>
         window.addEventListener('scan', event => {           
             let sale_detail = event.detail[0].sales_detail;
+            let cant_sales_detail = event.detail[0].cant_sales_detail;
             let product = event.detail[0].product;
             let presentation = event.detail[0].persentation;
             let promotions = event.detail[0].promotions;
@@ -259,8 +260,7 @@
             let total = 0.00;
             let descuento = 0.00;
 
-            console.log('promos', promotions);
-            
+            console.log('scan', cant_sales_detail);
 
             if(presentation.length > 0 && presentation[presentation.length - 1].stock < 0){
                 swal.fire('Sin existencias en sistema.', '', 'info');
@@ -276,6 +276,7 @@
                 $('#btnCobro').fadeOut();
             }
 
+            let total_descuento = 0;
             $.each(sale_detail, function(index, val){
                 total += val.total;
                 descuento += val.descuento;
@@ -288,31 +289,41 @@
                     tipo_impuesto = val.iva != 0 ? 'IVA':'IEPS';
                     impuesto = val.iva != 0 ? number_format(val.iva):number_format(val.ipes);
                 }
+                
+                    $.each(cant_sales_detail[index], function(contador, value){   
+                        total_descuento += value.descuento;
+                        console.log('con', value);
 
-                $('#tbody_details').append(`
-                <tr class="text-center" ident="tr-${product[index]['code_product']}">
-                    <td>${product[index]['code_product']}</td>
-                    <td class="text-center">${val.cant}</td>
-                    <td class="text-center">${unidad_sat[index]}</td>
-                    <td class="text-center">${tipo_impuesto}</td>
-                    <td class="text-center">$ ${number_format(val.unit_price)}</td>
-                    <td class="text-center">$ ${impuesto}</td>
-                    <td class="text-center">$ ${number_format(val.subtotal)}</td>
-                    <td class="text-center">$ ${number_format(val.descuento)}</td>
-                    <td class="text-center">$ ${number_format(val.total - val.descuento)}</td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct(${val.id}, ${val.cant})"><i class="fa fa-edit"></i></button>
-                        <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct(${val.id})"><i class="fa fa-trash"></i></button>
-                    </td>
-                </tr>
-                `);
+                        let subtotal_ = value.cant*val.unit_price;
+                        let total_ = subtotal_ - value.descuento;
+                        
+                        $('#tbody_details').append(`
+                        <tr class="text-center" ident="tr-${product[index]['code_product']}">
+                            <td>${product[index]['code_product']}</td>
+                            <td class="text-center">${value.cant}</td>
+                            <td class="text-center">${unidad_sat[index]}</td>
+                            <td class="text-center">${tipo_impuesto}</td>
+                            <td class="text-center">$ ${number_format(val.unit_price)}</td>
+                            <td class="text-center">$ ${impuesto}</td>
+                            <td class="text-center">$ ${number_format(val.subtotal)}</td>
+                            <td class="text-center">$ ${number_format(value.descuento)}</td>
+                            <td class="text-center">$ ${number_format(total_)}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct(${value.id}, ${val.cant})"><i class="fa fa-edit"></i></button>
+                                <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct(${val.id})"><i class="fa fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        `);
+                    });
+                
             });
+           
             
             $('#tbody_total').empty().append(`
                 <tr class="table-info"><td colspan="6"></td>
                     <td class="text-right text-bold">Totales</td>
-                    <td class="text-center" >$ <span class="badge badge-success">${number_format(descuento)}</span></td>
-                    <td class="text-center text-bold" >$ <span>${number_format(total - descuento)}</span></td>
+                    <td class="text-center" >$ <span class="badge badge-success">${number_format(total_descuento)}</span></td>
+                    <td class="text-center text-bold" >$ <span>${number_format(total)}</span></td>
                     <td></td>
                 </tr>
             `);
@@ -348,7 +359,7 @@
             let sale_detail_id = $('#update_sale_detail_id').val();
             let cant = $('#update_cant_prod').val();
             
-            Livewire.dispatch('updateCant', {'sale_detail_id' : sale_detail_id, 'cant' : cant});
+            Livewire.dispatch('updateCant', {'sale_detail_cant_id' : sale_detail_id, 'cant' : cant});
         }
 
         //funcion para formatear numeros
