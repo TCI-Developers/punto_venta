@@ -94,27 +94,21 @@ class UserController extends Controller
             $userArray = json_decode($json, true);
            
             $exist_user = User::where('phone', $request->phone)->first();
-           
+
             if(!$exist_user){
                 $new_user = $this->storeUser($userArray['datos_empleado___nombre'], $userArray['id_usuario'], $userArray['telefono'], $userArray['password']);
                 Auth::login($new_user);      
             }else{
                 Auth::login($exist_user); 
             }
-
-            // $this->getCustomers(); Ya no se ocupan
-            // $this->getBrands();
-            // $this->getProducts(); 
-            // $this->getPaymentMethods();
-            // $this->getUnidadesSat();
           
-            if(!Auth::User()->hasAnyRole(['admin', 'root'])){
+            if(!Auth::User()->hasAnyRole(['root'])){ //modificar aqui el rol qeu l
                 $validatedData = $request->validate([
                     'start_amount_box' => 'required'],['start_amount_box' => 'El monto inicial es requerido.']
                 );
 
                 $box = Box::where('status', '>', 0)->orderBy('end_date', 'desc')->first();
-                
+               
                 if(is_object($box) && !isset($request->next) && $request->next != 'on'){
                     if($request->start_amount_box != $box->amount_cash_user){
                         Auth::logout(Auth::User());
@@ -146,7 +140,7 @@ class UserController extends Controller
     public function logout(){
         //no puede cerrar sesión hasta que no cierre el turno
         $user = Auth::User();
-        if(!$user->hasAnyRole(['root', 'admin'])){
+        if(!$user->hasAnyRole(['root'])){
             return redirect()->route('box.turnOff');
         }
 
