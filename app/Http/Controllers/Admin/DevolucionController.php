@@ -43,15 +43,25 @@ class DevolucionController extends Controller
                 if(count($sale_details)){
                     foreach($sale_details as $index => $item){
                         $part_to_product = PartToProduct::find($item->part_to_product_id);
+                        $sale_details_cants = $item->getCantSalesDetail;
+                        
+                        if(is_countable($sale_details_cants)){
+                            $cant = 0;
+                            foreach($sale_details_cants as $details_cant){
+                                if($part_to_product->id == $details_cant->part_to_product_id){
+                                    $cant += $details_cant->cant;
+                                }
+                            }
+                        }
 
                         $productos[$index]['id'] = $part_to_product->getProduct->id;
                         $productos[$index]['product'] = $part_to_product->getProduct->code_product.' - '.$part_to_product->getProduct->description;
-                        $productos[$index]['cantidad'] = $item->cant;
+                        $productos[$index]['cantidad'] = $cant ?? 0;
                         $productos[$index]['part_product_id'] = $item->part_to_product_id;
                         $productos[$index]['product_presentation'] = $item->getPartToProduct->getPresentation->type;
                     }
                 }
-                // dd($productos);
+
                 return view('Admin.devoluciones.create', ['devolucion' => $devolucion ?? null, 'productos_sale' => $productos, 'sale' => $sale]);
             }
 
@@ -72,7 +82,7 @@ class DevolucionController extends Controller
         $devolucion->cantidad = $request->cantidad;
         $devolucion->description = $request->description;
         $devolucion->fecha_devolucion = $request->fecha_devolucion;
-        // $devolucion->save();
+        $devolucion->save();
 
         // $this->saveDBExterna($request); //Guardado en DB externa
 

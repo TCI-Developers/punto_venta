@@ -260,7 +260,7 @@
             let total = 0.00;
             let descuento = 0.00;
 
-            console.log('scan', cant_sales_detail);
+           
 
             if(presentation.length > 0 && presentation[presentation.length - 1].stock < 0){
                 swal.fire('Sin existencias en sistema.', '', 'info');
@@ -276,20 +276,28 @@
                 $('#btnCobro').fadeOut();
             }
 
+            console.log('scan', event.detail[0]);
+
             let total_descuento = 0;
-            $.each(sale_detail, function(index, val){                
+            $.each(sale_detail, function(index, val){       
+               
+                         
                 let tipo_impuesto = '';
-                let impuesto = '0.00';
+                let impuesto = 0.00;
                 if(val.iva == 0 && val.ieps == 0){
                     tipo_impuesto = 'SYS';
                 }else{
                     tipo_impuesto = val.iva != 0 ? 'IVA':'IEPS';
-                    impuesto = val.iva != 0 ? number_format(val.iva):number_format(val.ipes);
+                    if(tipo_impuesto == 'IVA'){
+                        impuesto = parseFloat(val.iva);
+                    }else{
+                        impuesto = parseFloat(val.ieps);
+                    }
                 }
-                
+               
                     $.each(cant_sales_detail[index], function(contador, value){   
                         let subtotal_ = value.cant*val.unit_price;
-                        let total_ = subtotal_ - value.total_descuento;
+                        let total_ = (subtotal_ - value.total_descuento) + impuesto;
                         total_descuento += value.total_descuento;
                         total += total_;
                         

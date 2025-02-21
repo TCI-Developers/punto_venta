@@ -40,10 +40,22 @@ class Sale extends Model
 
     //Funcion para obtener la suma de todos los movimientos de la venta
     public function getAmount($id){
-        $details_amount = SaleDetail::where('sale_id', $id)->sum('amount');
-        $details_descuento = SaleDetail::where('sale_id', $id)->sum('descuento');
-        $details = $details_amount - $details_descuento;
-        // $details = $this->hasMany('App\Models\SaleDetail', 'sale_id', 'id');
+        $sales_detail_total = SaleDetail::where('sale_id', $id)->sum('total');
+        $sale_details = SaleDetail::where('sale_id', $id)->get();
+        $descuento = 0;
+
+        if(count($sale_details)){
+            foreach($sale_details as $item){
+                if(count($item->getCantSalesDetail)){
+                    foreach($item->getCantSalesDetail as $detal_cant){
+                        $descuento += $detal_cant->total_descuento;
+                    }
+                }
+            }
+        }
+
+        $details_descuento = 0;
+        $details = $sales_detail_total - $descuento;
         return $details;
     }
 

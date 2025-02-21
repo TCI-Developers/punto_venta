@@ -49,14 +49,13 @@
                         <p>Presentación productos</p>
                     </a>
                 </li>
-                @if(!Auth::User()->hasAnyRole(['root','admin']))
+                
                 <li class="nav-item"> <!-- Corte Caja -->
                     <a class="nav-link" href="{{route('box.turnOff')}}">
                         <img src="{{asset('icons/close.svg')}}" alt="Icono de close" width="23">
                         <p>Cierre de Turno</p>
                     </a>
                 </li>
-                @endif
 
                 <!--Habilitar Promociones despues de las validaciones en ventas-->
                 @if(Auth::User()->hasAnyRole(['root','admin']))

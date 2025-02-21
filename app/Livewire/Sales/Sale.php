@@ -60,8 +60,8 @@ class Sale extends Component
             return view('livewire.sales.create');
         }else if($this->type == 'show'){ //condicion para mostrar venta para editar
             $sale = SaleModel::find($this->id);
-            $this->total_desc = SaleDetail::where('sale_id', $this->id)->sum('descuento');
-            $this->total_sale = SaleDetail::where('sale_id', $this->id)->sum('total') - $this->total_desc;
+            // $this->total_desc = SaleDetail::where('sale_id', $this->id)->sum('descuento');
+            // $this->total_sale = SaleDetail::where('sale_id', $this->id)->sum('total') - $this->total_desc;
             $this->sales_detail = SaleDetail::where('sale_id', $this->id)->get();
             // dd(count($this->sales_detail) && (int)$sale->amount_received === 0);
             $devoluciones = Devolucion::where('sale_id', $this->id)->get();
@@ -358,22 +358,7 @@ class Sale extends Component
         $this->dispatch('scan', ['product' => $data['product_detail'] ?? [], 'persentation' => $data['presentation_detail'] ?? [], 
                                 'sales_detail' => $this->sales_detail, 'unidad_sat' => $data['unidad_sat'] ?? [],
                                 'promotions' => $data['promotions'] ?? [], 'cant_sales_detail' => $data['cant_sales_detail'] ?? []]);
-        
-        // if(is_object($sale_detail) && is_object($sale_detail_cant)){
-        //     $presentation = PartToProduct::find($sale_detail->part_to_product_id);
 
-        //     if(is_object($presentation)){
-        //             $presentation->stock = $presentation->stock + $sale_detail_cant->cant;
-        //             if($presentation->vigencia_cantidad_fecha == 'cantidad' && (int)$sale_detail_cant->descuento > 0){
-        //                 $presentation->vigencia = $presentation->vigencia + $sale_detail_cant->cant;
-        //             }
-        //             $presentation->save();
-        //     }
-
-        //     $sale_detail_cant->delete();
-        //     $sale_detail->delete();
-
-        // }
     }
 
     //funcion para agregar nota al detalle de venta sobre stock de presentacion

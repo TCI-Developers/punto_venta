@@ -34,6 +34,7 @@
             @php 
                 $total_sale_ = 0;
                 $total_desc_ = 0;
+                $impuestos = 0;
             @endphp
 
             @forelse($sales_detail as $index => $item)
@@ -41,7 +42,8 @@
 
             @foreach($item->getCantSalesDetail as $value)
             @php
-                $total_sale_ += ($item->unit_price * $value->cant) - ($value->descuento*$value->cant);
+                $impuestos += $item->iva != 0 ? $item->iva:$item->ieps;
+                $total_sale_ += (($item->unit_price * $value->cant) - ($value->descuento*$value->cant)) + $impuestos;
                 $total_desc_ += ($value->descuento*$value->cant);
             @endphp
 
@@ -60,7 +62,7 @@
                 <td>${{$item->iva != 0 ? number_format($item->iva,2):number_format($item->ieps,2)}}</td>
                 <td>${{number_format(($item->unit_price*$value->cant),2)}}</td>
                 <td>$ {{ number_format($value->total_descuento, 2) }}</td>
-                <td>$ {{number_format((($item->unit_price * $value->cant) - $value->total_descuento), 2)}}</td>
+                <td>$ {{number_format(((($item->unit_price * $value->cant) - $value->total_descuento) + $impuestos), 2)}}</td>
                 @if($sale->amount_received == 0) 
                 <td>
                     {{--<button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct({{$value->id}},{{$value->cant}})"><i class="fa fa-edit"></i></button> --}}
