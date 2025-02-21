@@ -41,8 +41,8 @@
 
             @foreach($item->getCantSalesDetail as $value)
             @php
-                $total_sale_ += ($item->unit_price * $value->cant) - $value->descuento;
-                $total_desc_ += $value->descuento;
+                $total_sale_ += ($item->unit_price * $value->cant) - ($value->descuento*$value->cant);
+                $total_desc_ += ($value->descuento*$value->cant);
             @endphp
 
             <tr class="text-center" ident="tr-{{$item->getPartToProduct->getProduct->code_product}}">
@@ -59,12 +59,12 @@
                 <td>${{number_format($item->unit_price,2)}}</td>
                 <td>${{$item->iva != 0 ? number_format($item->iva,2):number_format($item->ieps,2)}}</td>
                 <td>${{number_format(($item->unit_price*$value->cant),2)}}</td>
-                <td>$ {{ number_format($value->descuento, 2) }}</td>
-                <td>$ {{number_format((($item->unit_price*$value->cant) - $value->descuento), 2)}}</td>
+                <td>$ {{ number_format($value->total_descuento, 2) }}</td>
+                <td>$ {{number_format((($item->unit_price * $value->cant) - $value->total_descuento), 2)}}</td>
                 @if($sale->amount_received == 0) 
                 <td>
-                    <button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct({{$value->id}},{{$value->cant}})"><i class="fa fa-edit"></i></button>
-                    <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct({{$item->id}})"><i class="fa fa-trash"></i></button>
+                    {{--<button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct({{$value->id}},{{$value->cant}})"><i class="fa fa-edit"></i></button> --}}
+                    <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct({{$value->id}})"><i class="fa fa-trash"></i></button>
                 </td>
                 @endif
             </tr>

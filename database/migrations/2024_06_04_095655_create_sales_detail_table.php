@@ -14,14 +14,12 @@ return new class extends Migration
         Schema::create('sales_detail', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('part_to_product_id');
-            $table->integer('cant')->default(0);
             $table->double('amount')->default(0);
             $table->double('subtotal')->default(0);
             $table->double('iva')->default(0);
             $table->double('ieps')->default(0);
             $table->unsignedBigInteger('sale_id');
             $table->double('unit_price')->default(0);
-            $table->double('descuento')->default(0);
             $table->double('total')->default(0);
             $table->text('notes')->nullable();
             $table->foreign('part_to_product_id')->references('id')->on('parts_to_product');

@@ -277,10 +277,7 @@
             }
 
             let total_descuento = 0;
-            $.each(sale_detail, function(index, val){
-                total += val.total;
-                descuento += val.descuento;
-                
+            $.each(sale_detail, function(index, val){                
                 let tipo_impuesto = '';
                 let impuesto = '0.00';
                 if(val.iva == 0 && val.ieps == 0){
@@ -291,11 +288,10 @@
                 }
                 
                     $.each(cant_sales_detail[index], function(contador, value){   
-                        total_descuento += value.descuento;
-                        console.log('con', value);
-
                         let subtotal_ = value.cant*val.unit_price;
-                        let total_ = subtotal_ - value.descuento;
+                        let total_ = subtotal_ - value.total_descuento;
+                        total_descuento += value.total_descuento;
+                        total += total_;
                         
                         $('#tbody_details').append(`
                         <tr class="text-center" ident="tr-${product[index]['code_product']}">
@@ -306,17 +302,17 @@
                             <td class="text-center">$ ${number_format(val.unit_price)}</td>
                             <td class="text-center">$ ${impuesto}</td>
                             <td class="text-center">$ ${number_format(val.subtotal)}</td>
-                            <td class="text-center">$ ${number_format(value.descuento)}</td>
+                            <td class="text-center">$ ${number_format(value.total_descuento)}</td>
                             <td class="text-center">$ ${number_format(total_)}</td>
                             <td class="text-center">
-                                <button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct(${value.id}, ${val.cant})"><i class="fa fa-edit"></i></button>
-                                <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct(${val.id})"><i class="fa fa-trash"></i></button>
+                                <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct(${value.id})"><i class="fa fa-trash"></i></button>
                             </td>
                         </tr>
                         `);
                     });
-                
             });
+
+            // <button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct(${value.id}, ${val.cant})"><i class="fa fa-edit"></i></button>
            
             
             $('#tbody_total').empty().append(`
@@ -373,7 +369,7 @@
         }
 
         //funcion para eliminar detalle de venta
-        function btnDestroyProduct(sale_detail_id){
+        function btnDestroyProduct(sale_detail_cant_id){
             Swal.fire({
                 icon: 'question',
                 title: "¿Deseas eliminar este producto?",
@@ -382,7 +378,7 @@
                 cancelButtonText: "Cancelar",
                 }).then((result) => {
                 if (result.isConfirmed) {
-                    Livewire.dispatch('destroyProduct', {'sale_detail_id' : sale_detail_id});
+                    Livewire.dispatch('destroyProduct', {'sale_detail_cant_id' : sale_detail_cant_id});
                 } 
             });
         }
