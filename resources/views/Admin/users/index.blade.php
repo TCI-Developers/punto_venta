@@ -25,7 +25,7 @@
 
     <script>
         //funcion para abrir modal crear
-        function btnShow(user){
+        function btnShow(user, user_branch){
             $('#modal_create').fadeIn();
             $('input[name=id]').val(user.id);
 
@@ -33,9 +33,15 @@
             $.each(user.get_roles, function(index, value){
                 val.push(value.role_id.toString());
             });
+            
+            let branch = [];
+            $.each(user_branch, function(index, value){
+                branch.push(value.branch_id.toString());                
+            });
 
             $('#role_id').val(val).selectpicker('refresh');
             $('#turno_id').val(user.turno_id).selectpicker('refresh');
+            $('#branch_id').val(branch).selectpicker('refresh');
         }
 
         //funcion para cerrar modal
@@ -122,6 +128,7 @@
                         <th>Telefono</th>
                         <th>Roles</th>
                         <th>Turno</th>
+                        <th>Sucursal</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -137,6 +144,7 @@
                             @endforelse
                         </td>
                         <td>{{$item->getTurno->turno ?? ''}}</td>
+                        <td>{{$item->getBranch->name ?? ''}}</td>
                         <td>
                             @if(!Auth::User()->hasRole('root'))
                             <button type="button" class="btn btn-warning btn-sm" onClick="modal({{$item}})"><i class="fa fa-edit"></i></button>
@@ -144,7 +152,7 @@
                                 class="btn {{$status == 0 ? 'btn-primary':'btn-danger'}} btn-sm"><i class="fa {{$status == 0 ? 'fa-upload':'fa-trash'}}"></i></a>
                             @endif
 
-                            <button type="button" class="btn btn-info btn-sm" onClick="btnShow({{$item}})"><img src="{{asset('icons/list.svg')}}" alt="icon list"></button>
+                            <button type="button" class="btn btn-info btn-sm" onClick="btnShow({{$item}}, {{$user_branch[$item->id]}} )"><img src="{{asset('icons/list.svg')}}" alt="icon list"></button>
                         </td>
                     </tr>
                     @empty

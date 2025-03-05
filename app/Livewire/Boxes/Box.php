@@ -4,7 +4,7 @@ namespace App\Livewire\Boxes;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\{Box as BoxModel};
+use App\Models\{Box as BoxModel, Devolution};
 
 class Box extends Component
 {   

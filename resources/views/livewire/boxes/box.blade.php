@@ -10,6 +10,7 @@
                         <th>Caja Inicial</th>
                         <th>Total Tarjeta</th>
                         <th>Total Efectivo</th>
+                        <th>Devoluciones</th>
                         <th>Horario</th>
                         <th>status</th>
                         <th>Total</th>
@@ -24,6 +25,7 @@
                             <td>$ {{number_format($item->start_amount_box, 2)}}</td>
                             <td>$ {{number_format($item->amount_credit_system, 2)}}</td>
                             <td>$ {{number_format($item->amount_cash_system, 2)}}</td>
+                            <td><a href="{{route('devoluciones.indexDevCorte', [$item->start_date, $item->end_date])}}" class="badge badge-info"> $ {{number_format($item->getTotalDevolutions($item->start_date, $item->end_date), 2)}} </a></td>
                             <td>{{date('d/m/y H:i', strtotime($item->start_date))}} - {{date('d/m/y H:i', strtotime($item->end_date))}}</td>
                             <td>
                                 @if($item->status == 0)
@@ -44,15 +46,16 @@
                                     @endif
                                 @endif
                             </td>
-                            <td>$ {{number_format(($item->amount_cash_system + $item->start_amount_box + $item->amount_credit_system),2)}}</td>
-                            <td><button type="button" class="btn btn-outline-info btn-sm" wire:click="openModalMoney({{$item->id}})"
-                            ><img src="{{asset('icons/money.svg')}}" alt="icon money"></button></td>
+                            <td>$ {{number_format((($item->amount_cash_system + $item->start_amount_box + $item->amount_credit_system)- $item->getTotalDevolutions($item->start_date, $item->end_date)),2)}}</td>
+                            <td><button type="button" class="btn btn-outline-info btn-sm" wire:click="openModalMoney({{$item->id}})">
+                                <img src="{{asset('icons/money.svg')}}" alt="icon money"></button>
+                            </td>
                         </tr>
                         <tr class="text-center collapse" id="group-of-rows-{{$index}}">
                             <td colspan="2">Usuario Registró:</td>
                             <td>$ {{number_format($item->amount_credit_user,2)}}</td>
                             <td>$ {{number_format($item->amount_cash_user,2)}}</td>
-                            <td colspan="2">
+                            <td colspan="3">
                                 <div class="row">
                                     <div class="col-lg-6 col-md-6 col-sm-6">
                                         <span>Efectivo diferencia de:</span> <br>
@@ -72,7 +75,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>$ {{number_format(($item->amount_cash_user + $item->amount_credit_user),2)}}</td>
+                            <td>$ {{number_format((($item->amount_cash_user + $item->amount_credit_user)-$item->getTotalDevolutions($item->start_date, $item->end_date)),2)}}</td>
                         </tr>
                 @empty
                     <tr class="table-warning text-center" colspan="7"></tr>

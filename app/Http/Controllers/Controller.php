@@ -12,6 +12,27 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, ValidatesRequests;
 
+    public function __construct(){
+
+        $this->middleware(function ($request, $next) {
+            $controller = class_basename($request->route()->getController());
+            $controllers_excluidos = ['AdminController','BranchController', 'UserController', 'RoleController'];
+            $ban = 0;
+            foreach($controllers_excluidos as $item){
+                if($item == $controller){
+                    $ban = 1;
+                    break;
+                }
+            }
+
+            if(!$ban && $this->sucursalUser() === false){
+                return redirect()->route('branchs.index')->with('error', 'Selecciona una sucursal para poder acceder al sistema.');
+            }
+            
+            return $next($request);
+        });
+    }
+
     //funcion Curl QuickBase
     function getQuickBase($table_name_db, $data = null){
         $db = $this->validacionTabla($table_name_db, $data)['db'];

@@ -30,14 +30,6 @@
     </script>
     @endif
 
-    @if(isset($sales) && count($sales))
-        <script>
-            $(document).ready(function(){
-                $('table').dataTable();
-            })
-        </script>
-    @endif
-
     <script>
         $(document).ready(function(){
             //funcion para agregar la cantidad de producto al input product_presentation_id
@@ -78,43 +70,6 @@
             @endif
         @endif
             @csrf
-
-            @if(isset($sales) && count($sales))
-            <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-bordered" id="table">
-                    <thead>
-                        <tr class="text-center table-info">
-                            <th colspan="5">VENTAS</th>
-                        </tr>
-                        <tr class="text-center">
-                            <th>Folio</th>
-                            <th>Cliente</th>
-                            <th>Fecha</th>
-                            <th>Total Venta</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($sales as $item)
-                            <tr class="text-center">
-                                <td>{{$item->folio}}</td>
-                                <td>{{$item->customer->name}}</td>
-                                <td>{{date('d-m-Y', strtotime($item->date))}}</td>
-                                <td>$ {{number_format($item->total_sale)}}</td>
-                                <td><a href="{{route('devoluciones.createSale', ['null', $item->id])}}" class="btn btn-warning"><i class="fas fa-undo"></i></a></td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="table-warnign">Sin registros</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            </div>
-            @endif
-
             <div class="card-body {{isset($sales) && count($sales) ? 'displayNone':''}}">
                 <div class="row form-group">
                     @if(isset($sale))

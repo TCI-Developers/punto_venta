@@ -11,15 +11,6 @@ use App\Imports\ProductsImport;
 
 class ProductController extends Controller
 {
-    public function __construct(){
-        $this->middleware(function ($request, $next) {
-        if($this->sucursalUser() === false){
-            return redirect()->route('branchs.index')->with('error', 'Selecciona una sucursal para poder acceder al sistema.');
-        }
-        return $next($request);
-        });
-    }
-
     //listado de productos
     public function index(){   
         return view('admin.products.index', ['branch_id' => Auth::User()->branch_id]);

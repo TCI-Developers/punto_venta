@@ -4,133 +4,228 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{Devolucion, Product, Sale, PartToProduct};
+use Illuminate\Support\Facades\Auth;
+use App\Models\{Devolucion, Product, Sale, SaleDetail, SaleDetailCant, PartToProduct};
 
 class DevolucionController extends Controller
 {
+
+    // verificar en cordes de caja las devoluciones
     /**
      * Display a listing of the resource.
      */
-    public function index($status = 1)
-    {   
+    public function index($status = 1){   
         $devoluciones = Devolucion::where('status', $status)->get();
         return view('Admin.devoluciones.index', ['status' => $status, 'devoluciones' => $devoluciones]);
     }
 
-    //funcion para mostrar vista de crear o actualizar devolucion
-    public function show($devolucion_id = null)
-    {   
-        if($devolucion_id == 'sale'){
-            $endDate = date('Y-m-d');
-            $startDate = date('Y-m-d', strtotime($endDate."- 1 week"));
-            $sales = Sale::whereBetween('date', [$startDate, $endDate])->get();
-        }else if($devolucion_id){
-            $devolucion = Devolucion::find($devolucion_id);
-        }
+    //funcion para mostrar las devoluciones uqe se hicieron durante las fechas de un corte
+    public function indexDevCorte($startDate, $endDate){   
+        $sale_details = SaleDetail::whereBetween('created_at', [$startDate, $endDate])->where('status', 0)
+                        ->select('sale_id') // Solo selecciona sale_id
+                        ->distinct()->get();
 
-        $productos = Product::get();
-        return view('Admin.devoluciones.create', ['devolucion' => $devolucion ?? null, 'productos' => $productos, 'sales' => $sales ?? []]);
-    }
-
-    //funcion para mostrar la vista de crear devolcuion de una venta
-    public function createDevolucionSale($devolucion_id = null, $sale_id){
-        if($sale_id){
-            $sale = Sale::find($sale_id);
-            $devolucion = Devolucion::find($devolucion_id);
-            if(is_object($sale)){
-                $sale_details = $sale->getDetails;
-                $productos = [];
-                if(count($sale_details)){
-                    foreach($sale_details as $index => $item){
-                        $part_to_product = PartToProduct::find($item->part_to_product_id);
-                        $sale_details_cants = $item->getCantSalesDetail;
-                        
-                        if(is_countable($sale_details_cants)){
-                            $cant = 0;
-                            foreach($sale_details_cants as $details_cant){
-                                if($part_to_product->id == $details_cant->part_to_product_id){
-                                    $cant += $details_cant->cant;
-                                }
-                            }
-                        }
-
-                        $productos[$index]['id'] = $part_to_product->getProduct->id;
-                        $productos[$index]['product'] = $part_to_product->getProduct->code_product.' - '.$part_to_product->getProduct->description;
-                        $productos[$index]['cantidad'] = $cant ?? 0;
-                        $productos[$index]['part_product_id'] = $item->part_to_product_id;
-                        $productos[$index]['product_presentation'] = $item->getPartToProduct->getPresentation->type;
+        $devoluciones = [];
+        if(count($sale_details)){
+            foreach($sale_details as $item){
+                if(count($item->getDevoluciones)){
+                    foreach($item->getDevoluciones as $dev){
+                        $devoluciones[] = $dev;
                     }
                 }
-
-                return view('Admin.devoluciones.create', ['devolucion' => $devolucion ?? null, 'productos_sale' => $productos, 'sale' => $sale]);
             }
-
-            return redirect()->back()->with('error', 'Ocurrio un error inesperado.');
         }
 
-        return redirect()->back()->with('error', 'Ocurrio un error inesperado.');
+        return view('Admin.devoluciones.index', ['status' => 1, 'devoluciones' => $devoluciones]);
     }
 
-    //funcion para guardar una devolucion
-    public function store(Request $request)
-    {
-        // validar los campos, no vacios
-        $devolucion = new Devolucion();
-        $devolucion->product_id = $request->product_id;
-        $devolucion->part_to_product_id = $request->part_to_product_id ?? null; //campo para devolucion de alaguna venta
-        $devolucion->sale_id = $request->sale_id ?? null; //campo para devolucion de alaguna venta
-        $devolucion->cantidad = $request->cantidad;
-        $devolucion->description = $request->description;
-        $devolucion->fecha_devolucion = $request->fecha_devolucion;
-        $devolucion->save();
+    //funcion para mostrar listado de ventas de una semana
+    public function showListadoVentas(){   
+        $endDate = date('Y-m-d');
+        $startDate = date('Y-m-d', strtotime($endDate."- 1 week"));
+        $sales = Sale::whereBetween('date', [$startDate, $endDate])->get();
+
+        $productos = Product::get();
+        return view('Admin.devoluciones.lista_ventas', ['productos' => $productos, 'sales' => $sales]);
+    }
+
+    //funcion para mostrar vista de crear devolucion de venta
+    public function createSaleToDevolucion($sale_id){
+        $sale = Sale::find($sale_id);
+        $sale_details = $sale->getDetails;
+
+        return view('Admin.devoluciones.create_devolucion', ['sale' => $sale, 'sale_details' => $sale_details]);
+    }
+
+    //funcion para mostrar la vista de la devolucion de venta y actualizar
+    public function showDevSale($devolucion_id){
+        $devolution = Devolucion::find($devolucion_id);
+        if(!is_object($devolution)){
+            return redirect()->back()->with('error', 'Ocurrio algo inesperado en la devolución.');
+        }
+
+        $sale = Sale::find($devolution->sale_id);
+        if(!is_object($devolution)){
+            return redirect()->back()->with('error', 'No se pudo completar la acción.');
+        }
+        $sale_details = $sale->getDetails;
+        $sale_details_dev = $sale->getDetailsDev;
+
+        return view('admin.devoluciones.create_devolucion', ['devolution' => $devolution, 'sale' => $sale,
+                                                             'sale_details' => $sale_details, 'sale_details_dev' => $sale_details_dev]);
+    }
+
+    //funcion para eliminar un detalle de venta con estatus 0
+    public function deleteDetailDev($devolution_id, $detail_dev_id){
+        $sale_detail_dev = SaleDetail::find($detail_dev_id);
+
+        // PONER AQUI LA CANTIDAD Y TOTALES DE DEVOLUCIONES PARA RESTAR
+        $devolution = Devolucion::find($devolution_id);
+        if(!is_object($devolution)){
+            return redirect()->back()->with('error', 'La no se pudo completar la acción.');
+        }
+
+        if(!is_object($sale_detail_dev)){
+            return redirect()->back()->with('error', 'No se pudo completar la acción.');
+        }
+
+        $cantidad = $devolution->cantidad;
+        $descuentos = $devolution->total_descuento;
+        $total_devolucion = $devolution->total_devolucion;
+
+        if(count($sale_detail_dev->getCantSalesDetailDev)){
+            $arr = $sale_detail_dev->getCantSalesDetailDev; 
+            foreach($arr as $detail){
+                $aux = SaleDetailCant::where('sale_detail_id', $detail->sale_detail_id)
+                                        ->where('part_to_product_id', $detail->part_to_product_id)
+                                        ->where('status', 0)
+                                        ->first();
+
+                $sale_detail = $aux->getSaleDetail;
+
+                $cantidad -= $aux->cant;
+                $descuentos -= $aux->tota_descuento;
+                $total_devolucion -= $sale_detail->total;
+
+                $this->setStock($aux, $aux->cant, 'resta');
+
+                is_object($aux) ? $aux->delete():'';
+            }
+        }
+        // dd($devolution, count($sale_detail_dev->getCantSalesDetailDev), $cantidad);
+        $sale_detail_dev->delete();
+
+        $devolution->cantidad = $cantidad;
+        $devolution->total_descuentos = $descuentos;
+        $devolution->total_devolucion = $total_devolucion;
+        $devolution->save();
+
+        return redirect()->back()->with('success', 'Se elimino con exito.');
+    }
+
+    //funcion para mostrar vista de crear o actualizar devolucion
+    public function showDevolucion($devolucion_id){
+        $devolucion = Devolucion::find($devolucion_id);
+        $productos = Product::get();
+        return view('Admin.devoluciones.create', ['devolucion' => $devolucion, 'productos' => $productos]);
+    }
+
+    //funcion para guardar una devolucion de venta
+    public function store(Request $request, $devolucion_id = null){ 
+        if(isset($request->part_to_product_id) && count($request->part_to_product_id)){
+            $cantidad = 0;
+            $total_descuentos = 0;
+            $total_devolucion = 0;
+
+            if(!is_null($devolucion_id)){
+                $devolucion = Devolucion::find($devolucion_id);
+                $cantidad = $devolucion->cantidad;
+                $total_descuentos = $devolucion->total_descuentos;
+                $total_devolucion = $devolucion->total_devolucion;
+            }
+
+            for ($i=0; $i < count($request->part_to_product_id) ; $i++) { 
+
+                $sale_detail_dev = new SaleDetail();
+                $sale_detail_dev->sale_id = $request->sale_id;
+                $sale_detail_dev->part_to_product_id = $request->part_to_product_id[$i];
+                $sale_detail_dev->amount = $request->subtotal[$i];
+                $sale_detail_dev->subtotal = $request->subtotal[$i];
+                $sale_detail_dev->iva = $request->iva[$i];
+                $sale_detail_dev->ieps = $request->ieps[$i];
+                $sale_detail_dev->unit_price = $request->unit_price[$i];
+                $sale_detail_dev->total = $request->total[$i];
+                $sale_detail_dev->status = 0;
+                $sale_detail_dev->save();
+                
+                $sale_detail_cant_dev = new SaleDetailCant();
+                $sale_detail_cant_dev->sale_detail_id = $sale_detail_dev->id;
+                $sale_detail_cant_dev->part_to_product_id = $sale_detail_dev->part_to_product_id;
+                $sale_detail_cant_dev->cant = $request->cant[$i];
+                $sale_detail_cant_dev->descuento = $request->descuento[$i];
+                $sale_detail_cant_dev->total_descuento = $request->total_descuento[$i];
+                $sale_detail_cant_dev->status = 0;
+                $sale_detail_cant_dev->save();
+
+                $cantidad += $request->cant[$i];
+
+                $total_descuentos += $request->total_descuento[$i];
+                $total_devolucion += $request->total[$i];
+
+                $this->setStock($sale_detail_cant_dev, $request->cant[$i], 'suma');
+            }
+
+            // validar los campos, no vacios
+            if(is_null($devolucion_id)){
+                $devolucion = new Devolucion();
+                $devolucion->sale_id = $request->sale_id; //campo para devolucion de alaguna venta
+            }
+            $devolucion->cantidad = $cantidad;
+            $devolucion->description = $request->notes;
+            $devolucion->fecha_devolucion = $request->fecha_devolucion;
+            $devolucion->user_dev = Auth::User()->id; //usuario que realizo la devolucion
+            $devolucion->total_descuentos = $total_descuentos; //total descuentos
+            $devolucion->total_devolucion = $total_devolucion; //total devolucion sin aplicar los descuentos que tenian los productos
+            $devolucion->save();
+
+            return redirect()->route('devoluciones.index')->with('success', 'Devolucion registrada con exito.');
+        }
 
         // $this->saveDBExterna($request); //Guardado en DB externa
 
         //logica para mandar guardar a QuickBase
-        $data['table_id'] = "bqa4qy3sd";
-        $data['usertoken'] = "b8degy_fwjc_0_djjg8pab6ss873bfjuhnjb6vdbut";
-        $data['apptoken'] = "dkxavxndzybjwqi43f52dsyakvp"; 
-        $data['dominio'] = "aortizdemontellanoarevalo.quickbase.com";
+        // $data['table_id'] = "bqa4qy3sd";
+        // $data['usertoken'] = "b8degy_fwjc_0_djjg8pab6ss873bfjuhnjb6vdbut";
+        // $data['apptoken'] = "dkxavxndzybjwqi43f52dsyakvp"; 
+        // $data['dominio'] = "aortizdemontellanoarevalo.quickbase.com";
 
         // $this->postQuickBase($data, $request);
 
-        return redirect()->route('devoluciones.index')->with('success', 'Devolucion registrada con exito.');
+        return redirect()->route('devoluciones.index')->with('error', 'No se pudo completar la acción.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        // validar los campos, no vacios
-        $devolucion = Devolucion::find($id);
-        if(is_object($devolucion)){
-            $devolucion->product_id = $request->product_id;
-            $devolucion->cantidad = $request->cantidad;
-            $devolucion->description = $request->description;
-            $devolucion->fecha_devolucion = $request->fecha_devolucion;
-            $devolucion->save();
-
-            return redirect()->route('devoluciones.index')->with('success', 'Devolución actualizada con exito.');
+    //funcion para sumar stock del producto y vigencia del producto
+    function setStock($sale_detail_cant, $cant, $type){
+        $presentation = PartToProduct::find($sale_detail_cant->part_to_product_id);
+        if($type == 'suma'){
+            $presentation->stock = $presentation->stock + $cant;
+        }else{
+            $presentation->stock= $presentation->stock - $cant;
         }
-        return redirect()->route('devoluciones.index')->with('error', 'Ocurrio un error.');
-    }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id, $status)
-    {
-        $devolucion = Devolucion::find($id);
-        if(is_object($devolucion)){
-            $devolucion->status = $status;
-            $devolucion->save();
-
-            $message = $status == 0 ? 'inhabilito':'habilito';
-
-            return redirect()->route('devoluciones.index')->with('success', 'Se '.$message.' con exito la devolución');
+        if($presentation->tipo_descuento != null && $presentation->vigencia_cantidad_fecha == 'cantidad' && $sale_detail_cant->descuento > 0){
+            if($type == 'suma'){
+                $presentation->vigencia = (float)$presentation->vigencia + $cant;
+            }else{
+                $presentation->vigencia = (float)$presentation->vigencia - $cant;
+            }
         }
-        return redirect()->back()->with('success', 'Ocurrio un error.');
+
+        if($presentation->vigencia < 0){
+            $presentation->vigencia = 0;
+        }
+
+        $presentation->save();
     }
 
     //funcion para mandar informacion a DB externa

@@ -6,6 +6,10 @@
         .displayNone{
             display:none;
         }
+
+        .table-dev{
+            background-color: #00000050 !important;
+        }
     </style>
 @stop
 @section('js')

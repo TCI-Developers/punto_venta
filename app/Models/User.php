@@ -75,6 +75,16 @@ class User extends Authenticatable
         return $this->hasOne('App\Models\Turno', 'id', 'turno_id');
     }
 
+    //funcion para obtener el roles
+    public function getBranch(){
+        return $this->hasOne('App\Models\Branch', 'id', 'branch_id');
+    }
+
+    //funcion para obtener las sucursales asignadas
+    public function getBranchs(){
+        return $this->hasMany('App\Models\BranchUser', 'user_id', 'id');
+    }
+
     //funcion para obtener los roles
     public function getRoles(){
         return $this->hasMany('App\Models\UserRole', 'user_id', 'id');
@@ -83,6 +93,11 @@ class User extends Authenticatable
     //Incializamos roles para el uso en hasRoles y hasAnyRole
     public function roles(){
         return $this->belongsToMany('App\Models\Role')->withTimesTamps();
+    }
+
+    //Incializamos roles para el uso en hasRoles y hasAnyRole
+    public function branchs(){
+        return $this->belongsToMany('App\Models\BranchUser')->withTimesTamps();
     }
 
     //funcion para saber si tiene varios roles

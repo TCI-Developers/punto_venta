@@ -16,9 +16,19 @@ class SaleDetail extends Model
         return $this->hasOne('App\Models\PartToProduct', 'id', 'part_to_product_id');
     }
 
+    //funcion para obtener las devoluciones por sale_id
+    public function getDevoluciones(){
+        return $this->hasMany('App\Models\Devolucion', 'sale_id', 'sale_id');
+    }
+
     //Funcion para obtener sales_detail_cant
     public function getCantSalesDetail(){
-        return $this->hasMany('App\Models\SaleDetailCant', 'sale_detail_id', 'id');
+        return $this->hasMany('App\Models\SaleDetailCant', 'sale_detail_id', 'id')->where('status', 1);
+    }
+
+    //Funcion para obtener sales_detail_cant
+    public function getCantSalesDetailDev(){
+        return $this->hasMany('App\Models\SaleDetailCant', 'sale_detail_id', 'id')->where('status', 0);
     }
 
     //Funcion para obtener producto por presentacion

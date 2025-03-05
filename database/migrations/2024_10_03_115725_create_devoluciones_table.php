@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('devoluciones', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('product_id');
-            $table->unsignedBigInteger('part_to_product_id')->nullable();
-            $table->unsignedBigInteger('sale_id')->nullable();
+            $table->unsignedBigInteger('sale_id'); //id venta
+            $table->unsignedBigInteger('user_dev'); //id usuario qeu creo la devolucion
             $table->double('cantidad')->default(0);
             $table->string('description')->nullable();
             $table->date('fecha_devolucion');
+            $table->double('total_descuentos')->default(0);
+            $table->double('total_devolucion')->default(0);
             $table->integer('status')->default(1);
-            $table->foreign('product_id')->references('id')->on('products');
-            $table->foreign('part_to_product_id')->references('id')->on('parts_to_product');
+            $table->foreign('user_dev')->references('id')->on('users');
             $table->foreign('sale_id')->references('id')->on('sales');
             $table->timestamps();
         });

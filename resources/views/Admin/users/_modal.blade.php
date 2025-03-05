@@ -26,6 +26,14 @@
                           @endforelse
                         </select>
                     </label>
+                    <label for="branch_id" class="col-lg-12 col-md-12 col-sm-12">Sucursal <br>
+                        <select name="branch_id[]" id="branch_id" class="form-control selectpicker show-tick" data-live-search="true" title="Selecciona una sucursal" multiple>
+                          @forelse($branchs as $item)
+                            <option value="{{$item->id}}">{{$item->name}}</option>
+                          @empty
+                          @endforelse
+                        </select>
+                    </label>
                 </div> 
         </div>
         <div class="modal-footer">

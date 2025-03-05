@@ -41,6 +41,7 @@ class Sale extends Component
         public $id = '';
 
         public $sales_detail = [];
+        public $sales_detail_dev = [];
         public $scan_presentation_id = '';
         public $total_sale = 0.00;
     public $total_desc = 0.00;
@@ -63,13 +64,14 @@ class Sale extends Component
             // $this->total_desc = SaleDetail::where('sale_id', $this->id)->sum('descuento');
             // $this->total_sale = SaleDetail::where('sale_id', $this->id)->sum('total') - $this->total_desc;
             $this->sales_detail = SaleDetail::where('sale_id', $this->id)->get();
+            $this->sales_detail_dev = SaleDetail::where('sale_id', $this->id)->where('status', 0)->get();
             // dd(count($this->sales_detail) && (int)$sale->amount_received === 0);
             $devoluciones = Devolucion::where('sale_id', $this->id)->get();
             return view('livewire.sales.show', ['sale' => $sale, 'devoluciones' => $devoluciones]);
         }
 
         if($this->search != ''){
-            if(Auth::User()->hasRole('admin')){
+            if(Auth::User()->hasRole(['root','admin'])){
                 $sales = SaleModel::where('folio', 'LIKE', "%{$this->search}%")
                     ->orWhereHas('paymentMethod', function($query) {
                         $query->where('pay_method', 'LIKE', "%{$this->search}%");
@@ -84,7 +86,7 @@ class Sale extends Component
                 ->orderBy($this->whatDate, 'desc')->paginate($this->paginate_cant);
             }
         }else{
-            if(Auth::User()->hasRole('admin')){
+            if(Auth::User()->hasRole(['root', 'admin'])){
                 $sales = SaleModel::whereBetween($this->whatDate, $this->date)
                     // ->where('folio', 'LIKE', "%{$this->search}%")
                     ->orderBy($this->whatDate, 'desc')->paginate($this->paginate_cant);
@@ -273,9 +275,6 @@ class Sale extends Component
 
         return $data;
     } 
-
-    
-
 
     //funcion para agregar manual la cantidad de productos
     public function updateCant($sale_detail_cant_id, $cant){  //seguirle aqui con las cantidades manuales

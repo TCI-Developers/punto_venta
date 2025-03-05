@@ -15,6 +15,11 @@ class AdminController extends Controller
         return view('dashboard');
     }
 
+    //funcion para ingresar el monto inicial de la caja
+    public function startAmountBox(){
+        return view('Admin.box.start_amount');
+    }
+
     /**
      * Store a newly created resource in storage.
      */

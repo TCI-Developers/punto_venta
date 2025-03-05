@@ -23,7 +23,11 @@ class Sale extends Model
     
     //Funcion para obtener marca (linea) del producto
     public function getDetails(){
-        return $this->hasMany('App\Models\SaleDetail', 'sale_id', 'id');
+        return $this->hasMany('App\Models\SaleDetail', 'sale_id', 'id')->where('status', 1);
+    }
+    //funcion para obtener los detalles de venta con status 0
+    public function getDetailsDev(){
+        return $this->hasMany('App\Models\SaleDetail', 'sale_id', 'id')->where('status', 0);
     }
 
     // Definir la relación con Customer

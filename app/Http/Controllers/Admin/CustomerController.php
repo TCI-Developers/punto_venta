@@ -7,16 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Customer;
 
 class CustomerController extends Controller
-{
-    public function __construct(){
-        $this->middleware(function ($request, $next) {
-        if($this->sucursalUser() === false){
-            return redirect()->route('branchs.index')->with('error', 'Selecciona una sucursal para poder acceder al sistema.');
-        }
-        return $next($request);
-        });
-    }
-    
+{    
     //funcion para mostrar listado de clientes
     public function index()
     {   

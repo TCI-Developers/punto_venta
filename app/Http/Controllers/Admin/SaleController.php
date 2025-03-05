@@ -8,16 +8,7 @@ use App\Models\{User, Sale, SaleDetail};
 use Illuminate\Support\Facades\Auth;
 
 class SaleController extends Controller
-{
-    public function __construct(){
-        $this->middleware(function ($request, $next) {
-        if($this->sucursalUser() === false){
-            return redirect()->route('branchs.index')->with('error', 'Selecciona una sucursal para poder acceder al sistema.');
-        }
-        return $next($request);
-        });
-    }
-    
+{    
     //vista principal ventas
     public function index()
     {          

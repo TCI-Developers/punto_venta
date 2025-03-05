@@ -22,6 +22,7 @@ return new class extends Migration
             $table->double('unit_price')->default(0);
             $table->double('total')->default(0);
             $table->text('notes')->nullable();
+            $table->integer('status')->default(1); //1 venta, 2 devolucion
             $table->foreign('part_to_product_id')->references('id')->on('parts_to_product');
             $table->foreign('sale_id')->references('id')->on('sales');
             $table->timestamps();

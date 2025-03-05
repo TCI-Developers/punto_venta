@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{User, Product, Brand, Customer, PaymentMethod, UnidadSat, Role, Turno, UserRole, Box};
+use App\Models\{User, Product, Brand, Customer, PaymentMethod, UnidadSat, Role, Turno, UserRole, Box, Branch, BranchUser};
 use Illuminate\Support\Facades\{Auth};
 use Illuminate\Support\Carbon;
 
@@ -16,7 +16,16 @@ class UserController extends Controller
         $users = User::where('status', $status)->OrderBy('name', 'asc')->get();
         $roles = Role::where('status', 1)->get();
         $turnos = Turno::where('status', 1)->get();
-        return view('Admin.users.index', ['users' => $users, 'roles' => $roles, 'turnos' => $turnos, 'status' => $status]);
+        $branchs = Branch::where('status', 1)->get();
+
+        $user_branch = [];
+        if(count($users)){
+            foreach($users as $user){
+                $user_branch[$user->id] = $user->getBranchs;
+            }
+        }
+
+        return view('Admin.users.index', ['users' => $users, 'roles' => $roles, 'turnos' => $turnos, 'status' => $status, 'branchs' => $branchs, 'user_branch' => $user_branch]);
     }
 
     //funcion para guardar un nuevo usuario
@@ -75,15 +84,17 @@ class UserController extends Controller
     //funcion login Users  
     public function loginUser(Request $request){
         $validatedData = $request->validate([
-                'phone' => ['required', 'numeric', 'digits_between:10,12'],
-                'password' => 'required|min:8',   
-                // 'start_amount_box' => 'required',   validar dependiendo el rol 
+            'phone' => 'required',
+            'password' => 'required',
+        ], [
+            'phone.required' => 'El teléfono es obligatorio.',
+            'password.required' => 'La contraseña es obligatoria.',
         ]);
        
         $today = Carbon::now();
         if ($today->isLastOfMonth()) {
             if (!$this->hasInternetConnection()) {
-                return redirect()->back()->with('error', 'Licencia vencida.');
+                return redirect()->back()->withErrors('error', 'Licencia vencida.');
             }
         }
       
@@ -101,39 +112,17 @@ class UserController extends Controller
             }else{
                 Auth::login($exist_user); 
             }
-          
-            if(!Auth::User()->hasAnyRole(['root'])){ //modificar aqui el rol qeu l
-                $validatedData = $request->validate([
-                    'start_amount_box' => 'required'],['start_amount_box' => 'El monto inicial es requerido.']
-                );
 
-                $box = Box::where('status', '>', 0)->orderBy('end_date', 'desc')->first();
-               
-                if(is_object($box) && !isset($request->next) && $request->next != 'on'){
-                    if($request->start_amount_box != $box->amount_cash_user){
-                        Auth::logout(Auth::User());
-                        return redirect()->back()->withInput()->with('monto', 'El monto inicial no coincide con el último cierre.');
-                    }
-                }
-               
-                //guardar el monto inicial de la caja
-                $box = new Box();
-                $box->user_id = $exist_user->id ?? $new_user->id;
-                $box->status = 0;
-                $box->start_date = date('Y-m-d H:i:s');
-                $box->start_amount_box = $request->start_amount_box;
-                $box->save();
-                
-                // return redirect()->route('sale.index');
-                return redirect()->route('branch.index');
-            }else if(Auth::User()->hasAnyRole(['admin', 'root'])){
+            if(!Auth::User()->hasAnyRole(['root'])){
+                return redirect()->route('admin.startAmountBox');
+            }else{
                 return redirect()->route('branch.index');
             }
-            
-            return redirect()->route('admin.index');
         }
+
+
         
-        return redirect()->back()->with('error', 'Credenciales Incorrectas.');
+        return redirect()->back()->withErrors('error', 'Credenciales Incorrectas.');
     }
 
     //funcion para logout
@@ -223,6 +212,17 @@ class UserController extends Controller
                 $user->save();
                 $ban = 1;
             }
+           
+            $userBranch = BranchUser::where('user_id', $request->id)->where('user_id', $request->id)->delete();
+            if(isset($request->branch_id)){
+                for ($i=0; $i <count($request->branch_id) ; $i++) { 
+                    $user_branch = new BranchUser();
+                    $user_branch->user_id = $request->id;
+                    $user_branch->branch_id = $request->branch_id[$i];
+                    $user_branch->save();
+                }
+                $ban = 1;
+            }
 
             $userRoles = UserRole::where('user_id',$request->id)->delete();
             if(isset($request->role_id) && count($request->role_id)){
@@ -232,14 +232,14 @@ class UserController extends Controller
                     $user_role->role_id = $request->role_id[$i];
                     $user_role->save();
                 }
-                $ban = 2;
+                $ban = 1;
             }
 
             $icon = 'info';
-            $message = 'No se asignaron roles o turnos.';
+            $message = 'No se asignaron roles o turnos o sucursales.';
             if($ban>0){
                 $icon = 'success';
-                $message = $ban == 2 ? 'Roles y Turno asginado con exito.':'Roles asignado con exito.';
+                $message = 'Selecciones asginadas con exito.';
             }
 
             return redirect()->back()->with($icon, $message);

@@ -2,6 +2,8 @@
 
 Route::get('/', 'Admin\AdminController@index')->name('admin.index'); //vista principal
 
+Route::get('/start-amount-box', 'Admin\AdminController@startAmountBox')->name('admin.startAmountBox'); //vista principal
+
 //products
 Route::get('/products', 'Admin\ProductController@index')->name('product.index'); //vista principal productos
 Route::get('/products-add-presentation/{product_id}', 'Admin\ProductController@create')->name('product.create'); //vista para presentaciones/devoluciones/promociones
@@ -43,6 +45,7 @@ Route::get('/category-enable/{id}', 'Admin\CategoryController@enable')->name('ca
 
 //corte de caja
 Route::get('/turn-off', 'Admin\BoxController@index')->name('box.index');
+Route::post('/store-start-amount', 'Admin\BoxController@storeStarAmountBox')->name('box.storeStarAmountBox');
 Route::get('/turn-off-view', 'Admin\BoxController@turnOff')->name('box.turnOff');
 Route::post('/turn-off-store', 'Admin\BoxController@store')->name('box.store');
 
@@ -93,10 +96,15 @@ Route::get('/promos-destroy/{promo_id}/{status}', 'Admin\PromotionController@des
 
 //devoluciones
 Route::get('/devoluciones/{status?}', 'Admin\DevolucionController@index')->name('devoluciones.index');
-Route::get('/devoluciones-create/{type_or_devolucion_id?}', 'Admin\DevolucionController@show')->name('devoluciones.create');
+Route::get('/devoluciones-corte/{starDate}/{endDate}', 'Admin\DevolucionController@indexDevCorte')->name('devoluciones.indexDevCorte'); //devoluciones por fechas de algun corte
+Route::get('/devoluciones-create-sale', 'Admin\DevolucionController@showListadoVentas')->name('devoluciones.showListadoVentas'); //crear una devolucion de venta o matriz
+Route::get('/devoluciones-show-dev-sale/{devolucion_id}', 'Admin\DevolucionController@showDevSale')->name('devoluciones.showDevSale'); //crear una devolucion de venta o matriz
+Route::get('/devoluciones-delete-detail-dev/{devolution_id}/{detail_dev_id}', 'Admin\DevolucionController@deleteDetailDev')->name('devoluciones.deleteDetailDev'); //elimina un detalle de la venta en status 0
+Route::post('/devoluciones-store/{devolucion_id?}', 'Admin\DevolucionController@store')->name('devoluciones.store'); //funcion para guardar la devolucion de venta
+
+Route::get('/devoluciones-sale-create/{sale_id}', 'Admin\DevolucionController@createSaleToDevolucion')->name('devoluciones.createSaleToDevolucion');
 Route::get('/devoluciones-create-sales/{devolucion_id?}/{sale_id}', 'Admin\DevolucionController@createDevolucionSale')->name('devoluciones.createSale');
-Route::post('/devoluciones-store', 'Admin\DevolucionController@store')->name('devoluciones.store');
 Route::get('/devoluciones-show/{devolucion_id}', 'Admin\DevolucionController@show')->name('devoluciones.show');
-Route::get('/devoluciones-show-sale/{devolucion_id}/{sale_id}', 'Admin\DevolucionController@createDevolucionSale')->name('devoluciones.showDevSale');
+// Route::get('/devoluciones-show-sale/{devolucion_id}/{sale_id}', 'Admin\DevolucionController@createDevolucionSale')->name('devoluciones.showDevSale');
 Route::post('/devoluciones-update/{devolucion_id}', 'Admin\DevolucionController@update')->name('devoluciones.update');
 Route::get('/devoluciones-destroy/{devolucion_id}/{status}', 'Admin\DevolucionController@destroy')->name('devoluciones.destroy');

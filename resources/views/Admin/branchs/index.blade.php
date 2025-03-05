@@ -82,11 +82,11 @@
             <div class="app-main"> <!-- MAIN (Center website) -->
                 <div class="row app-row" id="body_formats">  <!--APP ROW 1-->
                     @forelse($branchs as $item)
-                    @if($user->hasAnyRole(['root', 'admin']))
-                        @include('Admin.branchs._sucursal')
-                    @elseif($user->hasBranch($item->id))
-                        @include('Admin.branchs._sucursal')
-                    @endif
+                        @if($user->hasAnyRole(['root', 'admin']))
+                            @include('Admin.branchs._sucursal')
+                        @elseif($user->hasBranch($item->id))
+                            @include('Admin.branchs._sucursal')
+                        @endif
                     @empty
                     @endforelse
                 </div> <!--APP ROW 1-->

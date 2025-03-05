@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\{User, Branch, BranchUser, Product, Brand};
+use App\Models\{User, Branch, BranchUser, Product, Brand, Box};
 
 class BranchController extends Controller
 {   
     // index
-    public function index($status = 1){          
+    public function index($status = 1){      
         $user = Auth::User();
         $branchs = Branch::where('status', $status)->get();
         $users = User::get(); //validar que no salgan roles que no deben ir

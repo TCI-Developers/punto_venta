@@ -31,7 +31,6 @@ Route::get('/get-customers', 'Admin\UserController@getCustomers')->name('user.ge
 Route::get('/get-payment-methods', 'Admin\UserController@getPaymentMethods')->name('user.getPaymentMethods');
 Route::get('/get-unidades-sat', 'Admin\UserController@getUnidadesSat')->name('user.getUnidadesSat');
 
-Route::get('/login', function(){
-   
-    return view('auth.login');
-})->name('login');
+// Route::get('/login', function(){
+//     return view('auth.login');
+// })->name('login');

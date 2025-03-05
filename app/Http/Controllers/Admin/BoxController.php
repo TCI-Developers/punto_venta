@@ -9,14 +9,6 @@ use App\Models\{Sale, Box};
 
 class BoxController extends Controller
 {
-    public function __construct(){
-        $this->middleware(function ($request, $next) {
-        if($this->sucursalUser() === false){
-            return redirect()->route('branchs.index')->with('error', 'Selecciona una sucursal para poder acceder al sistema.');
-        }
-        return $next($request);
-        });
-    }
 
     //funcion para mostrar listado de cierres de turno
     public function index(){
@@ -52,6 +44,32 @@ class BoxController extends Controller
         }
        
         return view('Admin.box.turn_off', ['start_amount_box' => $box->start_amount_box ?? null, 'ventas_cerradas' => $ventas_cerradas, 'status' => $status]);
+    }
+
+    //funcion para guardar el monto incial de la caja
+    public function storeStarAmountBox(Request $request){
+        $validatedData = $request->validate([
+            'start_amount_box' => 'required'],['start_amount_box' => 'El monto inicial es requerido.']
+        );
+
+        $user = Auth::User();
+        $box = Box::where('status', '>', 0)->orderBy('end_date', 'desc')->first();
+
+        if(is_object($box) && !isset($request->next) && $request->next != 'on'){
+            if($request->start_amount_box != $box->amount_cash_user){
+                Auth::logout(Auth::User());
+                return redirect()->back()->withInput()->withErrors('monto', 'El monto inicial no coincide con el último cierre.');
+            }
+        }
+
+        $box = new Box();
+        $box->user_id = $user->id;
+        $box->status = 0;
+        $box->start_date = date('Y-m-d H:i:s');
+        $box->start_amount_box = $request->start_amount_box;
+        $box->save();
+
+        return redirect()->route('branch.index');
     }
 
     //funcion para guardar cierre de caja
