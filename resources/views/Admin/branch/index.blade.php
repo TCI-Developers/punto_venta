@@ -85,7 +85,6 @@
             <button type="button" class="btn btn-primary float-right" onclick="importProducts({{$branch->id}})"><i class="fa fa-download"></i> Importar Productos</button>
             @endisset
         </div>
-        
         <div class="card-body">
             <form action="{{route('branchs.store', isset($branch) ? $branch->id:'')}}" method="post">
             @csrf
@@ -119,6 +118,8 @@
                         @endforeach
                     </select>
                 </label>
+            </div>
+            <div>
             </div>
             <div class="row">
                 <div class="col-lg-12 col-md-12 col-sm-12 text-right">

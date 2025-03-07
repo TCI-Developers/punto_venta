@@ -17,8 +17,8 @@ class PartToProduct extends Model
     ];
 
     //Funcion para obtener la presentacion
-    public function getPresentation(){
-        return $this->hasOne('App\Models\PresentationProduct', 'id', 'presentation_product_id');
+    public function getUnidadSat(){
+        return $this->hasOne('App\Models\UnidadSat', 'id', 'unidad_sat_id');
     }
 
     //obtenemos el producto

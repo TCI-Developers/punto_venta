@@ -6,7 +6,7 @@ Route::get('/start-amount-box', 'Admin\AdminController@startAmountBox')->name('a
 
 //products
 Route::get('/products', 'Admin\ProductController@index')->name('product.index'); //vista principal productos
-Route::get('/products-add-presentation/{product_id}', 'Admin\ProductController@create')->name('product.create'); //vista para presentaciones/devoluciones/promociones
+Route::get('/products-add-presentation/{product_id}/{despiece?}', 'Admin\ProductController@create')->name('product.create'); //vista para presentaciones/devoluciones/promociones
 Route::post('/products-store-presentation/{product_id}', 'Admin\ProductController@store')->name('product.store'); //funcion para guardar las presentaciones/devoluciones/promociones asignadas
 Route::post('/products-update-presentation', 'Admin\ProductController@update')->name('product.update'); //funcion para guardar las presentaciones/devoluciones/promociones asignadas
 

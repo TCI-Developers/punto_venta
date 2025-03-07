@@ -22,6 +22,11 @@ return new class extends Migration
             $table->string('unit', 100)->nullable();
             $table->string('unit_description', 100)->nullable();
             $table->double('existence')->nullable();
+
+            $table->double('precio')->default(0); //precio del producto tal cual se vende normalmente
+            $table->double('precio_mayoreo')->default(0); //precio mayoreo
+            $table->double('precio_despiece')->default(0); //precio cuando se vende por despiece
+
             $table->boolean('activo')->default(1);
             $table->text('comments')->nullable();
             $table->double('segment_units')->nullable();

@@ -44,7 +44,6 @@ class Product extends Component
 
     public function render()
     {   
-        
         if($this->search == ''){
             $products = ProductModel::where('activo', 1)->paginate($this->paginate_cant);
         }else{

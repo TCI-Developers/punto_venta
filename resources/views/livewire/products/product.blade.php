@@ -22,6 +22,9 @@
                         <th>Linea</th>
                         <th>Unidad</th>
                         <th>Existencias</th>
+                        <th>Precio Unitario</th>
+                        <th>Precio Mayoreo</th>
+                        <th>Precio Despiece</th>
                         @if(Auth::User()->hasAnyRole(['root', 'admin']))
                         <th>Acciones</th>
                         @endif
@@ -35,17 +38,33 @@
                         <td class="text-center">{{$item->getBrand->name}}</td>
                         <td class="text-center">{{$item->unit}}</td>
                         <td class="text-center">{{number_format($item->existence,2)}}</td>
+                        <td class="text-center">$ {{number_format($item->precio,2)}}</td>
+                        <td class="text-center">$ {{number_format($item->precio_mayoreo,2)}}</td>
+                        <td class="text-center">$ {{number_format($item->precio_despiece,2)}}</td>
                         @if(Auth::User()->hasAnyRole(['root', 'admin']))
                         <td class="text-center">
-                            {{--<button type="button" class="btn btn-info btn-sm" onClick="modalAddPresentation({{$item->id}})">
-                                <img src="{{asset('icons/list.svg')}}" alt="icon list">
-                            </button> --}}
-                            <a href="{{route('product.create', $item->id)}}" class="btn btn-info btn-sm"><i class="fa fa-list"></i></a>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary">Acción</button>
+                                <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown">
+                                    <span class="sr-only">Toggle Dropdown</span>
+                                </button>
+                                <div class="dropdown-menu">
+                                    @if(is_object($item->getPartToProduct) && is_object($item->getPartToProductDespiezado))
+                                        @php $status = 'only_edit'; @endphp
+                                    @endif
+
+                                    <a class="dropdown-item" href="{{route('product.create', [$item->id, $status ?? ''])}}"><i class="fa fa-list"></i>&nbsp; Presentaciones</a>
+                                    @if(!is_object($item->getPartToProductDespiezado)){{--Si ya tiene despiezado, no te da opcion de despiezar mas este proudcto--}}
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="{{route('product.create', [$item->id, 'despiece'])}}"><i class="fa fa-check"></i>&nbsp; Despiezado</a>
+                                    @endif
+                                </div>
+                            </div>
                         </td>
                         @endif
                     </tr>
                     @empty
-                    <tr><td colspan="6" class="table-warning text-center">Sin categorias</td></tr>
+                    <tr><td colspan="9" class="table-warning text-center">Sin categorias</td></tr>
                     @endforelse
                 </tbody>
             </table>

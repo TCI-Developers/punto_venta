@@ -16,7 +16,10 @@ return new class extends Migration
             $table->unsignedBigInteger('product_id'); //id del producto
             $table->string('code_bar')->nullable(); //codigo de barras
             $table->double('price')->default(0);
+            $table->double('price_mayoreo')->default(0); //precio por mayoreo
             $table->double('stock')->default(0);
+            $table->double('cantidad_mayoreo')->default(0); //cantidad minima en la cual se toma en cuenta el precio por mayoreo
+            $table->double('cantidad_despiezado')->default(0); //cantidad para obtener el precio despiezado
             
             //campos descuentos
             $table->string('tipo_descuento')->nullable(); //monto o porcentaje
@@ -24,11 +27,11 @@ return new class extends Migration
             $table->string('vigencia_cantidad_fecha')->nullable(); //si la vigencia del descuento es por fecha o por alguna cantidad
             $table->string('vigencia')->nullable(); //la fecha o cantidad en que vence el decuento
 
-            $table->unsignedBigInteger('presentation_product_id'); //id de la presentacion
+            $table->unsignedBigInteger('unidad_sat_id'); //id de la unidad del sat
             $table->unsignedBigInteger('promotion_id')->nullable(); //id de la promocion (por el momento no se usa)
             $table->boolean('status')->default(1); //status 1 activo - 0 baja
             $table->foreign('product_id')->references('id')->on('products');
-            $table->foreign('presentation_product_id')->references('id')->on('presentations_product');
+            $table->foreign('unidad_sat_id')->references('id')->on('unidades_sat');
             $table->foreign('promotion_id')->references('id')->on('promotions');
             $table->timestamps();
         });

@@ -5,7 +5,7 @@ namespace Database\Seeders;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Models\{Role, Customer};
+use App\Models\{Role, Customer, PresentationProduct};
 
 class DatabaseSeeder extends Seeder
 {
@@ -36,5 +36,6 @@ class DatabaseSeeder extends Seeder
             'regimen_fiscal' => '',
             'status' => 1,
         ]);
+
     }
 }

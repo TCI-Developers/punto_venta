@@ -17,27 +17,29 @@ class ProductController extends Controller
     }
 
     //funcion para mostrar presentacion/devolucion/promociones
-    public function create($product_id){
-        $presentations = PresentationProduct::where('status', 1)->get();
-        $promotions = Promotion::where('status', 1)->get();
+    public function create($product_id, $type = null){
+        $product = Product::find($product_id);
         $part_to_products = PartToProduct::where('product_id', (int)$product_id)->where('status', 1)->get();
-        $unidades_sat = UnidadSat::where('status', 1)->get();
 
-        $arr_presentations = [];
-        if(count($part_to_products)){
-            foreach($part_to_products as $index => $item){
-                $arr_presentations[$index] = $item->getPresentation->type;
+        if($type == 'despiece'){
+            if(!count($part_to_products) || $product->precio_despiece <= 0.0){
+                $message = !count($part_to_products) ? 'sin antes agregar una presentación':'porque no tiene precio despiezado.';
+                return redirect()->back()->with('error', 'No puedes despiezar el producto '.$message.'.');
             }
         }
 
-        return view('Admin.products.asignar_presentacion_desc_promo', ['product_id' => $product_id,'presentations' => $presentations, 
-                    'promotions' => $promotions, 'part_to_products' => $part_to_products, 'presentation_name' => $arr_presentations,
+        $promotions = Promotion::where('status', 1)->get();
+        $unidades_sat = UnidadSat::where('status', 1)->get();
+
+        return view('Admin.products.asignar_presentacion_desc_promo', ['product' => $product, 'type' => $type,
+                    'promotions' => $promotions, 'part_to_products' => $part_to_products,
                     'unidades_sat' => $unidades_sat]);
     }
 
     //funcion para guardar la presentacion/devolucion/promociones asignadas al producto
     public function store(Request $request, $product_id){
-        if($request->presentation_type_id != '' && $request->price != '' && $request->code_bar != ''){
+        if($request->unidad_sat_id != '' && $request->price != '' && $request->code_bar != ''){
+
             if($request->part_product_id == ''){
                 $presentation = new PartToProduct();
                 $presentation->product_id = (int)$product_id;
@@ -48,21 +50,26 @@ class ProductController extends Controller
 
             }
 
+
+            //descuentos
             if($request->monto_porcentaje > 0 && $request->monto_porcentaje != ''){
                 $presentation->tipo_descuento = $request->tipo_descuento;
                 $presentation->monto_porcentaje = $request->monto_porcentaje;
                 $presentation->vigencia_cantidad_fecha = $request->vigencia_cantidad_fecha;
                 $presentation->vigencia = $request->vigencia_cantidad_fecha == 'fecha' ? $request->vigencia_fecha:$request->vigencia;
             }
-            
+            //promocion
             if(isset($request->promotion_id)){
                 $presentation->promotion_id = (int)$request->promotion_id ?? null;
             }
 
-            $presentation->presentation_product_id = (int)$request->presentation_type_id;
+            $presentation->unidad_sat_id = (int)$request->unidad_sat_id;
             $presentation->price = $request->price;
+            $presentation->price_mayoreo = $request->precio_mayoreo ?? 0;
             $presentation->code_bar = $request->code_bar;
             $presentation->stock = $request->stock;
+            $presentation->cantidad_mayoreo = $request->cantidad_mayoreo ?? 0;
+            $presentation->cantidad_despiezado = $request->cantidad_despiezado ?? 0;
             $presentation->save();
 
             return redirect()->back()->with('success', 'Presentación '.$message.' a producto.');

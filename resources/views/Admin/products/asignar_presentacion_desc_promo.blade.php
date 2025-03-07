@@ -1,10 +1,10 @@
 @extends('adminlte::page')
 
-@section('title', 'Productos')
+@section('title', 'Presentaciones')
 
 @section('css')
     <style>
-        .displayNone{
+        .displayNone, .despiezado{
             display:none;
         }
     </style>
@@ -14,7 +14,12 @@
     @include('components.use.notification_success_error')
     <script>
         //funcion para asignar valores a los inputs
-        function update(product){            
+        function update(product){    
+            console.log('*', product);
+                
+            
+            $('#btnSubmit').attr('disabled', false).attr('type', 'submit').fadeIn();
+                            
             swal.fire('Actualización habilitada.', '', 'success');
             $('input[name=part_product_id]').val(product.id);
 
@@ -24,10 +29,14 @@
             $('#titleBtnSubmit').html('Actualizar');
 
             //presentaciones
-            $('#presentation_type_id').val(product.presentation_product_id).selectpicker('refresh');
-            $('#price').val(product.price);
+            $('#unidad_sat_id').val(product.unidad_sat_id).selectpicker('refresh');
+            $('.price').val(product.price);
+            $('#precio_mayoreo').val(product.price_mayoreo);
             $('#code_bar').val(product.code_bar);
             $('#stock').val(product.stock);
+            $('#cantidad_mayoreo').val(product.cantidad_mayoreo);
+            $('#cantidad_despiezado').val(product.cantidad_despiezado);
+            $('#price_general').val(product.cantidad_despiezado);
             //descuento
             $('#tipo_descuento').val(product.tipo_descuento).selectpicker('refresh');
             $('#title_monto_porcentaje').html(product.tipo_descuento == 'monto' ? 'Monto':'Porcentaje');
@@ -49,6 +58,17 @@
             }
             //Promocion
             $('#promotion_id').val(product.promotion_id).selectpicker('refresh');
+
+            if(product.cantidad_despiezado > 0){
+                $('.presentation').fadeOut().attr('disabled');
+                $('.despiezado').fadeIn().attr('disabled', false);
+                priceDespiece();
+                console.log('aqui', product.price);
+                
+            }else{
+                $('.presentation').fadeIn().attr('disabled', false);;
+                $('.despiezado').fadeOut().attr('disabled');
+            }
         }
 
         //funcion para validar campos de descuento
@@ -89,14 +109,8 @@
             $('#btnCancelarUpdate').fadeOut(function(){
                 $('#btnCancelar').fadeIn();
             });
+            $('#btnSubmit').attr('disabled', true).attr('type', 'button').fadeOut();
             swal.fire('Actualización Cancelada.', '', 'success');
-        }
-
-        //funcion para mostrar modal agregar presentacion
-        function selectPresentation(value){
-            if(value == 'new'){
-                $('#modal_presentations').modal('show');
-            }
         }
 
         //funcion para cerrar modal de cancelar
@@ -104,39 +118,68 @@
             $('.inputModal').val('');
             $('#modal_presentations').modal('hide');
         }
+
+        //funcion para habilitar o deshabilitar precio mayoreo
+        function precioMayoreo(input){
+            let precio = $(input).val()
+            console.log(precio);
+            
+            if(precio == 0){
+                $('#cantidad_mayoreo').attr('disabled', true).val(0);
+            }else{
+                $('#cantidad_mayoreo').removeAttr('disabled').val(0);
+            }
+        }
+
+        //funcion para sacar el calculo del precio para el despieceç
+        function priceDespiece(){
+            let precio_general = $('#price_general').val();
+            let cantidad_despiezado = $('#cantidad_despiezado').val();            
+            console.log('entra');
+            
+            $('.price').val(parseFloat(precio_general/cantidad_despiezado).toFixed(2));
+        }
     </script>
 @stop
 
 @section('content')
-<form action="{{route('product.store', $product_id)}}" method="post" id="form">
+<form action="{{route('product.store', $product->id)}}" method="post" id="form">
     @csrf
-    <input type="hidden" name="part_product_id">
+        <input type="hidden" name="part_product_id">
        <div class="card card-primary">
             <div class="card card-header">
-                <h1 class="text-center">Asignar presentación</h1>
+                <h3 class="text-center">Asignar presentación</h3>
+                <h4 class="text-center">{{$product->code_product}}</h4>
             </div>
             <!-- Presentaciones -->
             <div class="card card-body"> 
             <div class="row">
                 <h3 class="col-12 table-info">Presentaciones</h3>
-                <label for="presentation_type_id" class="col-lg-8 col-md-8 col-sm-12">Presentación* <br>
-                    <select id="presentation_type_id" name="presentation_type_id" class="form-control selectpicker inputModal" title="Selecciona una presentación" onchange="selectPresentation(this.value)">
-                        <option value="new" style="background-color:#32c4fed9;">- Crear presentación</option>
-                        @forelse($presentations as $item)
-                            <option value="{{$item->id}}">{{$item->type}}</option>
+                <label for="unidad_sat_id" class="col-lg-4 col-md-4 col-sm-12">Presentación* <br>
+                    <select id="unidad_sat_id" name="unidad_sat_id" class="form-control selectpicker inputModal" 
+                            title="Selecciona una unidad" data-live-search="true">
+                        <option value="" {{$type == 'only_edit' ? 'selected':''}}></option>
+                        @forelse($unidades_sat as $item)
+                            <option value="{{$item->id}}" {{$type != 'only_edit' && $product->unit === $item->clave_unidad ? 'selected':''}}>{{$item->clave_unidad}} - {{$item->name}}</option>
                         @empty
                         @endforelse
                     </select>
                 </label>
-                <label for="price" class="col-lg-4 col-md-4 col-sm-12">Precio* <br>
-                    <input type="number" name="price" id="price" class="form-control inputModal" placeholder="0">
-                </label>
-                <label for="code_bar" class="col-lg-8 col-md-8 col-sm-12">Codigo <br>
+
+                @if($type == 'only_edit')
+                    @include('Admin.products.inputs._inputs_presentacion'){{-- Campos presentacion--}}
+                    @include('Admin.products.inputs._inputs_despiezado'){{-- Campos de despieze--}}
+                @elseif(!$type) {{-- Campos sin despieze--}}
+                    @include('Admin.products.inputs._inputs_presentacion'){{-- Campos presentacion--}}
+                @else 
+                    @include('Admin.products.inputs._inputs_despiezado'){{-- Campos de despieze--}}
+                @endif
+                <label for="code_bar" class="col-lg-4 col-md-4 col-sm-12">Codigo <br>
                     <input type="text" name="code_bar" id="code_bar" class="form-control inputModal" placeholder="Codigo" value="">
                 </label>
-                <label for="stock" class="col-lg-4 col-md-4 col-sm-12">Stock
-                    <input type="number" class="form-control inputModal" name="stock" id="stock" placeholder="0">
-                </label>
+                <label for="stock" class="col-lg-4 col-md-4 col-sm-12">Stock General
+                    <input type="number" class="form-control inputModal" name="stock" id="stock" step="0.01" value="{{isset($type) ? $product->getPartToProduct->stock:0}}" required {{isset($type) ? 'readonly':''}}>
+                </label>                
             </div>
             </div>
             <!-- Promociones -->
@@ -186,8 +229,9 @@
             </div>
             </div>
 
-            <div class="card-body">
-                <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> <span id="titleBtnSubmit">Asignar</span></button>
+            <div class="card-body text-right">
+                <a href="{{route('product.index')}}" class="btn btn-success float-left"><i class="fa fa-arrow-left"></i></a>
+                <button type="{{$type == 'only_edit' ? 'button':'submit'}}" class="btn btn-primary {{ $type=='only_edit' ? 'displayNone':''}}" id="btnSubmit"><i class="fa fa-check"></i> <span id="titleBtnSubmit">Asignar</span></button>
                 <a href="{{route('product.index')}}" class="btn btn-secondary" id="btnCancelar"><i class="fa fa-times"></i> Cancelar</a>
                 <button type="button" class="btn btn-danger displayNone" id="btnCancelarUpdate" onClick="cancelarUpdate()"><i class="fa fa-times"></i> Cancelar Actualización</button>
             </div>
@@ -197,20 +241,24 @@
                         <br>
                         <table class="table table-striped table-bordered">
                             <thead>
-                                <tr>
+                                <tr class="text-center">
+                                    <th>Codigo</th>
                                     <th>Presentación</th>
-                                    <th class="text-center">Precio</th>
-                                    <th class="text-center">Stock</th>
-                                    <th class="text-center">Descuento</th>
-                                    <th class="text-center">Stock/Vigencia Desc</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th>Precio</th>
+                                    <th>Mayoreo</th>
+                                    <th>Stock</th>
+                                    <th>Descuento</th>
+                                    <th>Stock/Vigencia Desc</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="body_table">
                                 @forelse($part_to_products as $index => $item)
                                     <tr>
-                                        <td>{{$presentation_name[$index]}}</td>
+                                        <td>{{$item->code_bar}}</td>
+                                        <td>{{$item->getUnidadSat->clave_unidad}} - {{$item->getUnidadSat->name}}</td>
                                         <td class="text-center">$ {{$item->price}}</td>
+                                        <td class="text-center">{{$item->cantidad_mayoreo > 0 ? '$ '.$item->price_mayoreo:'N/A'}}</td>
                                         <td class="text-center">{{$item->stock}}</td>
                                         <td class="text-center">
                                             @if($item->monto_porcentaje > 0)
@@ -226,7 +274,7 @@
                                         </td>
                                     </tr>
                                 @empty
-                                <tr><td colspan="6" class="table-warning text-center">Sin presentaciones.</td></tr>
+                                <tr><td colspan="8" class="table-warning text-center">Sin presentaciones.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>

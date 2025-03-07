@@ -15,6 +15,7 @@ class Product extends Model
     //funcion para guardar todos los productos de quick en local
     public function setProducs($products) {
         $branch_id = Auth::User()->branch_id;
+
         if(count($products) && $branch_id){
             foreach($products as $item){
                 $product = ProductModel::find((int)$item->record_id_);
@@ -32,6 +33,11 @@ class Product extends Model
                     $product->unit_description = $item->unidad_sat___descripci_n;
                     $product->existence = $item->existencia_real;
                     $product->taxes = $item->impuesto;
+
+                    $product->precio = (float)$item->preciov_1;
+                    $product->precio_mayoreo = (float)$item->preciov_3;
+                    $product->precio_despiece = (float)$item->preciov_4;
+                    
                     $product->amount_taxes = (float)$item->valor_impuesto;
                     $product->activo = $item->baja == 0 ? 1:0;
                     $product->comments = $item->notas;
@@ -39,14 +45,14 @@ class Product extends Model
                     $product->branch_id = $branch_id;
                     $product->save();
                 
-                    $con=1;
-                    for ($i=1; $i <=4 ; $i++) { 
-                        $price_v = 'preciov_'.$i; 
-                        if($item->$price_v != 0){
-                            $this->setPrice((int)$item->record_id_, $item->$price_v, $con);
-                            $con++;
-                        }   
-                    }
+                    // $con=1;
+                    // for ($i=1; $i <=4 ; $i++) { 
+                    //     $price_v = 'preciov_'.$i; 
+                    //     if($item->$price_v != 0){
+                    //         $this->setPrice((int)$item->record_id_, $item->$price_v, $con);
+                    //         $con++;
+                    //     }   
+                    // }
                 }
             }
             return true;
@@ -57,6 +63,16 @@ class Product extends Model
     //Funcion para obtener marca (linea) del producto
     public function getBrand(){
         return $this->hasOne('App\Models\Brand', 'id', 'brand_id');
+    }
+
+    //Funcion para obtener presentacion
+    public function getPartToProduct(){
+        return $this->hasOne('App\Models\PartToProduct', 'product_id', 'id');
+    }
+
+    //Funcion para obtener presentacion que son despiezado
+    public function getPartToProductDespiezado(){
+        return $this->hasOne('App\Models\PartToProduct', 'product_id', 'id')->where('cantidad_despiezado', '>', 0);
     }
 
     //Funcion para obtener los precios 
