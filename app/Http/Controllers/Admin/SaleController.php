@@ -39,6 +39,7 @@ class SaleController extends Controller
 
             $sale = new Sale();
             $sale->user_id = Auth::User()->id;
+            $sale->branch_id = Auth::User()->branch_id;
             $sale->folio = 0;
             $sale->customer_id = $request->customer_id;
             $sale->date = date('Y-m-d');

@@ -205,7 +205,7 @@
         function getChange(amount_received){
             let total = $('#total_sale').val();
             let change = amount_received - total;
-            $('#change').val(change);
+            $('#change').val(change.toFixed(3));
             if(change>=0){
                 $('#btnAcept').fadeIn();
             }
@@ -300,7 +300,7 @@
                 }
                
                     $.each(cant_sales_detail[index], function(contador, value){   
-                        let subtotal_ = value.cant*val.unit_price;
+                        let subtotal_ = value.cant * val.unit_price;
                         let total_ = (subtotal_ - value.total_descuento) + impuesto;
                         total_descuento += value.total_descuento;
                         total += total_;
@@ -313,7 +313,7 @@
                             <td class="text-center">${tipo_impuesto}</td>
                             <td class="text-center">$ ${number_format(val.unit_price)}</td>
                             <td class="text-center">$ ${impuesto}</td>
-                            <td class="text-center">$ ${number_format(val.subtotal)}</td>
+                            <td class="text-center">$ ${number_format(subtotal_)}</td>
                             <td class="text-center">$ ${number_format(value.total_descuento)}</td>
                             <td class="text-center">$ ${number_format(total_)}</td>
                             <td class="text-center">
@@ -355,6 +355,32 @@
             // $('#label_cant_prod input').val('');
         });
 
+        //funcion para asignar productos por mayoreo
+        window.addEventListener('venta_mayoreo', event => {
+            let presentation = event.detail[0].presentation
+            Swal.fire({
+                    title: "¿Venta por mayoreo?",
+                    text: "El producto se puede vender por mayoreo depues de "+ presentation.cantidad_mayoreo +" piezas en: $ "
+                            +presentation.price_mayoreo+" o al precio de menudeo: $ "+presentation.price,
+                    icon: "info",
+                    input: "number",
+                    inputLabel: "Cantidad",
+                    inputAttributes: {
+                        min: presentation.cantidad_mayoreo,
+                        max: presentation.stock,
+                        step: "0.01",
+                    },
+                    inputValue: presentation.cantidad_mayoreo, 
+                    showDenyButton: true,
+                    confirmButtonText: "SI",
+                    denyButtonText: `NO`
+                }).then((result) => {
+                    Livewire.dispatch('venta_mayoreo_save', {'presentation' : presentation, 'status' : result.isConfirmed, 'cant' : result.value});
+            });
+
+
+        })
+
         //funcion para modificar cantidad de productos registrados
         function btnCantProduct(sale_detail_id, cant){
             $('#update_cant_prod').val(cant);
@@ -373,8 +399,7 @@
         //funcion para formatear numeros
         function number_format(number){
             let value = (number).toLocaleString(
-            undefined, // leave undefined to use the visitor's browser 
-                        // locale or a string like 'en-US' to override it.
+            undefined,
             { minimumFractionDigits: 2 }
             );
             return value;

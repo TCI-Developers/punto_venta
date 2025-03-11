@@ -16,8 +16,6 @@
         //funcion para asignar valores a los inputs
         function update(product){    
             console.log('*', product);
-                
-            
             $('#btnSubmit').attr('disabled', false).attr('type', 'submit').fadeIn();
                             
             swal.fire('Actualización habilitada.', '', 'success');
@@ -36,7 +34,7 @@
             $('#stock').val(product.stock);
             $('#cantidad_mayoreo').val(product.cantidad_mayoreo);
             $('#cantidad_despiezado').val(product.cantidad_despiezado);
-            $('#price_general').val(product.cantidad_despiezado);
+            $('#price_general').val($('#price_general').attr('precio_despiece'));
             //descuento
             $('#tipo_descuento').val(product.tipo_descuento).selectpicker('refresh');
             $('#title_monto_porcentaje').html(product.tipo_descuento == 'monto' ? 'Monto':'Porcentaje');

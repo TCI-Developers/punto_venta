@@ -97,8 +97,8 @@ class SaleDetail extends Model
                 if((float)$item->descuento === $descuento){
                     $cant_detail = SaleDetailCant::find($item->id);
                     $cant_detail->cant += 1;
-                    $cant_detail->descuento = $descuento;
-                    $cant_detail->total_descuento = $cant_detail->cant * $descuento;
+                    $cant_detail->descuento = round($descuento, 2);
+                    $cant_detail->total_descuento = round(($cant_detail->cant * $descuento), 2);
                     $cant_detail->save();
 
                     $ban = true;
@@ -115,13 +115,14 @@ class SaleDetail extends Model
     }
 
     //funcion para guardar cantidades y descuentos de los detalles de venta
-    function saveNewCantDetails($sale_detail_id, $presentation, $with_desc = true){
+    function saveNewCantDetails($sale_detail, $presentation, $with_desc = true){
         $detail_cant = new SaleDetailCant();
-        $detail_cant->sale_detail_id = $sale_detail_id;
+        $detail_cant->sale_detail_id = $sale_detail->id;
         $detail_cant->part_to_product_id = $presentation->id;
+        $detail_cant->sale_id = $sale_detail->sale_id;
         $detail_cant->cant = 1;
-        $detail_cant->descuento = $with_desc ? ($presentation->monto_porcentaje ?? 0):0;
-        $detail_cant->total_descuento = $with_desc ? ($presentation->monto_porcentaje ?? 0):0;
+        $detail_cant->descuento = $with_desc ? (round($presentation->monto_porcentaje,2) ?? 0):0;
+        $detail_cant->total_descuento = $with_desc ? (round($presentation->monto_porcentaje,2) ?? 0):0;
         $detail_cant->save();
 
         return $detail_cant;

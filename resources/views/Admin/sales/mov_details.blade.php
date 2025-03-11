@@ -43,14 +43,14 @@
             @foreach($item->getCantSalesDetail as $value)
             @php
                 $impuestos += $item->iva != 0 ? $item->iva:$item->ieps;
-                $total_sale_ += (($item->unit_price * $value->cant) - ($value->descuento*$value->cant)) + $impuestos;
-                $total_desc_ += ($value->descuento*$value->cant);
+                $total_sale_ += (($item->unit_price * $value->cant) - ($value->total_descuento)) + $impuestos;
+                $total_desc_ += $value->total_descuento ?? 0;
             @endphp
 
             <tr class="text-center" ident="tr-{{$item->getPartToProduct->getProduct->code_product}}">
                 <td>{{$item->getPartToProduct->getProduct->code_product}}</td>
                 <td>{{$value->cant}}</td>
-                <td>{{$item->getPartToProduct->getPresentation->getUnidadSat->clave_unidad}} - {{$item->getPartToProduct->getPresentation->getUnidadSat->name}}</td>
+                <td>{{$item->getPartToProduct->getProduct->unit}} - {{$item->getPartToProduct->getProduct->unit_description}}</td>
                 <td>
                     @if($item->iva == 0 && $item->ieps == 0)
                         SYS
@@ -58,9 +58,9 @@
                         {{$item->iva != 0 ? 'IVA':'IEPS'}}
                     @endif
                 </td>
-                <td>${{number_format($item->unit_price,2)}}</td>
-                <td>${{$item->iva != 0 ? number_format($item->iva,2):number_format($item->ieps,2)}}</td>
-                <td>${{number_format(($item->unit_price*$value->cant),2)}}</td>
+                <td>$ {{number_format($item->unit_price,2)}}</td>
+                <td>$ {{$item->iva != 0 ? number_format($item->iva,2):number_format($item->ieps,2)}}</td>
+                <td>$ {{number_format(($item->unit_price*$value->cant),2)}}</td>
                 <td>$ {{ number_format($value->total_descuento, 2) }}</td>
                 <td>$ {{number_format(((($item->unit_price * $value->cant) - $value->total_descuento) + $impuestos), 2)}}</td>
                 @if($sale->amount_received == 0) 

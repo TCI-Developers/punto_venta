@@ -5,21 +5,24 @@ namespace App\Livewire\Boxes;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\{Box as BoxModel, Devolution};
+use Illuminate\Support\Facades\Auth;
 
 class Box extends Component
 {   
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
     public $paginate_cant = 25;
+    public $user = '';
     // public $search = '';
 
     public function render()
-    {   
+    {   $this->user = Auth::User();   
+
         $current_date = date('Y-m-d').' 23:59:59';
         // if($this->search == ''){
         //     $this->boxes = BoxModel::where('end_date', '<=' ,$current_date)->orderBy('end_date', 'asc')->paginate($this->paginate_cant);
         // }else{
-            $boxes = BoxModel::where('end_date', '<=' ,$current_date)->orderBy('end_date', 'asc')->paginate($this->paginate_cant);
+            $boxes = BoxModel::where('branch_id',$this->user->branch_id)->where('end_date', '<=' ,$current_date)->orderBy('end_date', 'asc')->paginate($this->paginate_cant);
         // }
         return view('livewire.boxes.box', ['boxes' => $boxes]);
     }

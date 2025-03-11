@@ -21,7 +21,7 @@
                         <th>Descripción</th>
                         <th>Linea</th>
                         <th>Unidad</th>
-                        <th>Existencias</th>
+                        <th>Stock</th>
                         <th>Precio Unitario</th>
                         <th>Precio Mayoreo</th>
                         <th>Precio Despiece</th>
@@ -37,7 +37,12 @@
                         <td class="text-center">{{$item->description}}</td>
                         <td class="text-center">{{$item->getBrand->name}}</td>
                         <td class="text-center">{{$item->unit}}</td>
-                        <td class="text-center">{{number_format($item->existence,2)}}</td>
+
+                        <td class="text-center">
+                            @if(is_object($item->getPartToProduct))
+                            <span class="badge badge-primary">{{number_format($item->getPartToProduct->stock ?? 0,2)}}</span>
+                            @endif
+                        </td>
                         <td class="text-center">$ {{number_format($item->precio,2)}}</td>
                         <td class="text-center">$ {{number_format($item->precio_mayoreo,2)}}</td>
                         <td class="text-center">$ {{number_format($item->precio_despiece,2)}}</td>

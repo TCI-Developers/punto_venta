@@ -113,7 +113,7 @@ class UserController extends Controller
                 Auth::login($exist_user); 
             }
 
-            if(!Auth::User()->hasAnyRole(['root'])){
+            if(!Auth::User()->hasAnyRole(['root', 'admin'])){
                 return redirect()->route('admin.startAmountBox');
             }else{
                 return redirect()->route('branch.index');

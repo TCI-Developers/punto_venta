@@ -77,7 +77,7 @@
                                 <span class="input-group-text">$</span>
                             </div>
                             <input type="number" name="total_sale" id="total_sale" class="form-control input_amounts input_sale text-center" placeholder="0" 
-                            value="{{(int)$sale->amount_received > 0 ? $sale->total_sale:$sale->getAmount($sale->id)}}" readonly>
+                            value="{{(int)$sale->amount_received > 0 ? $sale->total_sale:$sale->getAmount($sale->id)}}" step="0.01" readonly>
                         </div>
                     </label>
                     <label for="change" class="col-lg-3 col-md-3 col-sm-12 padding-0"> Cambio <br>
@@ -85,7 +85,7 @@
                             <div class="input-group-prepend">
                                 <span class="input-group-text">$</span>
                             </div>
-                            <input type="number" name="change" id="change" class="form-control input_amounts input_sale text-center" placeholder="0" value="{{$sale->change}}" readonly>
+                            <input type="number" name="change" id="change" class="form-control input_amounts input_sale text-center" step="0.01" placeholder="0" step="0.01" value="{{$sale->change}}" readonly>
                         </div>
                     </label>
                 </div>

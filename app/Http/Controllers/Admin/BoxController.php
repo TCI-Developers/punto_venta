@@ -64,6 +64,7 @@ class BoxController extends Controller
 
         $box = new Box();
         $box->user_id = $user->id;
+        $box->branch_id = $user->branch_id;
         $box->status = 0;
         $box->start_date = date('Y-m-d H:i:s');
         $box->start_amount_box = $request->start_amount_box;

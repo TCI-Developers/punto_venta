@@ -1,6 +1,6 @@
 <div class="card card-primary">
         <div class="form-group card-header with-border text-center">
-            <h2>Cortes de caja</h2>
+            <h2>Cortes de caja sucursal {{$user->getBranch->name}}</h2>
         </div>
         <div class="card-body table-responsive">
             <table class="table table-striped table-bordered datatable">
@@ -34,13 +34,13 @@
                                     <span class="badge badge-success">Completada</span>
                                 @else
                                     <span class="badge badge-warning">Completada Irregular</span>
-                                    @if((int)$item->amount_credit_user != (int)$item->amount_credit_system)
-                                    <br><span class="badge {{(int)$item->amount_credit_system > (int)$item->amount_credit_user ? 'badge-danger':'badge-primary'}}">
+                                    @if((float)$item->amount_credit_user != (float)$item->amount_credit_system)
+                                    <br><span class="badge {{(float)$item->amount_credit_system > (float)$item->amount_credit_user ? 'badge-danger':'badge-primary'}}">
                                         {{($item->amount_credit_system - $item->amount_credit_user) < 0 ? '+':'-'}} $ {{number_format(abs($item->amount_credit_system - $item->amount_credit_user),2)}}
                                     </span>
                                     @endif
-                                    @if((int)$item->amount_cash_user != (int)$item->amount_cash_system)
-                                    <br><span class="badge {{(int)$item->amount_cash_system > (int)$item->amount_cash_user ? 'badge-danger':'badge-primary'}}">
+                                    @if((float)$item->amount_cash_user != (float)$item->amount_cash_system)
+                                    <br><span class="badge {{(float)$item->amount_cash_system > (float)$item->amount_cash_user ? 'badge-danger':'badge-primary'}}">
                                         {{($item->amount_cash_system - $item->amount_cash_user) < 0 ? '+':'-'}} $ {{number_format(abs($item->amount_cash_system - $item->amount_cash_user),2)}}
                                     </span>
                                     @endif

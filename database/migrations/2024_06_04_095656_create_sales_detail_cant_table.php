@@ -15,12 +15,14 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('sale_detail_id');
             $table->unsignedBigInteger('part_to_product_id');
+            $table->unsignedBigInteger('sale_id');
             $table->integer('cant');
             $table->double('descuento')->default(0);
             $table->double('total_descuento')->default(0);
             $table->boolean('status')->default(1);
             $table->foreign('sale_detail_id')->references('id')->on('sales_detail');
             $table->foreign('part_to_product_id')->references('id')->on('parts_to_product');
+            $table->foreign('sale_id')->references('id')->on('sales');
             $table->timestamps();
         });
     }

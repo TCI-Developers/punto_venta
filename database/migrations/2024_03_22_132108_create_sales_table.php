@@ -16,6 +16,7 @@ return new class extends Migration
             $table->date('date');
             $table->string('folio');
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('branch_id');
             $table->string('uuid')->nullable();
             $table->unsignedBigInteger('payment_method_id');
             $table->string('type_payment', 50);
@@ -28,6 +29,7 @@ return new class extends Migration
             $table->unsignedBigInteger('customer_id');
             $table->string('type', 100)->nullable();
             $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('branch_id')->references('id')->on('branchs');
             $table->foreign('customer_id')->references('id')->on('customers');
             $table->timestamps();
         });

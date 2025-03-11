@@ -15,6 +15,11 @@ class SaleDetailCant extends Model
         return $this->hasOne('App\Models\SaleDetail', 'id', 'sale_detail_id');
     }
 
+    //Funcion para obtener el detalle de venta
+    public function getPresentation(){
+        return $this->hasOne('App\Models\PartToProduct', 'id', 'part_to_product_id');
+    }
+
     //funcion para saber si es el mismo registro con descuento pero ya no hay stock de descuento
     public function newSaleDetailCant($saleDetailCant, $presentation){
         if((float)$saleDetailCant->descuento > 0 && $presentation->vigencia == 0 && $presentation->vigencia_cantidad_fecha == 'cantidad'){

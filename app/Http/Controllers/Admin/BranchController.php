@@ -136,7 +136,7 @@ class BranchController extends Controller
     public function setSucursalUser($branch_id){
         $user = Auth::User();
 
-        if($user->branch_id !== null && $user->branch_id != $branch_id){
+        if($user->branch_id !== null && $user->branch_id != $branch_id && !$user->hasAnyRole(['root', 'admin'])){
             return redirect()->back()->with('error', 'No puedes cambiar de sucursal, hasta no cerrar sesión.');
         }
 

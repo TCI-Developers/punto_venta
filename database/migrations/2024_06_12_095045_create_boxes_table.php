@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('boxes', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('branch_id');
             $table->datetime('start_date');
             $table->datetime('end_date')->nullable();
             $table->double('amount_credit_user')->default(0);
@@ -40,6 +41,7 @@ return new class extends Migration
 
             $table->integer('status')->default(1); //1 = Correcto, 2 = No coincide lo ingresado con lo del sistema, 3 = corregido
             $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('branch_id')->references('id')->on('branchs');
             $table->timestamps();
         });
     }
