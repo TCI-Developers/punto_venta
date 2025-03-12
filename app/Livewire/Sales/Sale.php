@@ -133,11 +133,11 @@ class Sale extends Component
                 // $this->newOrUpdateSaleDetailCant($response, $sale_detail, $sale_detail_cant, $presentation); //actualizamos o creamos nuevo registro sale_detail_cant
                 // $this->calculoImpuestos($sale_detail, $presentation); //calculo de impuestos
                 // $data = $this->getDataSales();
-                $this->data = $this->saveMenudeo($presentation);
+                $this->saveMenudeo($presentation);
 
-                $this->dispatch('scan', ['product' => $this->data['product_detail'], 'persentation' => $this->data['presentation_detail'], 
-                                        'sales_detail' => $this->sales_detail, 'unidad_sat' => $this->data['unidad_sat'],
-                                        'promotions' => $this->data['promotions'], 'cant_sales_detail' => $this->data['cant_sales_detail']]);
+                // $this->dispatch('scan', ['product' => $this->data['product_detail'], 'persentation' => $this->data['presentation_detail'], 
+                //                         'sales_detail' => $this->sales_detail, 'unidad_sat' => $this->data['unidad_sat'],
+                //                         'promotions' => $this->data['promotions'], 'cant_sales_detail' => $this->data['cant_sales_detail']]);
             }           
         }else{
             $this->dispatch('scan', ['error' => true]);
@@ -145,7 +145,7 @@ class Sale extends Component
     }
 
     //funcion para guardar en sale_detail
-    function saveSaleDetail($presentation){
+    function saveSaleDetail($presentation, $type = null){
         $sale_details = SaleDetail::where('sale_id', $this->id)->where('part_to_product_id', $presentation->id)
                                     ->where('unit_price', $presentation->price)->get();
 
@@ -157,7 +157,7 @@ class Sale extends Component
             $sale_detail = new SaleDetail(); //guardamos el detalle de venta
             $sale_detail->part_to_product_id = $presentation->id;
             $sale_detail->sale_id = $this->id;
-            $sale_detail->unit_price = round($presentation->price, 2);
+            $sale_detail->unit_price = round((is_null($type) ? $presentation->price:$presentation->price_mayoreo), 2);
             $sale_detail->save();
         }
 
@@ -316,9 +316,11 @@ class Sale extends Component
         $response = $this->restarStock($presentation); //restamos el stock de la presentacion
         $this->newOrUpdateSaleDetailCant($response, $sale_detail, $sale_detail_cant, $presentation); //actualizamos o creamos nuevo registro sale_detail_cant
         $this->calculoImpuestos($sale_detail, $presentation); //calculo de impuestos
-        $data = $this->getDataSales();
+        $this->data = $this->getDataSales();
 
-        return $data;
+        $this->dispatch('scan', ['product' => $this->data['product_detail'], 'persentation' => $this->data['presentation_detail'], 
+                                        'sales_detail' => $this->sales_detail, 'unidad_sat' => $this->data['unidad_sat'],
+                                        'promotions' => $this->data['promotions'], 'cant_sales_detail' => $this->data['cant_sales_detail']]);
     }
 
     //funcion para agregar producto con precio de mayoreo
@@ -327,9 +329,21 @@ class Sale extends Component
             $exist_sale_detail_cant = SaleDetailCant::where('part_to_product_id', $presentation['id'])->first();
             if(is_object($exist_sale_detail_cant)){
                 $this->dispatch('alert', ['message' => 'Este producto ya esta registrado, para agregarlo como mayoreo, eliminalo primero.']);
+            }else{   
+                $presentation = PartToProduct::find($presentation['id']);
+                $sale_detail = $this->saveSaleDetail($presentation, 'mayoreo');
+                $sale_detail_cant = $sale_detail->saveNewCantDetails($sale_detail, $presentation, false, $cant);
+                $this->setStock($presentation, $cant, 'mayoreo');
+                $this->calculoImpuestos($sale_detail, $presentation); //calculo de impuestos
+
+                $this->data = $this->getDataSales();
+
+                $this->dispatch('scan', ['product' => $this->data['product_detail'], 'persentation' => $this->data['presentation_detail'], 
+                                        'sales_detail' => $this->sales_detail, 'unidad_sat' => $this->data['unidad_sat'],
+                                        'promotions' => $this->data['promotions'], 'cant_sales_detail' => $this->data['cant_sales_detail']]);
             }
-            // $sale_detail = $this->saveSaleDetail($presentation); SEGUIR AQUI CON LOS DE MAYOREO
         }else{
+            $presentation = PartToProduct::find($presentation['id']);
             $this->saveMenudeo($presentation);
         }
     }
@@ -388,7 +402,7 @@ class Sale extends Component
                                     'promotions' => $data['promotions'], 'cant_sales_detail' => $data['cant_sales_detail']]);
             }
         }
-    },,
+    }
 
     //funcion para eliminar un producto ya agregado en la venta
     public function destroyProduct($sale_detail_cant_id){
@@ -426,8 +440,10 @@ class Sale extends Component
             foreach($presentacionese_existentes as $item){
                 if($type == 'mas'){
                     $item->stock = $item->stock + $cant;
-                }else{
+                }else if($type == 'menos'){
                     $item->stock = $item->stock - 1;
+                }else{
+                    $item->stock = $item->stock - $cant;
                 }
                 $item->save();
             }
