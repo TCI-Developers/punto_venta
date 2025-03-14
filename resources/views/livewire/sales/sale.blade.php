@@ -67,7 +67,8 @@
                         <td>{{$item->folio}}</td>
                         <td>{{date('d-m-Y', strtotime($item->date))}}</td>
                         <td>{{$item->getPaymentMethod->pay_method}}</td> 
-                        <td>$ {{number_format($item->getAmount($item->id),2)}}</td>
+                        {{-- <td>$ {{number_format($item->getAmount($item->id),2)}}</td> --}}
+                        <td>$ {{number_format($item->total_sale,2)}}</td>
                         <td>{{date('d-m-Y H:i:s', strtotime($item->updated_at))}}</td>
                         <td>
                             <a href="{{route('sale.show', $item->id)}}" class="btn btn-info btn-sm" data-toggle="tooltip" data-placement="top" title="Ver venta"
@@ -77,6 +78,13 @@
                     @empty
                     <tr id="trEmpty"><td colspan="{{Auth::User()->hasRole('admin') ? '7':'6'}}" class="table-warning text-center">Sin Ventas</td></tr>
                     @endforelse
+                    
+                    @if(!Auth::User()->hasAnyRole(['admin', 'root']))
+                    <tr>
+                        <td colspan="3" class="text-bold text-right">Total Tarjeta: $ {{number_format($total_tarjeta,2) ?? 0}}</td>
+                        <td colspan="3" class="text-bold text-right">Total Efectivo: $ {{number_format($total_efectivo,2) ?? 0}}</td>
+                    </tr>
+                    @endif
                 </tbody>
             </table>
             </div>

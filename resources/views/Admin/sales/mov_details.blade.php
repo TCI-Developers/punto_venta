@@ -66,6 +66,7 @@
                 @if($sale->amount_received == 0) 
                 <td>
                     {{--<button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct({{$value->id}},{{$value->cant}})"><i class="fa fa-edit"></i></button> --}}
+                    <button type="button" class="btn btn-info btn-sm" onClick="btnCantProduct({{$item->getPartToProduct->id}})"><i class="fa fa-plus"></i></button>
                     <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct({{$value->id}})"><i class="fa fa-trash"></i></button>
                 </td>
                 @endif

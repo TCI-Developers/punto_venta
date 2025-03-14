@@ -8,7 +8,7 @@
       <div class="modal-body col-12">
           <label for="new_cant_prod" id="label_cant_prod" class="col-12 text-center">Cantidad
               <input type="number" class="form-control text-center" id="update_cant_prod" min="1">
-              <input type="hidden" class="form-control text-center" id="update_sale_detail_id" >
+              <input type="hidden" class="form-control text-center" id="presentation_id" >
           </label>
       </div>
 

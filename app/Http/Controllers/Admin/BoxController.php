@@ -85,24 +85,22 @@ class BoxController extends Controller
         $total_tarjeta = Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'tarjeta')->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale'); 
         
         $totalTicketsCoins = $this->getTotalTicketsCoins($request->tickets, $request->coins);
-        
-        $rules = $this->rules($box->start_amount_box ?? 0,$request->monto_efectivo, $request->monto_tarjeta, $total_efectivo ?? 0, $total_tarjeta ?? 0);
-        $rules_tickets_coins = $this->rules_tickets_coins($box->start_amount_box, $totalTicketsCoins, $total_efectivo);
+        $rules = $this->rules(round($box->start_amount_box,2) ?? 0, round($request->monto_efectivo), round($request->monto_tarjeta, 2), round($total_efectivo, 2) ?? 0, round($total_tarjeta, 2) ?? 0);
+        $rules_tickets_coins = $this->rules_tickets_coins(round($box->start_amount_box,2), round($totalTicketsCoins,2), round($total_efectivo,2));
            
-
         if(!$request->acept){
             $validated = $request->validate($rules[0], $rules[1]);
             $validate_tickets_coins = $request->validate($rules_tickets_coins);
         } 
 
         $box->end_date = $end_date;
-        $box->amount_credit_system = $total_tarjeta;
-        $box->amount_cash_system = $total_efectivo;
-        $box->total_system = $total_tarjeta + $total_efectivo;
+        $box->amount_credit_system = round($total_tarjeta, 2);
+        $box->amount_cash_system = round($total_efectivo, 2);
+        $box->total_system = round(($total_tarjeta + $total_efectivo), 2);
 
-        $box->amount_credit_user = $request->monto_tarjeta;
-        $box->amount_cash_user = $request->monto_efectivo;
-        $box->total_user = $request->monto_tarjeta + $request->monto_efectivo;
+        $box->amount_credit_user = round($request->monto_tarjeta,2);
+        $box->amount_cash_user = round($request->monto_efectivo,2);
+        $box->total_user = round(($request->monto_tarjeta + $request->monto_efectivo),2);
 
         $box->ticket_1000 = $request->tickets['1000'] ?? 0;
         $box->ticket_500 = $request->tickets['500'] ?? 0;
@@ -117,8 +115,8 @@ class BoxController extends Controller
         $box->coin_2 = $request->coins['2'] ?? 0;
         $box->coin_1 = $request->coins['1'] ?? 0;
         $box->coin_50_cen = $request->coins['_50'] ?? 0;
-
-        $box->status = ($total_tarjeta + $total_efectivo) == ($request->monto_tarjeta + ($request->monto_efectivo - $box->start_amount_box)) ? 1:2;
+        dd($total_efectivo);
+        $box->status = round(($total_tarjeta + $total_efectivo),2) == round(($request->monto_tarjeta + ($request->monto_efectivo - $box->start_amount_box)),2) ? 1:2;
         $box->save();
 
         Auth::logout(Auth::User());
@@ -142,7 +140,6 @@ class BoxController extends Controller
 
     //reglas de validacion
     public function rules($start_amount_box, $efectivo, $tarjeta, $total_efectivo, $total_tarjeta){
-
         if($efectivo == null || $efectivo > 0 && $tarjeta == null || $tarjeta > 0){
             $arr[0] = ['monto_efectivo' => 'required|in:'.($total_efectivo + $start_amount_box).'', 'monto_tarjeta' => 'required|in:'.$total_tarjeta.''];
             $arr[1] = ['monto_efectivo' => 'El monto que ingresaste no concuerda con lo vendido en efectivo.', 'monto_tarjeta' => 'El monto que ingresaste no concuerda con lo vendido con tarjeta.']; 
@@ -153,6 +150,7 @@ class BoxController extends Controller
             $arr[0] = ['monto_tarjeta' => 'required|in:'.$total_tarjeta.''];
             $arr[1] = ['monto_tarjeta' => 'El monto que ingresaste no concuerda con lo vendido con tarjeta.'];
         }
+
         return $arr;
     } 
 
@@ -164,8 +162,6 @@ class BoxController extends Controller
                     if ($total_tickets_coins == 0) {
                         $fail('Ingresa el conteo de billetes y monedas.');
                     }else if($total_tickets_coins != ($total_efectivo + $start_amount_box)){
-                        echo $total_tickets_coins.'<br>';
-                        echo ($total_efectivo + $start_amount_box).'<br>';
                         $fail('El conteo de billetes y monedas no concuerda con el total de ventas que realizaste.');
                     }
                 },

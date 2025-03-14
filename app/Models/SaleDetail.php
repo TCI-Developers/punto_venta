@@ -116,13 +116,19 @@ class SaleDetail extends Model
 
     //funcion para guardar cantidades y descuentos de los detalles de venta
     function saveNewCantDetails($sale_detail, $presentation, $with_desc = true, $cant = 1){
+        if($presentation->tipo_descuento == 'porcentaje'){
+            $descuento = (($presentation->monto_porcentaje*$presentation->price)/100)*$cant;
+        }else{
+            $descuento = ($presentation->monto_porcentaje*$cant);
+        }
+
         $detail_cant = new SaleDetailCant();
         $detail_cant->sale_detail_id = $sale_detail->id;
         $detail_cant->part_to_product_id = $presentation->id;
         $detail_cant->sale_id = $sale_detail->sale_id;
         $detail_cant->cant = $cant;
         $detail_cant->descuento = $with_desc ? (round($presentation->monto_porcentaje,2) ?? 0):0;
-        $detail_cant->total_descuento = $with_desc ? (round($presentation->monto_porcentaje,2) ?? 0):0;
+        $detail_cant->total_descuento = $with_desc ? (round($descuento,2) ?? 0):0;
         $detail_cant->save();
 
         return $detail_cant;

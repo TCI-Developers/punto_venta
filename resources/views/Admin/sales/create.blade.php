@@ -253,7 +253,7 @@
     </script>
 
     <script>
-        window.addEventListener('scan', event => {           
+        window.addEventListener('scan', event => {      
             let sale_detail = event.detail[0].sales_detail;
             let cant_sales_detail = event.detail[0].cant_sales_detail;
             let product = event.detail[0].product;
@@ -264,8 +264,8 @@
             let total = 0.00;
             let descuento = 0.00;
 
-           
-
+            console.log('*', presentation);
+            
             if(presentation.length > 0 && presentation[presentation.length - 1].stock < 0){
                 swal.fire('Sin existencias en sistema.', '', 'info');
                 Livewire.dispatch('stockOff', {'sale_detail_id' : sale_detail[sale_detail.length - 1].id,
@@ -273,19 +273,20 @@
             }
             
             $('#tbody_details').empty();
-            
             if(sale_detail.length){
                 $('#btnCobro').fadeIn();
             }else{
                 $('#btnCobro').fadeOut();
             }
 
-            console.log('scan', event.detail[0]);
-
+            if(sale_detail.length == 0){
+                $('#tbody_details').append(`
+                    <tr id="trEmpty"><td colspan="10" class="table-warning text-center">Sin movimientos.</td></tr>
+                `);
+            }
+            
             let total_descuento = 0;
-            $.each(sale_detail, function(index, val){       
-               
-                         
+            $.each(sale_detail, function(index, val){          
                 let tipo_impuesto = '';
                 let impuesto = 0.00;
                 if(val.iva == 0 && val.ieps == 0){
@@ -298,34 +299,34 @@
                         impuesto = parseFloat(val.ieps);
                     }
                 }
-               
-                    $.each(cant_sales_detail[index], function(contador, value){   
-                        let subtotal_ = value.cant * val.unit_price;
-                        let total_ = (subtotal_ - value.total_descuento) + impuesto;
-                        total_descuento += value.total_descuento;
-                        total += total_;
-                        
-                        $('#tbody_details').append(`
-                        <tr class="text-center" ident="tr-${product[index]['code_product']}">
-                            <td>${product[index]['code_product']}</td>
-                            <td class="text-center">${value.cant}</td>
-                            <td class="text-center">${unidad_sat[index]}</td>
-                            <td class="text-center">${tipo_impuesto}</td>
-                            <td class="text-center">$ ${number_format(val.unit_price)}</td>
-                            <td class="text-center">$ ${impuesto}</td>
-                            <td class="text-center">$ ${number_format(subtotal_)}</td>
-                            <td class="text-center">$ ${number_format(value.total_descuento)}</td>
-                            <td class="text-center">$ ${number_format(total_)}</td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct(${value.id})"><i class="fa fa-trash"></i></button>
-                            </td>
-                        </tr>
-                        `);
-                    });
-            });
-
-            // <button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct(${value.id}, ${val.cant})"><i class="fa fa-edit"></i></button>
-           
+                console.log('entra', cant_sales_detail.length);
+                
+                
+                $.each(cant_sales_detail[index], function(contador, value){   
+                    let subtotal_ = value.cant * val.unit_price;
+                    let total_ = (subtotal_ - value.total_descuento) + impuesto;
+                    total_descuento += value.total_descuento;
+                    total += total_;
+                    
+                    $('#tbody_details').append(`
+                    <tr class="text-center" ident="tr-${product[index]['code_product']}">
+                        <td>${product[index]['code_product']}</td>
+                        <td class="text-center">${value.cant}</td>
+                        <td class="text-center">${unidad_sat[index]}</td>
+                        <td class="text-center">${tipo_impuesto}</td>
+                        <td class="text-center">$ ${number_format(val.unit_price)}</td>
+                        <td class="text-center">$ ${impuesto}</td>
+                        <td class="text-center">$ ${number_format(subtotal_)}</td>
+                        <td class="text-center">$ ${number_format(value.total_descuento)}</td>
+                        <td class="text-center">$ ${number_format(total_)}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-info btn-sm" onClick="btnCantProduct(${presentation[index]['id']})"><i class="fa fa-plus"></i></button>
+                            <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct(${value.id})"><i class="fa fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    `);
+                });
+            });           
             
             $('#tbody_total').empty().append(`
                 <tr class="table-info"><td colspan="6"></td>
@@ -336,7 +337,7 @@
                 </tr>
             `);
             
-            $('#presentation_id').focus();
+            $('#presentation_id').val('').focus();
             $('#update_cant_prod').val('');
             $('#update_sale_detail_id').val('');
             $('#modal_cant').fadeOut();
@@ -352,48 +353,20 @@
         //funcion para mostrar alerta de stock
         window.addEventListener('alert', event => {   
             swal.fire(event.detail[0].message, '', 'info');
-            // $('#label_cant_prod input').val('');
         });
 
-        //funcion para asignar productos por mayoreo
-        window.addEventListener('venta_mayoreo', event => {
-            let presentation = event.detail[0].presentation
-            Swal.fire({
-                    title: "¿Venta por mayoreo?",
-                    text: "El producto se puede vender por mayoreo depues de "+ presentation.cantidad_mayoreo +" piezas en: $ "
-                            +presentation.price_mayoreo+" o al precio de menudeo: $ "+presentation.price,
-                    icon: "info",
-                    input: "number",
-                    inputLabel: "Cantidad",
-                    inputAttributes: {
-                        min: presentation.cantidad_mayoreo,
-                        max: presentation.stock,
-                        step: "0.01",
-                    },
-                    inputValue: presentation.cantidad_mayoreo, 
-                    showDenyButton: true,
-                    confirmButtonText: "SI",
-                    denyButtonText: `NO`
-                }).then((result) => {
-                    Livewire.dispatch('venta_mayoreo_save', {'presentation' : presentation, 'status' : result.isConfirmed, 'cant' : result.value});
-            });
-
-
-        })
-
         //funcion para modificar cantidad de productos registrados
-        function btnCantProduct(sale_detail_id, cant){
-            $('#update_cant_prod').val(cant);
-            $('#update_sale_detail_id').val(sale_detail_id);
+        function btnCantProduct(presentation_id){
+            $('#presentation_id').val(presentation_id);
             $('#modal_cant').fadeIn();
         }
 
         //funcion para actualizar cantidad de producto
         function updateCant(){
-            let sale_detail_id = $('#update_sale_detail_id').val();
+            let presentation_id = $('#presentation_id').val();
             let cant = $('#update_cant_prod').val();
             
-            Livewire.dispatch('updateCant', {'sale_detail_cant_id' : sale_detail_id, 'cant' : cant});
+            Livewire.dispatch('updateCant', {'presentation_id' : presentation_id, 'cant' : cant});
         }
 
         //funcion para formatear numeros

@@ -5,7 +5,7 @@ namespace App\Livewire\Sales;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\{Sale as SaleModel, Customer, PaymentMethod, Product, Price, SaleDetail, SaleDetailCant, PartToProduct, UnidadSat, Devolucion};
-use Illuminate\Support\Facades\{Auth, Log};
+use Illuminate\Support\Facades\{Auth, Log, DB};
 use Livewire\Attributes\Validate;
 
 class Sale extends Component
@@ -15,7 +15,6 @@ class Sale extends Component
         'updateCant' => 'updateCant',
         'destroyProduct' => 'destroyProduct',
         'stockOff' => 'stockOff',
-        'venta_mayoreo_save' => 'venta_mayoreo_save',
     ];
 
     use WithPagination;
@@ -97,7 +96,14 @@ class Sale extends Component
             }
         }
 
-        return view('livewire.sales.sale',['sales' => $sales]);
+        $total_efectivo = 0;
+        $total_tarjeta = 0;
+        foreach($sales as $item){
+            $total_efectivo += $item->type_payment == 'efectivo' ? $item->total_sale:0;
+            $total_tarjeta += $item->type_payment == 'tarjeta' ? $item->total_sale:0;
+        }
+
+        return view('livewire.sales.sale',['sales' => $sales, 'total_efectivo' => $total_efectivo, 'total_tarjeta' => $total_tarjeta]);
     }
 
     //funcion obtener fechas de filtro
@@ -120,25 +126,14 @@ class Sale extends Component
     //funcion para obtener datos con scaner
     public function scaner_codigo(){
         $presentation = PartToProduct::where('code_bar', $this->scan_presentation_id)->first();
-
         $this->scan_presentation_id = '';
         if(is_object($presentation)){
-
-            if($presentation->price_mayoreo > 0 && $presentation->cantidad_mayoreo > 0){
-                $this->dispatch('venta_mayoreo', ['presentation' => $presentation]);
-            }else{
-                // $sale_detail = $this->saveSaleDetail($presentation); //guardamos en save_detail
-                // $sale_detail_cant = $this->saveSaleDetailCant($sale_detail, $presentation); //guardamos en save_detail_cant
-                // $response = $this->restarStock($presentation); //restamos el stock de la presentacion
-                // $this->newOrUpdateSaleDetailCant($response, $sale_detail, $sale_detail_cant, $presentation); //actualizamos o creamos nuevo registro sale_detail_cant
-                // $this->calculoImpuestos($sale_detail, $presentation); //calculo de impuestos
-                // $data = $this->getDataSales();
-                $this->saveMenudeo($presentation);
-
-                // $this->dispatch('scan', ['product' => $this->data['product_detail'], 'persentation' => $this->data['presentation_detail'], 
-                //                         'sales_detail' => $this->sales_detail, 'unidad_sat' => $this->data['unidad_sat'],
-                //                         'promotions' => $this->data['promotions'], 'cant_sales_detail' => $this->data['cant_sales_detail']]);
-            }           
+                $cantidad = $this->mayoreo_or_menudeo($presentation);
+                if($cantidad){
+                    $this->venta_mayoreo_save($presentation, $cantidad);
+                }else{
+                    $this->saveMenudeo($presentation);
+                }       
         }else{
             $this->dispatch('scan', ['error' => true]);
         }
@@ -170,7 +165,6 @@ class Sale extends Component
 
         if(!count($sale_detail_cants)){
             $withDesc = false;
-           
             if(!is_null($presentation->vigencia) && !is_null($presentation->tipo_descuento) && $presentation->vigencia_cantidad_fecha == 'cantidad' && $presentation->vigencia > 0){
                 $withDesc = true;
             }else if(!is_null($presentation->vigencia) && !is_null($presentation->tipo_descuento) && $presentation->vigencia_cantidad_fecha == 'fecha' && $presentation->vigencia < date('Y-m-d H:i:s')){
@@ -190,7 +184,7 @@ class Sale extends Component
         if(!is_null($presentation->vigencia) && !is_null($presentation->tipo_descuento) && $presentation->vigencia_cantidad_fecha == 'cantidad'){
                 $presentation->vigencia = (float)$presentation->vigencia - 1;
         }
-        
+
         if(!is_null($presentation->vigencia) && $presentation->vigencia < 0){
             $presentation->vigencia = null;
             $presentation->save();
@@ -199,11 +193,6 @@ class Sale extends Component
             $presentation->save();
             return 'update';
         }
-    }
-
-    //funcion para sumar vigencia en presentacion
-    function sumarVigencia($presentation, $sale_detail_cant){
-
     }
 
     //funcion para actualizar o crear nuevo regstro en sale_detail_cant
@@ -244,19 +233,20 @@ class Sale extends Component
                 }
             }
 
-            $sale_detail_cant->descuento = 0;
-            if(!is_null($presentation->vigencia) && $presentation->tipo_descuento == 'monto'){
-                $sale_detail_cant->descuento = round(($presentation->monto_porcentaje ?? 0), 2);
-                $sale_detail_cant->total_descuento = round(((($presentation->monto_porcentaje ?? 0) * $sale_detail_cant->cant)), 2);
-            }else if(!is_null($presentation->vigencia) && $presentation->tipo_descuento == 'porcentaje'){
-                $sale_detail_cant->descuento = round(($presentation->monto_porcentaje ?? 0),2);
-                $sale_detail_cant->total_descuento = 0;
-                if(!is_null($presentation->monto_porcentaje) && $presentation->monto_porcentaje > 0){
-                    $sale_detail_cant->total_descuento = round(((($presentation->price * $presentation->monto_porcentaje)/100)*$sale_detail_cant->cant),2);
+                $sale_detail_cant->descuento = 0;
+                if(!is_null($presentation->vigencia) && $presentation->tipo_descuento == 'monto'){
+                    $sale_detail_cant->descuento = round(($presentation->monto_porcentaje ?? 0), 2);
+                    $sale_detail_cant->total_descuento = round(((($presentation->monto_porcentaje ?? 0) * $sale_detail_cant->cant)), 2);
+                }else if(!is_null($presentation->vigencia) && $presentation->tipo_descuento == 'porcentaje'){
+                    $sale_detail_cant->descuento = round(($presentation->monto_porcentaje ?? 0),2);
+                    $sale_detail_cant->total_descuento = 0;
+                    if(!is_null($presentation->monto_porcentaje) && $presentation->monto_porcentaje > 0){
+                        $sale_detail_cant->total_descuento = round(((($presentation->price * $presentation->monto_porcentaje)/100)*$sale_detail_cant->cant),2);
+                        $sale_detail_cant->save();
+                    }
                 }
-            }
 
-            $sale_detail_cant->save();
+                $sale_detail_cant->save();
         }
     }
 
@@ -323,16 +313,39 @@ class Sale extends Component
                                         'promotions' => $this->data['promotions'], 'cant_sales_detail' => $this->data['cant_sales_detail']]);
     }
 
+    //funcion para saber si es mayoreo o menudeo
+    function mayoreo_or_menudeo($presentation, $total_cant = 0, $manual = null){
+        $cantidad_sales_detail_cant = SaleDetailCant::where('sale_id', $this->id)->where('part_to_product_id', $presentation->id)->get(); //cantidad del producto escaneado
+
+        if(count($cantidad_sales_detail_cant)){
+            
+            $total_cant = $cantidad_sales_detail_cant->sum('cant')+1; //total cantidad de producto escaneado mas 1 para tomar en cuenta el escaneado
+            $multiple_data = count($cantidad_sales_detail_cant) == $total_cant ? true:false; //variable para saber si existen varios registros con el mismo producto
+           
+            if($presentation->cantidad_mayoreo > 0 && $presentation->price_mayoreo > 0 && $presentation->cantidad_mayoreo <= $total_cant){
+               
+                foreach($cantidad_sales_detail_cant as $item){
+                    $this->destroyProduct($item->id, 'mayoreo');
+                }
+                return $total_cant;
+            }
+
+        }
+        return false;
+    }
+
     //funcion para agregar producto con precio de mayoreo
-    function venta_mayoreo_save($presentation, $status, $cant){
-        if($status){
-            $exist_sale_detail_cant = SaleDetailCant::where('part_to_product_id', $presentation['id'])->first();
+    function venta_mayoreo_save($presentation, $cant = 0){
+        
+            $exist_sale_detail_cant = SaleDetailCant::where('sale_id', $this->id)->where('part_to_product_id', $presentation['id'])->first();
+
             if(is_object($exist_sale_detail_cant)){
                 $this->dispatch('alert', ['message' => 'Este producto ya esta registrado, para agregarlo como mayoreo, eliminalo primero.']);
             }else{   
                 $presentation = PartToProduct::find($presentation['id']);
                 $sale_detail = $this->saveSaleDetail($presentation, 'mayoreo');
                 $sale_detail_cant = $sale_detail->saveNewCantDetails($sale_detail, $presentation, false, $cant);
+                
                 $this->setStock($presentation, $cant, 'mayoreo');
                 $this->calculoImpuestos($sale_detail, $presentation); //calculo de impuestos
 
@@ -342,71 +355,10 @@ class Sale extends Component
                                         'sales_detail' => $this->sales_detail, 'unidad_sat' => $this->data['unidad_sat'],
                                         'promotions' => $this->data['promotions'], 'cant_sales_detail' => $this->data['cant_sales_detail']]);
             }
-        }else{
-            $presentation = PartToProduct::find($presentation['id']);
-            $this->saveMenudeo($presentation);
-        }
-    }
-// *****************************************************************
-    //funcion para agregar manual la cantidad de productos
-    public function updateCant($sale_detail_cant_id, $cant){  //seguirle aqui con las cantidades manuales
-        $cant = (float)$cant;      
-        $sale_detail_cant = SaleDetailCant::find($sale_detail_cant_id);
-        $sale_detail = $sale_detail_cant->getSaleDetail;
-        $presentation = $sale_detail->getPartToProductId($sale_detail->part_to_product_id);
-
-        $cantidad = (float)$cant - 1;
-        $desc_stock = false;
-        
-        if($sale_detail->nuevoReg($sale_detail_cant, $presentation)){
-            $cantidad = (float)$cant;
-        }
-
-        dd($cantidad);
-
-        if((float)$sale_detail_cant->cant > $cant){ //condicion para actualizar el stock del producto
-            if(is_object($presentation)){
-                $presentation_model = PartToProduct::find($presentation->id);
-                
-                if((float)$sale_detail_cant->descuento > 0){
-                    $vigencia_actual = (float) $presentation_model->vigencia;
-                    $vigencia = $vigencia_actual + ($sale_detail_cant->cant - $cant);
-                }
-
-                $presentation_model->stock = $presentation->stock + ($sale_detail_cant->cant - $cant);
-                $presentation_model->vigencia = (string) $vigencia;
-                $presentation_model->save();
-                    
-                $sale_detail_cant->cant = 0;
-                $sale_detail_cant->save();
-
-                $cantidad = $cant;
-                $desc_stock = true;
-            }
-        } 
-
-        if($cant > ($presentation->stock + $cantidad)){
-                $this->dispatch('alert', ['message' => 'Stock insuficiente.']);
-        }else{
-            $cant_detail = $cant - $sale_detail_cant->cant;
-            $product = $presentation->getProducto($presentation->product_id);
-            for($i = 0; $i < $cant_detail; $i++){
-                $presentation = $sale_detail->getPartToProductId($sale_detail->part_to_product_id);
-
-                $this->saveDetail($presentation, $product, 'manual', $sale_detail_cant, $desc_stock);
-                !$desc_stock ? $this->descStock($presentation):'';
-                $data = $this->getDataSales();
-                
-                $this->dispatch('scan', ['product' => $data['product_detail'], 'persentation' => $data['presentation_detail'], 
-                                    'sales_detail' => $this->sales_detail, 'unidad_sat' => $data['unidad_sat'],
-                                    'promotions' => $data['promotions'], 'cant_sales_detail' => $data['cant_sales_detail']]);
-            }
-        }
-    }
+    }    
 
     //funcion para eliminar un producto ya agregado en la venta
-    public function destroyProduct($sale_detail_cant_id){
-
+    public function destroyProduct($sale_detail_cant_id, $status = null){
         $sale_detail_cant = SaleDetailCant::find($sale_detail_cant_id);
         $sale_detail = $sale_detail_cant->getSaleDetail;
         $presentation = PartToProduct::find($sale_detail->part_to_product_id);
@@ -414,7 +366,7 @@ class Sale extends Component
         $this->setStock($presentation, $sale_detail_cant->cant, 'mas');
 
         if($presentation->vigencia_cantidad_fecha == 'cantidad' && $sale_detail_cant->descuento > 0){
-            $presentation->vigencia = $presentation->vigencia + $sale_detail_cant->cant;
+            $presentation->vigencia = (float)$presentation->vigencia + (float)$sale_detail_cant->cant;
         }
 
         $presentation->save();
@@ -426,15 +378,19 @@ class Sale extends Component
             $this->calculoImpuestos($sale_detail, $presentation);
         }     
 
-        $data = $this->getDataSales();
-        $this->dispatch('scan', ['product' => $data['product_detail'] ?? [], 'persentation' => $data['presentation_detail'] ?? [], 
+        if(is_null($status)){
+            $data = $this->getDataSales();
+            $this->dispatch('scan', ['product' => $data['product_detail'] ?? [], 'persentation' => $data['presentation_detail'] ?? [], 
                                 'sales_detail' => $this->sales_detail, 'unidad_sat' => $data['unidad_sat'] ?? [],
                                 'promotions' => $data['promotions'] ?? [], 'cant_sales_detail' => $data['cant_sales_detail'] ?? []]);
+        }else{
+            return true;
+        }
 
     }
 
     // funcion para cambiar el stock del producto
-    function setStock($presentation, $cant, $type = 'menos'){
+    function setStock($presentation, $cant = 1, $type = 'menos'){
         $presentacionese_existentes = PartToProduct::where('product_id', $presentation->product_id)->get();
         if(count($presentacionese_existentes)){
             foreach($presentacionese_existentes as $item){
@@ -450,6 +406,53 @@ class Sale extends Component
         }
     }
 
+// *****************************************************************
+
+    //funcion para agregar manual la cantidad de productos
+    public function updateCant($presentation_id, float $cant){  //seguirle aqui con las cantidades manuales
+        $presentation = PartToProduct::find($presentation_id);
+
+            $cantidad_sales_detail_cant = SaleDetailCant::where('sale_id', $this->id)
+                ->where('part_to_product_id', $presentation->id)
+                ->orderBy('created_at', 'desc')->get(); //cantidad del producto escaneado
+
+  
+            $detail_with_desc = SaleDetailCant::where('sale_id', $this->id)
+                            ->where('part_to_product_id', $presentation->id)->where('descuento', '>', 0)->first();
+            
+            $presentation->vigencia += ($detail_with_desc->cant ?? 0);
+
+            $arr_sales_detail_cant = $cantidad_sales_detail_cant;
+            foreach($arr_sales_detail_cant as $index => $item){
+                $this->destroyProduct($item->id, 'masivo');
+            }
+           
+            if($cant >= $presentation->cantidad_mayoreo){
+                $this->venta_mayoreo_save($presentation, $cant);
+            }else{
+                if($presentation->vigencia >= $cant){
+                    $this->menorAVigencia($presentation, $cant);
+                }else if($presentation->vigencia < $cant){ 
+                    if(!is_null($presentation->vigencia) && $presentation->vigencia > 0){
+                        $cant = $cant - $presentation->vigencia;
+                        $presentation = PartToProduct::find($presentation->id);
+                        $this->menorAVigencia($presentation, $presentation->vigencia);
+                    }
+                    
+                    $sale_detail = $this->saveSaleDetail($presentation); //guardamos en save_detail
+                    $sale_detail->saveNewCantDetails($sale_detail, $presentation, false, $cant);
+                    $this->setStock($presentation, $cant, 'otro');
+                    $this->calculoImpuestos($sale_detail, $presentation);
+                }
+
+            }
+                $this->data = $this->getDataSales();
+
+                $this->dispatch('scan', ['cant' => $cant, 'product' => $this->data['product_detail'], 'persentation' => $this->data['presentation_detail'], 
+                        'sales_detail' => $this->sales_detail, 'unidad_sat' => $this->data['unidad_sat'],
+                        'promotions' => $this->data['promotions'], 'cant_sales_detail' => $this->data['cant_sales_detail']]);
+    }
+
     //funcion para agregar nota al detalle de venta sobre stock de presentacion
     function stockOff($sale_detail_id, $code){
         $sale_detail = SaleDetail::find($sale_detail_id);
@@ -457,5 +460,28 @@ class Sale extends Component
             $sale_detail->notes = $sale_detail->notes.' *Presentación de producto sin existencia: '.$code;
             $sale_detail->save();
         }
+    }
+
+    //funcion para guardar la cantidad menor a la vigencia
+    function menorAVigencia($presentation, $cant){
+        $sale_detail = $this->saveSaleDetail($presentation);
+        $withDesc = $presentation->vigencia > 0 ? true:false;
+        
+        if($presentation->tipo_descuento == 'porcentaje'){
+            $descuento = (($presentation->monto_porcentaje*$presentation->price)/100)*$cant;
+        }else{
+            $descuento = ($presentation->monto_porcentaje*$cant);
+        }
+        
+        $sale_detail->saveNewCantDetails($sale_detail, $presentation, true, $cant);
+
+        $presentation->vigencia = ($presentation->vigencia ?? 0) - $cant;
+        if($presentation->vigencia < 0){
+            $presentation->vigencia = null;
+        }
+        $presentation->save();
+
+        $this->setStock($presentation, $cant, 'otro');
+        $this->calculoImpuestos($sale_detail, $presentation); //calculo de impuestos
     }
 }

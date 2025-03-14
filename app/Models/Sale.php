@@ -85,4 +85,10 @@ class Sale extends Model
     {
         return $this->belongsTo('App\Models\PaymentMethod');
     }
+
+    //funcion para obtener los totales de tarjetas y efectivo
+    public function getTotal($type, $date){
+        $total = Sale::whereBetween('date', [$date])->where('type_payment', $type)->sum('total_sale'); 
+        return $total;
+    }
 }

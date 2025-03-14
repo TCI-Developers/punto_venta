@@ -28,7 +28,7 @@
                             <div class="input-group-prepend">
                                 <span class="input-group-text">$</span>
                             </div>
-                            <input type="number" class="form-control text-center inputModal" name="monto_efectivo" id="monto_efectivo" placeholder="0" value="{{old('monto_efectivo')}}">
+                            <input type="number" class="form-control text-center inputModal" name="monto_efectivo" id="monto_efectivo" placeholder="0" value="{{old('monto_efectivo')}}" step="0.01">
                         </div>
                       </label>
 
@@ -37,7 +37,7 @@
                               <div class="input-group-prepend">
                                   <span class="input-group-text">$</span>
                               </div>
-                              <input type="number" class="form-control text-center inputModal" name="monto_tarjeta" id="monto_tarjeta" placeholder="0" value="{{old('monto_tarjeta')}}">
+                              <input type="number" class="form-control text-center inputModal" name="monto_tarjeta" id="monto_tarjeta" placeholder="0" value="{{old('monto_tarjeta')}}" step="0.01">
                           </div>
                       </label>                    
 
