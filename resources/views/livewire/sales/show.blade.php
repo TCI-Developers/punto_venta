@@ -67,7 +67,7 @@
                             <div class="input-group-prepend">
                                 <span class="input-group-text">$</span>
                             </div>
-                            <input type="number" name="amount_received" id="amount_received" class="form-control input_amounts input_sale text-center" 
+                            <input type="number" name="amount_received" id="amount_received" class="form-control input_amounts input_sale text-center" step="0.01" 
                             placeholder="0" value="{{(float)$sale->amount_received == 0 ? '':$sale->amount_received}}" onchange="getChange(this.value)" readonly>
                         </div>
                     </label>
@@ -99,10 +99,10 @@
                 <button type="submit" class="btn btn-success float-right mr-5 displayNone" id="btnUpdateSale">Actualizar venta</button> 
                 <button type="button" class="btn btn-light float-right mr-5 displayNone" id="btnCancelSale" onClick="cancelEditSale()">Cancelar</button> 
                 @endif
-               
+
                 <!-- Si existen movimientos y no se a cobrado -->
                 <button type="button" class="btn btn-warning float-right mr-2" onClick="cobrar()" id="btnCobro"
-                style="{{count($this->sales_detail) && (float)$sale->amount_received === 0 ? '':'display:none'}}">Cobrar</button> 
+                style="{{count($sale->getDetails) && (float)$sale->amount_received === 0 || !count($sale->getDetails) && (float)$sale->amount_received === 0 ? '':'display:none'}}">Cobrar</button> 
             </form>
         </div>
         @include('Admin.sales.mov_details')

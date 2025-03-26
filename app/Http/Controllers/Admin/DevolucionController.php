@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\{Devolucion, Product, Sale, SaleDetail, SaleDetailCant, PartToProduct};
+use App\Models\{Devolucion, Product, Sale, SaleDetail, SaleDetailCant, PartToProduct, Branch, Driver};
 
 class DevolucionController extends Controller
 {
@@ -15,12 +15,15 @@ class DevolucionController extends Controller
      * Display a listing of the resource.
      */
     public function index($status = 1){   
-        $devoluciones = Devolucion::where('status', $status)->get();
-        return view('Admin.devoluciones.index', ['status' => $status, 'devoluciones' => $devoluciones]);
+        if(!is_null(Auth::User()->branch_id)){
+            $devoluciones = Devolucion::where('status', $status)->where('branch_id', Auth::User()->branch_id)->get();
+            return view('Admin.devoluciones.index', ['status' => $status, 'devoluciones' => $devoluciones]);
+        }
+        return view('Admin.devoluciones.index', ['status' => $status, 'devoluciones' => []])->with('Selecciona una sucursal.');
     }
 
     //funcion para mostrar las devoluciones uqe se hicieron durante las fechas de un corte
-    public function indexDevCorte($startDate, $endDate){   
+    public function indexDevCorte($startDate, $endDate){
         $sale_details = SaleDetail::whereBetween('created_at', [$startDate, $endDate])->where('status', 0)
                         ->select('sale_id') // Solo selecciona sale_id
                         ->distinct()->get();
@@ -40,12 +43,13 @@ class DevolucionController extends Controller
     }
 
     //funcion para mostrar listado de ventas de una semana
-    public function showListadoVentas(){   
+    public function showListadoVentas(){  
+        $branch_id = Auth::User()->branch_id; 
         $endDate = date('Y-m-d');
         $startDate = date('Y-m-d', strtotime($endDate."- 1 week"));
-        $sales = Sale::whereBetween('date', [$startDate, $endDate])->get();
+        $sales = Sale::where('branch_id', $branch_id)->whereBetween('date', [$startDate, $endDate])->get();
 
-        $productos = Product::get();
+        $productos = Product::where('branch_id', $branch_id)->get();
         return view('Admin.devoluciones.lista_ventas', ['productos' => $productos, 'sales' => $sales]);
     }
 
@@ -132,6 +136,7 @@ class DevolucionController extends Controller
 
     //funcion para guardar una devolucion de venta
     public function store(Request $request, $devolucion_id = null){ 
+        
         if(isset($request->part_to_product_id) && count($request->part_to_product_id)){
             $cantidad = 0;
             $total_descuentos = 0;
@@ -145,6 +150,7 @@ class DevolucionController extends Controller
             }
 
             for ($i=0; $i < count($request->part_to_product_id) ; $i++) { 
+                $sale = Sale::find($request->sale_id);
 
                 $sale_detail_dev = new SaleDetail();
                 $sale_detail_dev->sale_id = $request->sale_id;
@@ -156,10 +162,12 @@ class DevolucionController extends Controller
                 $sale_detail_dev->unit_price = $request->unit_price[$i];
                 $sale_detail_dev->total = $request->total[$i];
                 $sale_detail_dev->status = 0;
+                $sale_detail_dev->created_at = $sale->updated_at ?? '';
                 $sale_detail_dev->save();
                 
                 $sale_detail_cant_dev = new SaleDetailCant();
                 $sale_detail_cant_dev->sale_detail_id = $sale_detail_dev->id;
+                $sale_detail_cant_dev->sale_id = $request->sale_id;
                 $sale_detail_cant_dev->part_to_product_id = $sale_detail_dev->part_to_product_id;
                 $sale_detail_cant_dev->cant = $request->cant[$i];
                 $sale_detail_cant_dev->descuento = $request->descuento[$i];
@@ -179,6 +187,7 @@ class DevolucionController extends Controller
             if(is_null($devolucion_id)){
                 $devolucion = new Devolucion();
                 $devolucion->sale_id = $request->sale_id; //campo para devolucion de alaguna venta
+                $devolucion->branch_id = Auth::User()->branch_id; //campo para devolucion de alaguna venta
             }
             $devolucion->cantidad = $cantidad;
             $devolucion->description = $request->notes;
@@ -272,5 +281,42 @@ class DevolucionController extends Controller
         $response = curl_exec($ch);
         curl_close ($ch);
        dd($response);
+    }
+
+    //funcion para mostrar vista devolucion a matriz
+    public function createMatriz(){
+        $branch_id = Auth::User()->branch_id;
+        $branch = Branch::find($branch_id);
+        $drivers = Driver::where('status', 1)->get();
+        $products = Product::where('branch_id', $branch_id)->get();
+
+        return view('Admin.devoluciones_matriz.create', [
+            'branch' => $branch,'drivers' => $drivers,'products' => $products,
+        ]);
+    }
+
+    //funcion para guardar la devolucion a matriz
+    public function storeMatriz(Request $request){
+        $validated = $request->validate([ 
+            'product_id' => 'required',
+            'cant' => 'required',
+            ],[
+            'product_id' => 'El producto es requerido.',
+            'cant' => 'La cantidad es requerida.',
+        ]);
+
+        $product = Product::find($request->product_id);
+        $presentacion = $product->getPartToProduct;
+        
+        if(!is_null($presentacion)){
+            $validated = $request->validate([ 
+                'cant' => 'required|lte:'.($presentacion->stock).''
+                ],[
+                'cant' => 'La cantidad es mayor al stock actual del producto. Cantidad actual '.$presentacion->stock.'.',
+            ]);
+        }
+        dd($presentacion);
+        // dd($request);
+
     }
 }

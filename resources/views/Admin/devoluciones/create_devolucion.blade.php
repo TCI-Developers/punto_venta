@@ -12,23 +12,6 @@
 
 @section('js')
     @include('components.use.notification_success_error')
-    @if ($errors->any())
-    <script>
-        $(document).ready(function() {
-            Swal.fire({
-                icon: 'info',
-                title: 'Validación de campos',
-                html: `
-                    <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                    </ul>
-                `
-            });
-        });
-    </script>
-    @endif
 
     <script>
         //funcion para abrir modal
@@ -233,7 +216,9 @@
                                 <td class="descuento" val="{{$value->descuento}}">$ {{number_format($value->total_descuento, 2) }}</td>
                                 <td class="total_sale">$ {{number_format(((($item->unit_price * $value->cant) - $value->total_descuento) + $impuestos), 2)}}</td>
                                 <td class="{{isset($devolution) ? 'showEdit displayNone':''}}">
-                                    @if(!$devolution->hasCodeProduct($sale_details_dev ?? [], $item->getPartToProduct->getProduct->code_product))
+                                    @if(!isset($devolution))
+                                    <button type="button" class="btn btn-warning btn-sm" onClick="showModal({{$value->id}}, {{$item->getPartToProduct->id}}, {{$item->iva}}, {{$item->ieps}})"><i class="fa fa-edit"></i></button>
+                                    @elseif(!$devolution->hasCodeProduct($sale_details_dev ?? [], $item->getPartToProduct->getProduct->code_product))
                                     <button type="button" class="btn btn-warning btn-sm" onClick="showModal({{$value->id}}, {{$item->getPartToProduct->id}}, {{$item->iva}}, {{$item->ieps}})"><i class="fa fa-edit"></i></button>
                                     @endif
                                 </td>

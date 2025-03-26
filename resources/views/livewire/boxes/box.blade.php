@@ -19,7 +19,7 @@
                 </thead>
                 <tbody>
                 @forelse($boxes as $index => $item)
-                        <tr class="text-center clickable" style="cursor:pointer;" data-toggle="tooltip" data-placement="top" title="Mostrar Detalles" onClick="clickTr({{$index}})">
+                        <tr class="text-center clickable" style="cursor:pointer;" data-toggle="tooltip" data-placement="top" title="Mostrar Detalles" onClick="clickTr({{$index}})"> 
                         {{--onClick="clickTr({{$index}})"--}}
                             <td>{{date('d/m/y', strtotime($item->start_date))}}</td>
                             <td>$ {{number_format($item->start_amount_box, 2)}}</td>
@@ -46,7 +46,7 @@
                                     @endif
                                 @endif
                             </td>
-                            <td>$ {{number_format((($item->amount_cash_system + $item->start_amount_box + $item->amount_credit_system)- $item->getTotalDevolutions($item->start_date, $item->end_date)),2)}}</td>
+                            <td>$ {{number_format((($item->amount_cash_system + $item->start_amount_box + $item->amount_credit_system) - $item->getTotalDevolutions($item->start_date, $item->end_date)),2)}}</td>
                             <td><button type="button" class="btn btn-outline-info btn-sm" wire:click="openModalMoney({{$item->id}})">
                                 <img src="{{asset('icons/money.svg')}}" alt="icon money"></button>
                             </td>
@@ -58,9 +58,9 @@
                             <td colspan="3">
                                 <div class="row">
                                     <div class="col-lg-6 col-md-6 col-sm-6">
-                                        <span>Efectivo diferencia de:</span> <br>
+                                        <span>Efectivo diferencia de:</span> <br> 
                                         @if(($item->amount_cash_system - ($item->amount_cash_user - $item->start_amount_box)) == 0)
-                                        $ {{number_format(abs($item->amount_cash_system - ($item->amount_cash_user - $item->start_amount_box)),2) }}
+                                        $ {{number_format(abs($item->amount_cash_system - ($item->amount_cash_user - $item->start_amount_box) ),2) }}
                                         @else
                                         {{($item->amount_cash_system - ($item->amount_cash_user - $item->start_amount_box)) < 0 ? '+':'-'}} $ {{number_format(abs($item->amount_cash_system - ($item->amount_cash_user - $item->start_amount_box)),2)}}
                                         @endif
@@ -75,7 +75,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>$ {{number_format((($item->amount_cash_user + $item->amount_credit_user)-$item->getTotalDevolutions($item->start_date, $item->end_date)),2)}}</td>
+                            <td>$ {{ number_format(($item->amount_cash_user + $item->amount_credit_user),2) }}</td>
                         </tr>
                 @empty
                     <tr class="table-warning text-center" colspan="7"></tr>

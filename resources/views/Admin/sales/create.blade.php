@@ -14,23 +14,6 @@
 @stop
 @section('js')
     @include('components..use.notification_success_error')
-    @if ($errors->any())
-    <script>
-        $(document).ready(function() {
-            Swal.fire({
-                icon: 'info',
-                title: 'Ocurrio un error',
-                html: `
-                    <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                    </ul>
-                `
-            });
-        });
-    </script>
-    @endif
     <script src="{{asset('js/script_datatables.js')}}"></script>
 
     <script>
@@ -205,7 +188,7 @@
         function getChange(amount_received){
             let total = $('#total_sale').val();
             let change = amount_received - total;
-            $('#change').val(change.toFixed(3));
+            $('#change').val(change.toFixed(2));
             if(change>=0){
                 $('#btnAcept').fadeIn();
             }
@@ -223,7 +206,7 @@
 
             if($('#type_payment').val() == 'tarjeta'){
                 $('#amount_received').val($('#total_sale').val()).attr('readonly', true);
-                getChange($('#total_sale').val());
+                getChange($('#total_sale').val().toFixed(2));
             }
             // $('#btnAddMov').fadeOut();
             $('#btnCobro').fadeOut();
@@ -341,7 +324,7 @@
             $('#update_cant_prod').val('');
             $('#update_sale_detail_id').val('');
             $('#modal_cant').fadeOut();
-            $('#total_sale').val(total - descuento);
+            $('#total_sale').val((total - descuento).toFixed(2));
 
             if(tipo == 'destroy'){
                 Swal.fire('Producto eliminado con exito.', '', 'success');

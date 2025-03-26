@@ -81,9 +81,12 @@ Route::get('/branchs-show/{branch_id}', 'Admin\BranchController@show')->name('br
 Route::get('/branchs-destroy/{id}/{status?}', 'Admin\BranchController@destroy')->name('branchs.destroy');
 Route::get('/branchs-set-branch/{branch_id}', 'Admin\BranchController@setSucursalUser')->name('branchs.setSucursalUser');
 
-Route::get('/branch/{status?}', 'Admin\BranchController@index')->name('branch.index'); //vista listado de suscursales para usuario
 Route::post('/branch-store', 'Admin\BranchController@store')->name('branch.store');
-Route::get('/products-import/{branch_id}', 'Admin\BranchController@getProducts')->name('import.products'); //ruta para importar productos de quickbase y almacenar en la DB local
+Route::get('/products-import/{branch_id?}', 'Controller@getBrands')->name('import.products'); //ruta para importar productos de quickbase y almacenar en la DB local
+Route::get('/payment-methods-import/{branch_id?}', 'Controller@getPaymentMethods')->name('import.getPaymentMethods'); //importamos metodo de pago manual
+Route::get('/drivers-import/{branch_id?}', 'Controller@getDrivers')->name('import.drivers');
+Route::get('/unit-sat-import/{branch_id?}', 'Controller@getUnidadesSat')->name('import.getUnidadesSat');
+Route::get('/get-poveedores/{branch_id?}', 'Controller@getProveedores')->name('proveedor.getProveedores');
 // Route::get('/brands-import', 'Admin\UserController@getBrands'); //ruta para importar productos de quickbase y almacenar en la DB local
 
 //promociones
@@ -94,17 +97,28 @@ Route::get('/promos-show/{promo_id}/{status?}', 'Admin\PromotionController@creat
 Route::post('/promos-update/{promo_id}', 'Admin\PromotionController@update')->name('promos.update');
 Route::get('/promos-destroy/{promo_id}/{status}', 'Admin\PromotionController@destroy')->name('promos.destroy');
 
-//devoluciones
+//devoluciones ventas
 Route::get('/devoluciones/{status?}', 'Admin\DevolucionController@index')->name('devoluciones.index');
 Route::get('/devoluciones-corte/{starDate}/{endDate}', 'Admin\DevolucionController@indexDevCorte')->name('devoluciones.indexDevCorte'); //devoluciones por fechas de algun corte
-Route::get('/devoluciones-create-sale', 'Admin\DevolucionController@showListadoVentas')->name('devoluciones.showListadoVentas'); //crear una devolucion de venta o matriz
-Route::get('/devoluciones-show-dev-sale/{devolucion_id}', 'Admin\DevolucionController@showDevSale')->name('devoluciones.showDevSale'); //crear una devolucion de venta o matriz
+Route::get('/devoluciones-create-sale', 'Admin\DevolucionController@showListadoVentas')->name('devoluciones.showListadoVentas'); //crear una devolucion de venta
+Route::get('/devoluciones-show-dev-sale/{devolucion_id}', 'Admin\DevolucionController@showDevSale')->name('devoluciones.showDevSale');
 Route::get('/devoluciones-delete-detail-dev/{devolution_id}/{detail_dev_id}', 'Admin\DevolucionController@deleteDetailDev')->name('devoluciones.deleteDetailDev'); //elimina un detalle de la venta en status 0
 Route::post('/devoluciones-store/{devolucion_id?}', 'Admin\DevolucionController@store')->name('devoluciones.store'); //funcion para guardar la devolucion de venta
+Route::get('/devoluciones-sale-create/{sale_id}', 'Admin\DevolucionController@createSaleToDevolucion')->name('devoluciones.createSaleToDevolucion'); // muestra vista de la devolucion de venta
 
-Route::get('/devoluciones-sale-create/{sale_id}', 'Admin\DevolucionController@createSaleToDevolucion')->name('devoluciones.createSaleToDevolucion');
-Route::get('/devoluciones-create-sales/{devolucion_id?}/{sale_id}', 'Admin\DevolucionController@createDevolucionSale')->name('devoluciones.createSale');
-Route::get('/devoluciones-show/{devolucion_id}', 'Admin\DevolucionController@show')->name('devoluciones.show');
-// Route::get('/devoluciones-show-sale/{devolucion_id}/{sale_id}', 'Admin\DevolucionController@createDevolucionSale')->name('devoluciones.showDevSale');
-Route::post('/devoluciones-update/{devolucion_id}', 'Admin\DevolucionController@update')->name('devoluciones.update');
-Route::get('/devoluciones-destroy/{devolucion_id}/{status}', 'Admin\DevolucionController@destroy')->name('devoluciones.destroy');
+//devoluciones matriz
+Route::get('/devoluciones-create-matriz', 'Admin\DevolucionController@createMatriz')->name('devoluciones.createMatriz'); //crear una devolucion de matriz
+Route::post('/devoluciones-store-matriz', 'Admin\DevolucionController@storeMatriz')->name('devoluciones.storeMatriz'); //crear una devolucion de matriz
+
+//proveedores
+Route::get('/poveedores/{status?}', 'Admin\ProveedorController@index')->name('proveedor.index');
+Route::get('/poveedores-create', 'Admin\ProveedorController@create')->name('proveedor.create');
+Route::post('/poveedores-store/{proveedor_id?}', 'Admin\ProveedorController@store')->name('proveedor.store');
+Route::get('/poveedores-show/{proveedor_id?}', 'Admin\ProveedorController@create')->name('proveedor.show');
+Route::get('/poveedores-enable/{proveedor_id}/{status}', 'Admin\ProveedorController@enable')->name('proveedor.enable');
+
+//compras
+Route::get('/compras/{status?}', 'Admin\CompraController@index')->name('compra.index');
+Route::get('/compras-create', 'Admin\CompraController@create')->name('compra.create');
+Route::post('/compras-store/{compra_id?}', 'Admin\CompraController@store')->name('compra.store');
+Route::get('/compras-show/{compra_id?}', 'Admin\CompraController@create')->name('compra.show');

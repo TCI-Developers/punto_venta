@@ -13,7 +13,7 @@ class Box extends Model
 
     //Funcion para obtener producto
     public function getTotalDevolutions($startDate, $endDate){
-        $total = SaleDetail::whereBetween('created_at', [$startDate, $endDate])->where('status', 0)->sum('total');
+        $total = SaleDetail::whereBetween('updated_at', [$startDate, $endDate])->where('status', 0)->sum('total');
         return $total ?? 0;
     }
 }

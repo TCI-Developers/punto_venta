@@ -13,7 +13,7 @@
                     <select name="customer_id" id="customer_id" class="form-control selectpicker show-tick" data-live-search="true" 
                             data-size="8" title="Selecciona un cliente" required>
                         @forelse($customers as $item)
-                        <option value="{{$item->id}}">{{$item->name}}</option>
+                        <option value="{{$item->id}}" {{$item->id == 1 ? 'selected':''}}>{{$item->name}}</option>
                         @empty
                         @endforelse
                     </select>

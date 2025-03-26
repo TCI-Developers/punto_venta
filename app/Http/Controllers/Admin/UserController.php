@@ -94,7 +94,7 @@ class UserController extends Controller
         $today = Carbon::now();
         if ($today->isLastOfMonth()) {
             if (!$this->hasInternetConnection()) {
-                return redirect()->back()->withErrors('error', 'Licencia vencida.');
+                return redirect()->back()->with('error', 'Licencia vencida.');
             }
         }
       
@@ -116,13 +116,13 @@ class UserController extends Controller
             if(!Auth::User()->hasAnyRole(['root', 'admin'])){
                 return redirect()->route('admin.startAmountBox');
             }else{
-                return redirect()->route('branch.index');
+                return redirect()->route('branchs.index');
             }
         }
 
 
         
-        return redirect()->back()->withErrors('error', 'Credenciales Incorrectas.');
+        return redirect()->back()->with('error', 'Credenciales Incorrectas.');
     }
 
     //funcion para logout

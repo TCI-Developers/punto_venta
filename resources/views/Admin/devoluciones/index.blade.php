@@ -4,23 +4,6 @@
 
 @section('js')
     @include('components..use.notification_success_error')
-    @if ($errors->any())
-    <script>
-        $(document).ready(function() {
-            Swal.fire({
-                icon: 'info',
-                title: 'Validación de campos',
-                html: `
-                    <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                    </ul>
-                `
-            });
-        });
-    </script>
-    @endif
 
 @stop
 
@@ -31,8 +14,8 @@
         </div>
         <div class="card-body table-responsive">
             <div class="form-group">
-                {{--<a class="btn btn-primary" href="{{route('devoluciones.create')}}"
-                    data-bs-toggle="tooltip" data-bs-placement="top" title="Nueva devolución"><i class="fa fa-plus"> Matriz</i></a>--}}
+                <a class="btn btn-primary" href="{{route('devoluciones.createMatriz')}}"
+                    data-bs-toggle="tooltip" data-bs-placement="top" title="Nueva devolución"><i class="fa fa-plus"> Matriz</i></a>
 
                 <a class="btn btn-success" href="{{route('devoluciones.showListadoVentas')}}"
                     data-bs-toggle="tooltip" data-bs-placement="top" title="Nueva devolución"><i class="fa fa-plus"> Venta</i></a>
@@ -64,18 +47,6 @@
                            <td class="text-center">${{number_format(($item->total_devolucion - $item->total_descuentos), 2)}}</td>
                             <td class="text-center">
                                 <a href="{{route('devoluciones.showDevSale', $item->id)}}" class="btn btn-info"><i class="fa fa-eye"></i></a>
-
-                                {{-- @if(!$item->sale_id)
-                                    <a href="{{route('devoluciones.show', $item->id)}}" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>
-                                @else
-                                    <a href="{{route('devoluciones.showDevSale', [$item->id, $item->sale_id])}}" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>
-                                @endif
-                                
-                                @if($status == 1)
-                                    <a href="{{route('devoluciones.destroy', [$item->id, 0])}}" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></a>
-                                @elseif($status == 0)
-                                    <a href="{{route('devoluciones.destroy', [$item->id, 1])}}" class="btn btn-primary btn-sm"><i class="fa fa-upload"></i></a>
-                                @endif --}}
                             </td>
                        </tr>
                     @empty

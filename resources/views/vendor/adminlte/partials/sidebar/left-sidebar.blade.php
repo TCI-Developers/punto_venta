@@ -37,6 +37,12 @@
                         <p>Clientes</p>
                     </a>
                 </li>
+                <li class="nav-item"> <!-- Proveedores -->
+                    <a class="nav-link" href="{{route('proveedor.index')}}">
+                        <img src="{{asset('icons/proveedor.svg')}}" alt="Icono de proveedores" width="23">
+                        <p>Proveedores</p>
+                    </a>
+                </li>
                 <li class="nav-item"> <!-- Ventas -->
                     <a class="nav-link" href="{{route('sale.index')}}">
                         <img src="{{asset('icons/cart.svg')}}" alt="Icono de ventas" width="23">
@@ -49,13 +55,28 @@
                         <p>Presentación productos</p>
                     </a>
                 </li>
-                
+
+                <li class="nav-item"> <!--Compras -->
+                    <a class="nav-link" href="{{route('compra.index')}}">
+                        <img src="{{asset('icons/compra.svg')}}" alt="Icono de requisición" width="23">
+                        <p>Compras</p>
+                    </a>
+                </li>
+
+                <li class="nav-item"> <!--Devoluciones -->
+                    <a class="nav-link" href="{{route('devoluciones.index')}}">
+                        <i class="fas fa-undo"></i>
+                        <p>Devoluciones</p>
+                    </a>
+                </li>
+                @if(!Auth::User()->hasAnyRole(['root','admin']))
                 <li class="nav-item"> <!-- Corte Caja -->
                     <a class="nav-link" href="{{route('box.turnOff')}}">
                         <img src="{{asset('icons/close.svg')}}" alt="Icono de close" width="23">
                         <p>Cierre de Turno</p>
                     </a>
                 </li>
+                @endif  
 
                 <!--Habilitar Promociones despues de las validaciones en ventas-->
                 @if(Auth::User()->hasAnyRole(['root','admin']))
@@ -65,20 +86,15 @@
                         <p>Promociones</p>
                     </a>
                 </li> --}}
-                <li class="nav-item"> <!--Devoluciones -->
-                    <a class="nav-link" href="{{route('devoluciones.index')}}">
-                        <i class="fas fa-undo"></i>
-                        <p>Devoluciones</p>
-                    </a>
-                </li>
                 <li class="nav-item"> <!-- Cortes de Caja -->
                     <a class="nav-link" href="{{route('box.index')}}">
                         <img src="{{asset('icons/list.svg')}}" alt="Icono de close" width="23">
                         <p>Cierres de Turno</p>
                     </a>
                 </li>
-                @endif
+                @endif               
 
+                @if(Auth::User()->hasAnyRole(['root','admin']))
                 <li class="nav-header text-center">Opciones de Admin</li>
 
                 <li class="nav-item"> <!-- Turnos -->
@@ -99,13 +115,13 @@
                         <p>Usuarios</p>
                     </a>
                 </li>
-                @if(Auth::User()->hasAnyRole(['root','admin']))
-                <li class="nav-item"> <!-- Sucursales -->
+               
+                {{-- <li class="nav-item"> <!-- Sucursales -->
                     <a class="nav-link" href="{{route('branch.index')}}">
                         <img src="{{asset('icons/home.svg')}}" alt="Icono de close" width="23">
                         <p>Opciones Sucursal</p>
                     </a>
-                </li>
+                </li> --}}
                 @endif
 
                

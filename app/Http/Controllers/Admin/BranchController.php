@@ -21,7 +21,7 @@ class BranchController extends Controller
     public function create(){
         //status 0 = mostrar formulario para nueva sucursal
         $users = User::get();
-        return view('Admin.branch.index', ['users' => $users, 'status' => 0]);
+        return view('Admin.branchs.show', ['users' => $users, 'status' => 0]);
     }
 
     // guardar sucursal
@@ -50,7 +50,7 @@ class BranchController extends Controller
             }
         }
 
-        return redirect()->route('branch.index')->with('success', 'Sucursal '.$message.' correctamente');
+        return redirect()->route('branchs.index')->with('success', 'Sucursal '.$message.' correctamente');
     }
 
     // mostrar sucursal
@@ -59,7 +59,7 @@ class BranchController extends Controller
         $users = User::get();
         if(is_object($branch)){
             $users_exist_in_branch = $branch->getUsers($branch->id);
-            return view('Admin.branch.index', ['branch' => $branch, 'users' => $users, 'users_exist_in_branch' => $users_exist_in_branch, 'status' => $status]);
+            return view('Admin.branchs.show', ['branch' => $branch, 'users' => $users, 'users_exist_in_branch' => $users_exist_in_branch, 'status' => $status]);
         }
         return redirect()->back()->with('error', 'Ocurrio un error.');
     }
@@ -145,10 +145,11 @@ class BranchController extends Controller
         $user_model->save(); 
 
         if ($this->hasInternetConnection()) {
+            $this->getDrivers();
             $this->getBrands();
             $this->getPaymentMethods();
             $this->getUnidadesSat();
-            $this->getProducts(); 
+            // $this->getProducts(); 
         }
 
         return redirect()->route('sale.index');

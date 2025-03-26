@@ -2,6 +2,10 @@
 
 @section('auth_header', 'Iniciar Sesión')
 
+@section('js')
+    @include('components..use.notification_success_error')
+@stop
+
 @section('auth_body')
     <form action="{{ route('user.login') }}" method="post">
         @csrf

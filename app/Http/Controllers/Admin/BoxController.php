@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\{Sale, Box};
+use App\Models\{Sale, Box, Devolucion};
 
 class BoxController extends Controller
 {
@@ -49,16 +49,16 @@ class BoxController extends Controller
     //funcion para guardar el monto incial de la caja
     public function storeStarAmountBox(Request $request){
         $validatedData = $request->validate([
-            'start_amount_box' => 'required'],['start_amount_box' => 'El monto inicial es requerido.']
+            'start_amount_box' => 'required'],['start_amount_box.required' => 'El monto inicial es requerido.']
         );
 
         $user = Auth::User();
         $box = Box::where('status', '>', 0)->orderBy('end_date', 'desc')->first();
 
         if(is_object($box) && !isset($request->next) && $request->next != 'on'){
-            if($request->start_amount_box != $box->amount_cash_user){
+            if((int)$request->start_amount_box != (int)$box->amount_cash_user){
                 Auth::logout(Auth::User());
-                return redirect()->back()->withInput()->withErrors('monto', 'El monto inicial no coincide con el último cierre.');
+                return redirect()->back()->with('error', 'El monto inicial no coincide con el último cierre.');
             }
         }
 
@@ -70,7 +70,7 @@ class BoxController extends Controller
         $box->start_amount_box = $request->start_amount_box;
         $box->save();
 
-        return redirect()->route('branch.index');
+        return redirect()->route('branchs.index');
     }
 
     //funcion para guardar cierre de caja
@@ -83,13 +83,32 @@ class BoxController extends Controller
 
         $total_efectivo = Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'efectivo')->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale'); 
         $total_tarjeta = Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'tarjeta')->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale'); 
+        $devoluciones = Devolucion::whereBetween('updated_at', [$start_date, $end_date])->get();
+        $total_devolucion_efectivo = 0;
+        $total_devolucion_tarjeta = 0;
+
+        if(count($devoluciones))
+        foreach($devoluciones as $item){
+            if($item->getSale->type_payment = 'efectivo'){
+                $total_devolucion_efectivo += $item->total_devolucion;
+            }else{
+                $total_devolucion_tarjeta += $item->total_devolucion;
+            }
+        }
         
+        $tolerancia = 1; //margen de un peso para el efectivo
+        $total_efect = ($box->start_amount_box + $total_efectivo) - $total_devolucion_efectivo; //total efectivo 
+        $montos = $total_efect - $request->monto_efectivo; 
+        $val_tolerancia = $montos > $tolerancia;
+        
+       
+
         $totalTicketsCoins = $this->getTotalTicketsCoins($request->tickets, $request->coins);
-        $rules = $this->rules(round($box->start_amount_box,2) ?? 0, round($request->monto_efectivo), round($request->monto_tarjeta, 2), round($total_efectivo, 2) ?? 0, round($total_tarjeta, 2) ?? 0);
-        $rules_tickets_coins = $this->rules_tickets_coins(round($box->start_amount_box,2), round($totalTicketsCoins,2), round($total_efectivo,2));
-           
+        $rules = $this->rules($total_efect, round($total_tarjeta, 2), round($request->monto_efectivo,2), round($request->monto_tarjeta, 2), $val_tolerancia);
+        $rules_tickets_coins = $this->rules_tickets_coins($total_efect, round($totalTicketsCoins,2), $val_tolerancia);
+
         if(!$request->acept){
-            $validated = $request->validate($rules[0], $rules[1]);
+            $validated = $request->validate($rules[0] ?? [], $rules[1] ?? []);
             $validate_tickets_coins = $request->validate($rules_tickets_coins);
         } 
 
@@ -115,8 +134,12 @@ class BoxController extends Controller
         $box->coin_2 = $request->coins['2'] ?? 0;
         $box->coin_1 = $request->coins['1'] ?? 0;
         $box->coin_50_cen = $request->coins['_50'] ?? 0;
-        dd($total_efectivo);
-        $box->status = round(($total_tarjeta + $total_efectivo),2) == round(($request->monto_tarjeta + ($request->monto_efectivo - $box->start_amount_box)),2) ? 1:2;
+
+        $totales = ($total_tarjeta + $total_efectivo) - $total_devolucion_efectivo ?? 0; //sistema
+        $ingresado = $request->monto_tarjeta + ($request->monto_efectivo - $box->start_amount_box); //ingresdo empleado
+
+        $box->status = (($totales - $ingresado) < 1) ? 1:2;
+        // dd($box);
         $box->save();
 
         Auth::logout(Auth::User());
@@ -139,29 +162,30 @@ class BoxController extends Controller
     }
 
     //reglas de validacion
-    public function rules($start_amount_box, $efectivo, $tarjeta, $total_efectivo, $total_tarjeta){
-        if($efectivo == null || $efectivo > 0 && $tarjeta == null || $tarjeta > 0){
-            $arr[0] = ['monto_efectivo' => 'required|in:'.($total_efectivo + $start_amount_box).'', 'monto_tarjeta' => 'required|in:'.$total_tarjeta.''];
-            $arr[1] = ['monto_efectivo' => 'El monto que ingresaste no concuerda con lo vendido en efectivo.', 'monto_tarjeta' => 'El monto que ingresaste no concuerda con lo vendido con tarjeta.']; 
-        }else if($efectivo == null || $efectivo >= 0){
-            $arr[0] = ['monto_efectivo' => 'required|in:'.($total_efectivo + $start_amount_box).''];
-            $arr[1] = ['monto_efectivo' => 'El monto que ingresaste no concuerda con lo vendido en efectivo.'];
-        }else if($tarjeta == null || $tarjeta == 0){
+    public function rules($total_efectivo, $total_tarjeta, $efectivo_manual, $tarjeta_manual, $tolerancia){
+        if($tolerancia){
+            if($efectivo_manual == null || $efectivo_manual >= 0){
+                $arr[0] = ['monto_efectivo' => 'required|in:'.($total_efectivo).''];
+                $arr[1] = ['monto_efectivo' => 'El monto que ingresaste no concuerda con lo vendido en efectivo.'];
+            }
+        }
+
+        if($tarjeta_manual == null || $tarjeta_manual > 0){
             $arr[0] = ['monto_tarjeta' => 'required|in:'.$total_tarjeta.''];
             $arr[1] = ['monto_tarjeta' => 'El monto que ingresaste no concuerda con lo vendido con tarjeta.'];
         }
 
-        return $arr;
+        return $arr ?? [];
     } 
 
     //funcion paa validar que el conteo de billetes y monedas concuerde con lo vendido
-    public function rules_tickets_coins($start_amount_box, $total_tickets_coins, $total_efectivo){
+    public function rules_tickets_coins($total_efectivo, $total_tickets_coins, $tolerancia){
         $rules = [
             'tickets' => [
-                function ($attribute, $value, $fail) use ($start_amount_box, $total_tickets_coins, $total_efectivo) {
+                function ($attribute, $value, $fail) use ($total_efectivo, $total_tickets_coins, $tolerancia) {
                     if ($total_tickets_coins == 0) {
                         $fail('Ingresa el conteo de billetes y monedas.');
-                    }else if($total_tickets_coins != ($total_efectivo + $start_amount_box)){
+                    }else if($tolerancia && $total_tickets_coins != ($total_efectivo)){
                         $fail('El conteo de billetes y monedas no concuerda con el total de ventas que realizaste.');
                     }
                 },

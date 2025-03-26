@@ -13,8 +13,8 @@ class Product extends Model
     protected $table = 'products';
 
     //funcion para guardar todos los productos de quick en local
-    public function setProducs($products) {
-        $branch_id = Auth::User()->branch_id;
+    public function setProducs($products, $branchId = null) {
+        $branch_id = is_null($branchId) ? Auth::User()->branch_id:$branchId;
 
         if(count($products) && $branch_id){
             foreach($products as $item){
@@ -44,15 +44,6 @@ class Product extends Model
                     $product->brand_id = (int)$item->linea___record_id_;
                     $product->branch_id = $branch_id;
                     $product->save();
-                
-                    // $con=1;
-                    // for ($i=1; $i <=4 ; $i++) { 
-                    //     $price_v = 'preciov_'.$i; 
-                    //     if($item->$price_v != 0){
-                    //         $this->setPrice((int)$item->record_id_, $item->$price_v, $con);
-                    //         $con++;
-                    //     }   
-                    // }
                 }
             }
             return true;

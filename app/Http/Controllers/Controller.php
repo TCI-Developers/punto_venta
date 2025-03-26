@@ -6,7 +6,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Auth;
-use App\Models\{User, Product, Brand, Customer, PaymentMethod, UnidadSat, Role, Turno, UserRole, Box};
+use App\Models\{User, Product, Brand, Customer, PaymentMethod, UnidadSat, Role, Turno, UserRole, Box, Driver, Proveedor};
 
 class Controller extends BaseController
 {
@@ -16,7 +16,7 @@ class Controller extends BaseController
 
         $this->middleware(function ($request, $next) {
             $controller = class_basename($request->route()->getController());
-            $controllers_excluidos = ['AdminController','BranchController', 'UserController', 'RoleController'];
+            $controllers_excluidos = ['AdminController','BranchController', 'UserController', 'RoleController', 'Controller'];
             $ban = 0;
             foreach($controllers_excluidos as $item){
                 if($item == $controller){
@@ -96,6 +96,14 @@ class Controller extends BaseController
             $data['db'] = 'bqa4qy4jd';
             $data['query'] = '{86.EX.0}AND{82.EX.0}';
             $data['clist'] = '3.13.29.154.43.92.86.49.155.64.65.66.67.44.79.60';
+        }else if($table_name_db == 'drivers'){
+            $data['db'] = 'bqa4qy3yt';
+            $data['query'] = '{53.EX.0}AND{127.EX.8}';
+            $data['clist'] = '3.10';
+        }else if($table_name_db == 'proveedores'){
+            $data['db'] = 'bqa4qy387';
+            $data['query'] = '';
+            $data['clist'] = '3.17.6.8.16.19.18.28.29.20.30';
         }
        
         return $data;
@@ -108,56 +116,98 @@ class Controller extends BaseController
     }
 
     //funcion para obtener las marcas (linea productos)
-    function getBrands(){
-        $brand_exist = Brand::first();
-        if(!is_object($brand_exist)){
-            $db = 'brer52xt3';
-            $query = '';
-            $clist = '3.6.7';
-            $response = $this->getQuickBase('brands');
+    function getDrivers($branch_id = null){
+        $driver_exist = is_null($branch_id) ? Driver::first():null;
+        if(!is_object($driver_exist)){
+            $response = $this->getQuickBase('drivers');
+            $driver = new Driver();
+            $driver2 = $driver->setDrivers($response);
 
+            if(!is_null($branch_id)){
+                return redirect()->back()->with('success', 'Importación de choferes con exito.');
+            }
+        }
+    }
+
+    //funcion para obtener las marcas (linea productos)
+    function getBrands($branch_id = null){
+        $brand_exist = is_null($branch_id) ? Brand::first():null;
+        if(!is_object($brand_exist)){
+            // $db = 'brer52xt3';
+            // $query = '';
+            // $clist = '3.6.7';
+            $response = $this->getQuickBase('brands');
             $brand = new Brand();
             $brand2 = $brand->setBrands($response);
+        }
+
+        $this->getProducts($branch_id);
+
+        if(!is_null($branch_id)){
+            return redirect()->back()->with('success', 'Importación de productos y marcas con exito.');
         }
     }
 
     //funcion para obtener todos los proudctos
-    function getProducts(){
-        $product_exist = Product::first();
+    function getProducts($branch_id = null){
+        $product_exist = is_null($branch_id) ? Product::first():null;
+
         if(!is_object($product_exist)){
-            $db = 'bqa4qy4jd';
-            $query = '{86.EX.0}AND{82.EX.0}';
-            $clist = '3.13.29.154.43.92.86.49.155.64.65.66.67.44.79.60';
+            // $db = 'bqa4qy4jd';
+            // $query = '{86.EX.0}AND{82.EX.0}';
+            // $clist = '3.13.29.154.43.92.86.49.155.64.65.66.67.44.79.60';
             $response = $this->getQuickBase('productos');
             $product = new Product();
-            $product2 = $product->setProducs($response);
+            $product2 = $product->setProducs($response, $branch_id);
         }
     }
 
     //funcion para obtener las metodos de pago
-    function getPaymentMethods(){
-        $payment_method_exist = PaymentMethod::first();
+    function getPaymentMethods($branch_id = null){
+        $payment_method_exist = is_null($branch_id) ? PaymentMethod::first():null;
         if(!is_object($payment_method_exist)){
-            $db = 'bqgubmjca';
-            $query = '';
-            $clist = '3.6.7';
+            // $db = 'bqgubmjca';
+            // $query = '';
+            // $clist = '3.6.7';
             $response = $this->getQuickBase('payment_methods');
         
             $payment_method = new PaymentMethod();
-            $payment_method2 = $payment_method->setPaymentMethods($response);
+            $payment_method2 = $payment_method->setPaymentMethods($response, $branch_id);
+
+            if(!is_null($branch_id)){
+                return redirect()->back()->with('success', 'Importación de metodos de pago con exito.');
+            }
         }
     }
 
     //funcion para obtener las unidades de sat
-    function getUnidadesSat(){
-        $unidad_sat_exist = UnidadSat::first();
+    function getUnidadesSat($branch_id = null){
+        $unidad_sat_exist = is_null($branch_id) ? UnidadSat::first():null;
         if(!is_object($unidad_sat_exist)){
-            $db = 'bqgt9zstu';
-            $query = '';
-            $clist = '3.6.7.8';
+            // $db = 'bqgt9zstu';
+            // $query = '';
+            // $clist = '3.6.7.8';
             $response = $this->getQuickBase('unidades_sat');
             $unidadSat = new UnidadSat();
             $unidadSat2 = $unidadSat->setUnidades($response);
+
+            if(!is_null($branch_id)){
+                return redirect()->back()->with('success', 'Importación de unidades de SAT con exito.');
+            }
+        }
+    }
+
+    //funcion para obtener proveedores
+    function getProveedores($branch_id = null){
+        $proveedor_exist = is_null($branch_id) ? Proveedor::first():null;
+        if(!is_object($proveedor_exist)){
+            $response = $this->getQuickBase('proveedores');
+            $proveedor = new Proveedor();
+            $proveedor2 = $proveedor->setProveedores($response);
+        }
+
+        if(!is_null($branch_id)){
+            return redirect()->back()->with('success', 'Importación de proveedores con exito.');
         }
     }
 

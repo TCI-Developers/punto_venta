@@ -5,24 +5,6 @@
 @section('js')
     @include('components.use.notification_success_error')
 
-    @if ($errors->any())
-    <script>
-        $(document).ready(function() {
-            Swal.fire({
-                icon: 'info',
-                title: 'Validación de campos',
-                html: `
-                    <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                    </ul>
-                `
-            });
-        });
-    </script>
-    @endif
-
     <script>
         //funcion para abrir modal crear
         function btnShow(user, user_branch){

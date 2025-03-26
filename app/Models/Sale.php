@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-Use App\Models\SaleDetail;
+Use App\Models\{SaleDetail};
 
 class Sale extends Model
 {
@@ -52,7 +52,7 @@ class Sale extends Model
             foreach($sale_details as $item){
                 if(count($item->getCantSalesDetail)){
                     foreach($item->getCantSalesDetail as $detal_cant){
-                        $descuento += $detal_cant->total_descuento;
+                        $descuento += (float)$detal_cant->total_descuento;
                     }
                 }
             }

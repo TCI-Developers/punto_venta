@@ -5,24 +5,6 @@
 @section('js')
     @include('components..use.notification_success_error')
 
-    @if ($errors->any())
-    <script>
-        $(document).ready(function() {
-            Swal.fire({
-                icon: 'info',
-                title: 'Validación de campos',
-                html: `
-                    <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                    </ul>
-                `
-            });
-        });
-    </script>
-    @endif
-
     <script>
         //funcion para habilitar boton editar
         function edit(){
@@ -44,18 +26,30 @@
         }
 
         //funcion para importar productos y se relacionen a la sucursal
-        function importProducts(branch_id){
-            console.log('*', branch_id);
-            
+        function importAll(branch_id, value){   
+            let route = '';
+            if(value == 'productos'){
+                route = "{{ route('import.products', ':id') }}".replace(':id', branch_id);
+            }else if(value == 'choferes'){
+                route = "{{ route('import.drivers', ':id') }}".replace(':id', branch_id); 
+            }else if(value == 'metodos_de_pago'){
+                route = "{{ route('import.getPaymentMethods', ':id') }}".replace(':id', branch_id);
+            }else if(value == 'proveedores'){
+                route = "{{ route('proveedor.getProveedores', ':id') }}".replace(':id', branch_id);
+            }else{
+                route = "{{ route('import.getUnidadesSat', ':id') }}".replace(':id', branch_id);
+            }  
+
             Swal.fire({
-                title: "¿Deseas importar productos a esta sucursal?",
+                title: "¿Deseas importar "+value.replace('_',' ')+" a esta sucursal?",
                 showCancelButton: true,
+                icon: 'question',
                 confirmButtonText: "Aceptar",
                 denyButtonText: `Cancelar`
             }).then((result) => {
                 if (result.isConfirmed) {
                     mostrarCargando();
-                    let productImportUrl = "{{ route('import.products', ':id') }}".replace(':id', branch_id);
+                    let productImportUrl = route;
                     window.location.href = productImportUrl;
                 }
             });
@@ -82,7 +76,11 @@
         <div class="col-12 mt-2">
             <a href="{{route('branchs.index')}}" class="btn btn-success"><i class="fa fa-arrow-left"></i></a>
             @isset($branch)
-            <button type="button" class="btn btn-primary float-right" onclick="importProducts({{$branch->id}})"><i class="fa fa-download"></i> Importar Productos</button>
+            <button type="button" class="btn btn-primary float-right col-2" onclick="importAll({{$branch->id}}, 'productos')"><i class="fa fa-download"></i> Importar productos</button>
+            <button type="button" class="btn btn-warning float-right col-2 mr-2" onclick="importAll({{$branch->id}}, 'choferes')"><i class="fa fa-download"></i> Importar choferes</button>
+            <button type="button" class="btn btn-secondary float-right col-2 mr-2" onclick="importAll({{$branch->id}}, 'metodos_de_pago')"><i class="fa fa-download"></i> Importar metodos de pago</button>
+            <button type="button" class="btn btn-info float-right col-2 mr-2" onclick="importAll({{$branch->id}}, 'unidades_Sat')"><i class="fa fa-download"></i> Importar unidades Sat</button>
+            <button type="button" class="btn btn-light float-right col-2 mr-2" onclick="importAll({{$branch->id}}, 'proveedores')"><i class="fa fa-download"></i> Importar Proveedores</button>
             @endisset
         </div>
         <div class="card-body">

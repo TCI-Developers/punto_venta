@@ -65,6 +65,7 @@ class Sale extends Component
             $this->sales_detail = SaleDetail::where('sale_id', $this->id)->get();
             $this->sales_detail_dev = SaleDetail::where('sale_id', $this->id)->where('status', 0)->get();
             $devoluciones = Devolucion::where('sale_id', $this->id)->get();
+
             return view('livewire.sales.show', ['sale' => $sale, 'devoluciones' => $devoluciones]);
         }
         $user = Auth::User();
@@ -167,7 +168,7 @@ class Sale extends Component
             $withDesc = false;
             if(!is_null($presentation->vigencia) && !is_null($presentation->tipo_descuento) && $presentation->vigencia_cantidad_fecha == 'cantidad' && $presentation->vigencia > 0){
                 $withDesc = true;
-            }else if(!is_null($presentation->vigencia) && !is_null($presentation->tipo_descuento) && $presentation->vigencia_cantidad_fecha == 'fecha' && $presentation->vigencia < date('Y-m-d H:i:s')){
+            }else if(!is_null($presentation->vigencia) && !is_null($presentation->tipo_descuento) && $presentation->vigencia_cantidad_fecha == 'fecha' && $presentation->vigencia.' 23:59:59' > date('Y-m-d H:i:s')){
                 $withDesc = true;
             }
 
@@ -222,31 +223,46 @@ class Sale extends Component
                 $sale_detail->saveNewCantDetails($sale_detail, $presentation, false);
             }
         }else{
+ 
             if(is_countable($sale_detail_cant)){
                 foreach($sale_detail_cant as $item){
                     if($item->part_to_product_id == $presentation->id){
-                        if(!is_null($presentation->vigencia) && $item->descuento == $presentation->monto_porcentaje || is_null($presentation->vigencia) && $item->descuento == 0){
-                            $sale_detail_cant = $item;
-                            $sale_detail_cant->cant = $sale_detail_cant->cant + 1;
+                        $sale_detail_cant = SaleDetailCant::find($item->id);
+
+                        if(!is_null($presentation->vigencia)){
+                            if(is_numeric($presentation->vigencia)){
+                                if($item->descuento == $presentation->monto_porcentaje || is_null($presentation->vigencia) && $item->descuento == 0){
+                                    $sale_detail_cant->cant = $sale_detail_cant->cant + 1;
+                                }
+                            }else{
+                                if($presentation->vigencia.' 23:59:59' > date('Y-m-d H:i:s') && $item->descuento > 0 ||
+                                    $presentation->vigencia.' 23:59:59' < date('Y-m-d H:i:s') && $item->descuento == 0){
+                                    $sale_detail_cant->cant = $sale_detail_cant->cant + 1;
+                                }
+                            }
                         }
+
                     }
                 }
             }
 
-                $sale_detail_cant->descuento = 0;
-                if(!is_null($presentation->vigencia) && $presentation->tipo_descuento == 'monto'){
+            $sale_detail_cant->descuento = 0;
+            if(!is_null($presentation->vigencia) && $presentation->tipo_descuento == 'monto'){
+                if(is_numeric($presentation->vigencia) || $presentation->vigencia.' 23:59:59' > date('Y-m-d H:i:s')){
                     $sale_detail_cant->descuento = round(($presentation->monto_porcentaje ?? 0), 2);
                     $sale_detail_cant->total_descuento = round(((($presentation->monto_porcentaje ?? 0) * $sale_detail_cant->cant)), 2);
-                }else if(!is_null($presentation->vigencia) && $presentation->tipo_descuento == 'porcentaje'){
+                }
+            }else if(!is_null($presentation->vigencia) && $presentation->tipo_descuento == 'porcentaje'){
+                if(is_numeric($presentation->vigencia) || $presentation->vigencia.' 23:59:59' > date('Y-m-d H:i:s')){
                     $sale_detail_cant->descuento = round(($presentation->monto_porcentaje ?? 0),2);
                     $sale_detail_cant->total_descuento = 0;
                     if(!is_null($presentation->monto_porcentaje) && $presentation->monto_porcentaje > 0){
                         $sale_detail_cant->total_descuento = round(((($presentation->price * $presentation->monto_porcentaje)/100)*$sale_detail_cant->cant),2);
-                        $sale_detail_cant->save();
                     }
                 }
+            }
 
-                $sale_detail_cant->save();
+            $sale_detail_cant->save();
         }
     }
 
@@ -262,11 +278,11 @@ class Sale extends Component
         $ieps = round(($product->taxes == 'IE3' ? ($amount * $product->amount_taxes):0),2);
         $total = round(($subtotal + $iva + $ieps), 2);
 
-        $sale_detail->amount = round($amount);
-        $sale_detail->subtotal = round($subtotal);
-        $sale_detail->iva = round($iva);
-        $sale_detail->ieps = round($ieps);
-        $sale_detail->total = round($total);
+        $sale_detail->amount = round($amount,2);
+        $sale_detail->subtotal = round($subtotal,2);
+        $sale_detail->iva = round($iva,2);
+        $sale_detail->ieps = round($ieps,2);
+        $sale_detail->total = round($total,2);
         $sale_detail->save();
     }
 
@@ -395,11 +411,14 @@ class Sale extends Component
         if(count($presentacionese_existentes)){
             foreach($presentacionese_existentes as $item){
                 if($type == 'mas'){
-                    $item->stock = $item->stock + $cant;
+                    $val = $presentation->cantidad_despiezado > 0 ? $cant/($presentation->cantidad_despiezado):$cant;
+                    $item->stock = $item->stock + $val;
                 }else if($type == 'menos'){
-                    $item->stock = $item->stock - 1;
+                    $val = $presentation->cantidad_despiezado > 0 ? 1/($presentation->cantidad_despiezado):1;
+                    $item->stock = $item->stock - $val;
                 }else{
-                    $item->stock = $item->stock - $cant;
+                    $val = $presentation->cantidad_despiezado > 0 ? $cant/($presentation->cantidad_despiezado):$cant;
+                    $item->stock = $item->stock - $val;
                 }
                 $item->save();
             }
@@ -420,19 +439,21 @@ class Sale extends Component
             $detail_with_desc = SaleDetailCant::where('sale_id', $this->id)
                             ->where('part_to_product_id', $presentation->id)->where('descuento', '>', 0)->first();
             
-            $presentation->vigencia += ($detail_with_desc->cant ?? 0);
+            if(is_numeric($presentation->vigencia)){
+                $presentation->vigencia += ($detail_with_desc->cant ?? 0);
+            }     
 
             $arr_sales_detail_cant = $cantidad_sales_detail_cant;
             foreach($arr_sales_detail_cant as $index => $item){
                 $this->destroyProduct($item->id, 'masivo');
             }
-           
-            if($cant >= $presentation->cantidad_mayoreo){
+            
+            if($presentation->cantidad_mayoreo > 0 && $cant >= $presentation->cantidad_mayoreo){
                 $this->venta_mayoreo_save($presentation, $cant);
             }else{
-                if($presentation->vigencia >= $cant){
+                if(is_numeric($presentation->vigencia) && $presentation->vigencia >= $cant){
                     $this->menorAVigencia($presentation, $cant);
-                }else if($presentation->vigencia < $cant){ 
+                }else if(is_numeric($presentation->vigencia) && $presentation->vigencia < $cant){ 
                     if(!is_null($presentation->vigencia) && $presentation->vigencia > 0){
                         $cant = $cant - $presentation->vigencia;
                         $presentation = PartToProduct::find($presentation->id);
@@ -441,6 +462,12 @@ class Sale extends Component
                     
                     $sale_detail = $this->saveSaleDetail($presentation); //guardamos en save_detail
                     $sale_detail->saveNewCantDetails($sale_detail, $presentation, false, $cant);
+                    $this->setStock($presentation, $cant, 'otro');
+                    $this->calculoImpuestos($sale_detail, $presentation);
+                }else if(!is_numeric($presentation->vigencia)){
+                    $sale_detail = $this->saveSaleDetail($presentation); //guardamos en save_detail
+                    $desc = $presentation->vigencia.' 23:59:59' > date('Y-m-d H:i:s') ? true:false;
+                    $sale_detail->saveNewCantDetails($sale_detail, $presentation, $desc, $cant);
                     $this->setStock($presentation, $cant, 'otro');
                     $this->calculoImpuestos($sale_detail, $presentation);
                 }
