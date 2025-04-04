@@ -227,4 +227,9 @@ class Controller extends BaseController
 
         return false;
     }
+
+    //funcion para quitar signo de pesos y hacerlo numerico el valor
+    function formatNumberr($valor){
+        return (float)str_replace(',','', str_replace('$', '', $valor));
+    }
 }

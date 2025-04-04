@@ -5,12 +5,23 @@
 <!-- Terminado 25/mar/25 -->
 
 -Tabla en DB de folios (no se ocupara)
-* Se creara nueva tabla dedicada para folios (ventas, requisiciones) (listo)
+* Se creara nueva tabla dedicada para folios (ventas, requisiciones) (pendiente para saber si se usara)
 
 -Modulo de requisiciones
-<!-- aqui se debe cambiar la forma de crear, se genera primero y despues se agregan los productps, debe de generarse con todo y productos -->
+* Validar entrega de productos al guardar (listo)
+* Se debe guardar las entradas en una tabla independiente para tener registro de los cambios (listo)
+* Solo admin puede editar entradas, Rechachar y autorizar ///SE ESTAN EDITANDO LAS ENTRADAS, SE VE EL MODO PARA EDITARLAS SI SE ACTUALIZA TODO O SE ACTUALIZA SOLO EL REGISTRO
+* Se hace orden de compra al entrar a status autorizar
+* Antes de solicitar se debe llenar la fecha de entrega
+* status solicitado no se puede modificar nada
+* Vigencia de pago es el plazo mas la fecha de recibido
+* Al cerrar la compra se actualizan los campos en dado caso de que existan cambios
 * Se debe crear DRUD
-* Dashboard para listar todas las requisiciones
+* Dashboard para listar todas las requisiciones 
+<!-- Terminado 03/abr/25 -->
+
+* PDF de la informacion despues de crear
+
 * Filtros para el listado (Fecha y sucursal)
 * Cuentas por cobrar (Despues de tener las requisiciones)
 

@@ -9,13 +9,17 @@ class Compra extends Component
 {   
     protected $listeners = [
         'vencimiento' => 'vencimiento',
+        'entradaProductEdit' => 'entradaProductEdit',
+        'recibidoProduct' => 'recibidoProduct',
     ];
 
     public $user;
+    public $compra;
     public $compra_id;
 
-    public $select_product; //select de productos
+    public $select_product = []; //select de productos
     public $product_arr = [];
+    public $product_saved = [];
     public $entrada_product = [];
     public $subtotal = [];
     public $valor_impuesto = [];
@@ -29,17 +33,19 @@ class Compra extends Component
     public function render()
     {   
         $proveedores = Proveedor::where('status', 1)->orderBy('name', 'asc')->get();
-        if(!is_null($this->compra_id)){
-            $compra = CompraModel::find($this->compra_id);
-            $products = Product::where('branch_id', $this->user->branch_id)->get();
+        $products = Product::where('branch_id', $this->user->branch_id)->get();
 
-            if(is_object($compra)){
-                return view('livewire.compras.create', ['compra' => $compra, 'proveedores' => $proveedores,
-                            'products' => $products]);
+        if(!is_null($this->compra_id)){
+            $this->compra = CompraModel::find($this->compra_id);
+            $status = $this->compra->status == 1 ? '':'disabled';
+            if(is_object($this->compra)){
+                $this->product_saved = $this->compra->getDetalles;
+                return view('livewire.compras.create', ['proveedores' => $proveedores,
+                            'products' => $products, 'status' => $status]);
             }
         }
 
-        return view('livewire.compras.create', ['proveedores' => $proveedores]);
+        return view('livewire.compras.create', ['products' => $products, 'proveedores' => $proveedores]);
     }
 
     //funcion para cuando seleccionan un producto se agrege en el cuerpo de la tabla
@@ -48,7 +54,9 @@ class Compra extends Component
         if(count($this->select_product)){
             foreach($this->select_product as $item){
                 $product = Product::find($item);
-                $this->product_arr[$product->id] = $product;
+                if(!isset($this->compra) || isset($this->compra) && $this->compra->hasProduct($item) == false){
+                   $this->product_arr[$product->id] = $product;
+                }
             }
             $this->dispatch('selectRefresh');
         }
@@ -61,5 +69,34 @@ class Compra extends Component
            $this->valor_impuesto[$product_id] = ($this->subtotal[$product_id] * $this->product_arr[$product_id]->amount_taxes);
         }
         $this->total[$product_id] = $this->subtotal[$product_id] + ($this->valor_impuesto[$product_id] ?? 0);
+    }
+
+    //funcion para calcular el subtotal
+    public function entradaProductEdit($detalle_id, float $entrada, $precio_unitario, $tipo_impuesto, $impuesto){
+       $this->subtotal[$detalle_id] = $entrada * $this->formatNumberr($precio_unitario);
+        if($tipo_impuesto != 'SYS'){
+           $this->valor_impuesto[$detalle_id] = ($this->subtotal[$detalle_id] * $impuesto);
+        }
+        $this->total[$detalle_id] = $this->subtotal[$detalle_id] + ($this->valor_impuesto[$detalle_id] ?? 0);
+    }
+
+    //funcion para calcular el subtotal con lo recibido
+    public function recibidoProduct($detalle_id, float $recibido, $precio_unitario, $tipo_impuesto, $impuesto){
+        $this->subtotal[$detalle_id] = $recibido * $this->formatNumberr($precio_unitario);
+        if($tipo_impuesto != 'SYS'){
+           $this->valor_impuesto[$detalle_id] = ($this->subtotal[$detalle_id] * $impuesto);
+        }
+        $this->total[$detalle_id] = $this->subtotal[$detalle_id] + ($this->valor_impuesto[$detalle_id] ?? 0);
+    }
+
+    //funcion para asignar la fecha de entrega a la orden de compra
+    public function setFechaEntrega($fecha){
+        $this->compra->programacion_entrega = $fecha;
+        $this->compra->save();
+    }
+
+    //funcion para quitar signo de pesos y hacerlo numerico el valor
+    function formatNumberr($valor){
+        return (float)str_replace(',','', str_replace('$', '', $valor));
     }
 }

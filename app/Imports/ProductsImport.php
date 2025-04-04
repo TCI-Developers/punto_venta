@@ -10,7 +10,6 @@ class ProductsImport implements ToCollection
 {
     public function collection(Collection $rows)
     {   
-        // dd($rows);
         foreach ($rows as $index => $row) {
             $code_product = $row[0];
             $barcode = $row[1];

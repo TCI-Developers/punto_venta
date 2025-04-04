@@ -29,7 +29,7 @@ return new class extends Migration
             $table->double('subtotal')->default(0);
             $table->double('total')->default(0);
             $table->string('observaciones')->nullable();
-            $table->integer('status')->default(1); //0 = Cancelada -1 = pendiente - 2 = Autorizada - 3 = Rechazada - 4 = Cerrada
+            $table->integer('status')->default(1); //0 = Cancelada - 1 = pendiente - 2 = Autorizada - 3 = Solicitado - 4 = Recibido
             $table->foreign('branch_id')->references('id')->on('branchs');
             $table->foreign('user_id')->references('id')->on('users');
             $table->timestamps();

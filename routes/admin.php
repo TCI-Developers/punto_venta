@@ -121,4 +121,8 @@ Route::get('/poveedores-enable/{proveedor_id}/{status}', 'Admin\ProveedorControl
 Route::get('/compras/{status?}', 'Admin\CompraController@index')->name('compra.index');
 Route::get('/compras-create', 'Admin\CompraController@create')->name('compra.create');
 Route::post('/compras-store/{compra_id?}', 'Admin\CompraController@store')->name('compra.store');
+Route::post('/compras-store-close/{compra_id}', 'Admin\CompraController@storeRecibido')->name('compra.storeRecibido');
 Route::get('/compras-show/{compra_id?}', 'Admin\CompraController@create')->name('compra.show');
+
+Route::get('/compras-status/{compra_id}/{status}', 'Admin\CompraController@status')->name('compra.status'); //cambiar el status de la compra
+Route::get('/detalle-compra-destroy/{detalle_id}', 'Admin\CompraController@destroy')->name('compra.destroy'); //cambiar el status de la compra
