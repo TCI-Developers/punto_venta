@@ -63,6 +63,13 @@
                     </a>
                 </li>
 
+                <li class="nav-item"> <!--Cuentas por pagar -->
+                    <a class="nav-link" href="{{route('cxp.index')}}">
+                        <i class="fa fa-address-book"></i>
+                        <p>Cuentas por pagar</p>
+                    </a>
+                </li>
+
                 <li class="nav-item"> <!--Devoluciones -->
                     <a class="nav-link" href="{{route('devoluciones.index')}}">
                         <i class="fas fa-undo"></i>

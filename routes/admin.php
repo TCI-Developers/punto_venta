@@ -126,3 +126,8 @@ Route::get('/compras-show/{compra_id?}', 'Admin\CompraController@create')->name(
 
 Route::get('/compras-status/{compra_id}/{status}', 'Admin\CompraController@status')->name('compra.status'); //cambiar el status de la compra
 Route::get('/detalle-compra-destroy/{detalle_id}', 'Admin\CompraController@destroy')->name('compra.destroy'); //cambiar el status de la compra
+Route::get('/compra-pdf/{compra_id}', 'Admin\CompraController@pdf')->name('compra.pdf');
+
+//cuentas por pagar
+Route::get('/cxp/{status?}', 'Admin\CuentaCobrarController@index')->name('cxp.index');
+

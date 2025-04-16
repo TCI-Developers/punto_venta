@@ -6,7 +6,7 @@
                 <h2>{{isset($compra) ? 'Actualizar compra':'Nueva compra'}}</h2>
             @endif
         </div>
-        @if(isset($compra) &&$compra->status == 4)
+        @if(isset($compra) && $compra->status == 4)
             <form action="{{route('compra.storeRecibido', $compra->id)}}" method="post" id="formAction">
         @else
             <form action="{{route('compra.store', isset($compra) ? $compra->id:null )}}" method="post" id="formAction">

@@ -2,6 +2,10 @@
 
 @section('title', 'Compras')
 
+@section('css')
+
+@stop
+
 @section('js')
     @include('components..use.notification_success_error')
 
@@ -19,10 +23,10 @@
         <div class="form-group card-header with-border text-center">
             <h2>Compras</h2>
         </div>
+
         <div class="card-body table-responsive">
             <div class="form-group">
                 <a href="{{route('compra.create')}}" class="btn btn-success"><img src="{{asset('icons/plus.svg')}}" width="23" alt="icono plus"> &nbsp; Nueva</a>
-                
                 <a href="{{route('proveedor.index', $status == 1 ? 0:1)}}" class="btn {{$status == 1 ? 'btn-light':'btn-primary'}} float-right"><img src="{{asset('icons/archive.svg')}}" width="23" alt="icono archive"> &nbsp; {{$status == 1 ? 'Inhabilitados':'Habilitados'}}</a>
             </div>
 
@@ -51,6 +55,7 @@
                         </td>
                         <td class="text-center">
                             <a href="{{route('compra.show', $item->id)}}" class="btn btn-warning btn-sm"><i class="fa fa-eye"></i></a>
+                            <a href="{{route('compra.pdf', $item->id)}}" class="btn btn-info btn-sm"><i class="fa fa-file"></i></a>
                         </td>
                     </tr>
                     @empty

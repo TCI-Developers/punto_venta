@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\{Compra, DetalleCompra, DetalleCompraEntrada, Proveedor, Product};
+use App\Models\{Compra, DetalleCompra, DetalleCompraEntrada, Proveedor, Product, CuentaPagar};
+use Barryvdh\DomPDF\Facade\PDF;
 
 class CompraController extends Controller
 {
@@ -98,7 +99,7 @@ class CompraController extends Controller
     }
 
     //funcion para guardar el cieere de la compra
-    public function storeRecibido(Request $request, $compra_id){
+    public function storeRecibido(Request $request, $compra_id){  
         $request->validate(
             ['recibido' => 'required'],['recibido.required' => 'El campo recibido es requerido.',]
         );
@@ -117,6 +118,10 @@ class CompraController extends Controller
                 $detalle_compra->subtotal = $subtotal;
                 $detalle_compra->impuestos = $impuestos;
                 $detalle_compra->total = $impuestos + $subtotal;
+
+                $product = Product::find($detalle_compra->producto_id);
+                $product->existence = $product->existence + $item;
+                $product->save();
                 $detalle_compra->save();
             }
 
@@ -136,6 +141,9 @@ class CompraController extends Controller
             $compra->subtotal = $subtotal;
             $compra->total = $total;
             $compra->save();
+
+            $cxp = new CuentaPagar();
+            $cxp->newCXP($compra); 
 
             return redirect()->back()->with('success', 'Compra cerrada con exito.');
         } catch (\Throwable $th) {
@@ -206,6 +214,13 @@ class CompraController extends Controller
         $compra->save();
 
         return redirect()->back()->with('success', 'Producto '. $detalle->descripcion_producto .' eliminado con exito.');
+    }
+
+    //funcion para mostrar pdf
+    public function pdf($compra_id){
+        $compra = Compra::find($compra_id);
+        $pdf = PDF::loadView('Admin.compras.pdf', ['compra' => $compra]);
+        return $pdf->setOptions(['isRemoteEnabled' => false])->stream('test'.$compra->id.'.pdf');
     }
 
     //funcion para validar los campos requeridos 

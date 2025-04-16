@@ -18,12 +18,18 @@
 * Al cerrar la compra se actualizan los campos en dado caso de que existan cambios
 * Se debe crear DRUD
 * Dashboard para listar todas las requisiciones 
-<!-- Terminado 03/abr/25 -->
-
 * PDF de la informacion despues de crear
+* Se actualiza la existencia con lo recibido
+<!-- Terminado 03/abr/25 -->
+* Cuentas por cobrar (Despues de tener las requisiciones)
 
 * Filtros para el listado (Fecha y sucursal)
-* Cuentas por cobrar (Despues de tener las requisiciones)
+* CRUD de las cuentas por cobrar en otro modulo
+* Vista para crear con campos capturables Fecha e Importe seleccionar orden de compra en dado caso de que no este dentro del modulo
+* Status 0 = eliminada, 1 = activa = 2 pagada
+* Listado de cuentas por pagar con filtro de activas, pagadas y ordenar por fecha.
+* Calendario en Vista
+* En productos se debe de tomar en cuanta la existencia o la presentacion, para tomar el stock 
 
 
 <!-- quedan pendientes las devoluciones a matriz por falta de modulos que se requieren en el proyecto -->
