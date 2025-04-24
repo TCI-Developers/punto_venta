@@ -36,4 +36,9 @@ class Compra extends Model
         $detalle = DetalleCompra::where('producto_id', $product_id)->first();
         return isset($detalle->id) ? true:false;
     }
+
+    //Funcion para obtener la cuenta por pagar
+    public function getCuentaPagar(){
+        return $this->hasOne('App\Models\CuentaPagar', 'compra_id', 'id');
+    }
 }

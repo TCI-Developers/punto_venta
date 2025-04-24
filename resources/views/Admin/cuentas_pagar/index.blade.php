@@ -46,21 +46,20 @@
                         <td class="text-center">{{$item->getCompra->folio}}</td>
                         <td class="text-center">{{date('d-m-Y', strtotime($item->fecha_vencimiento))}}</td>
                         <td class="text-right">$ {{number_format($item->total, 2)}}</td>
-                        <td class="text-right">$ 0.00</td>
+                        <td class="text-right">$ {{number_format($item->getDetails->sum('importe'), 2)}}</td>
                         <td class="text-center">
                             @if($item->status != 0)
-                            <span class="badge {{$item->status == 1 ? 'badge-warning':'badge-success'}}">{{$item->tipo == 1 ? 'Pendiente':'Pagada'}}</span>
+                            <span class="badge {{$item->status == 1 ? 'badge-warning':'badge-success'}}">{{$item->status == 1 ? 'Pendiente':'Pagada'}}</span>
                             @else
                             <span class="badge badge-danger">Eliminada</span>
                             @endif
                         </td>
                         <td class="text-center">
-                            <a href="{{route('compra.show', $item->id)}}" class="btn btn-warning btn-sm"><i class="fa fa-eye"></i></a>
-                            <a href="{{route('compra.pdf', $item->id)}}" class="btn btn-info btn-sm"><i class="fa fa-file"></i></a>
+                            <a href="{{route('cxp.show', $item->id)}}" class="btn btn-warning btn-sm"><i class="fa fa-eye"></i></a>
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="5" class="table-warning text-center">Sin cuentas</td></tr>
+                    <tr><td colspan="6" class="table-warning text-center">Sin cuentas</td></tr>
                     @endif
                 </tbody>
             </table>

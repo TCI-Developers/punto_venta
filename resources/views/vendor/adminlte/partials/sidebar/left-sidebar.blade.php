@@ -123,12 +123,12 @@
                     </a>
                 </li>
                
-                {{-- <li class="nav-item"> <!-- Sucursales -->
-                    <a class="nav-link" href="{{route('branch.index')}}">
-                        <img src="{{asset('icons/home.svg')}}" alt="Icono de close" width="23">
-                        <p>Opciones Sucursal</p>
+                <li class="nav-item"> <!-- Empresa -->
+                    <a class="nav-link" href="{{route('admin.empresa')}}">
+                        <i class="fa fa-id-card"></i>
+                        <p>Empresa</p>
                     </a>
-                </li> --}}
+                </li>
                 @endif
 
                

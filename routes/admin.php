@@ -1,6 +1,8 @@
 <?php
 
 Route::get('/', 'Admin\AdminController@index')->name('admin.index'); //vista principal
+Route::get('/empresa', 'Admin\AdminController@empresa')->name('admin.empresa'); //vista muetsra datos de la empresa
+Route::post('/empresa-update', 'Admin\AdminController@empresaUpdate')->name('admin.empresaUpdate'); //vista muetsra datos de la empresa
 
 Route::get('/start-amount-box', 'Admin\AdminController@startAmountBox')->name('admin.startAmountBox'); //vista principal
 
@@ -124,10 +126,13 @@ Route::post('/compras-store/{compra_id?}', 'Admin\CompraController@store')->name
 Route::post('/compras-store-close/{compra_id}', 'Admin\CompraController@storeRecibido')->name('compra.storeRecibido');
 Route::get('/compras-show/{compra_id?}', 'Admin\CompraController@create')->name('compra.show');
 
-Route::get('/compras-status/{compra_id}/{status}', 'Admin\CompraController@status')->name('compra.status'); //cambiar el status de la compra
+Route::get('/compras-status/{compra_id?}/{status}', 'Admin\CompraController@status')->name('compra.status'); //cambiar el status de la compra
 Route::get('/detalle-compra-destroy/{detalle_id}', 'Admin\CompraController@destroy')->name('compra.destroy'); //cambiar el status de la compra
 Route::get('/compra-pdf/{compra_id}', 'Admin\CompraController@pdf')->name('compra.pdf');
 
 //cuentas por pagar
-Route::get('/cxp/{status?}', 'Admin\CuentaCobrarController@index')->name('cxp.index');
+Route::get('/cxp/{status?}', 'Admin\CuentaPagarController@index')->name('cxp.index');
+Route::get('/cxp-show/{id}', 'Admin\CuentaPagarController@show')->name('cxp.show');
+Route::post('/cxp-store/{id}', 'Admin\CuentaPagarController@store')->name('cxp.store');
+Route::get('/cxp-destroy/{id}', 'Admin\CuentaPagarController@destroy')->name('cxp.destroy');
 

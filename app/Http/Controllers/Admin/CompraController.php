@@ -12,8 +12,9 @@ class CompraController extends Controller
 {
     //listado de proveedores
     public function index($status = 1)
-    {   
-        $compras = Compra::get();
+    {      
+        $branch_id = Auth::User()->branch_id;
+        $compras = Compra::where('branch_id', $branch_id)->get();
         return view('Admin.compras.index', ['compras' => $compras, 'status' => $status]);
     }
 
@@ -105,6 +106,8 @@ class CompraController extends Controller
         );
 
         try {
+            $compra = Compra::find($compra_id);
+
             foreach($request->recibido ?? [] as $index => $item){
                 $detalle_compra_entrada = DetalleCompraEntrada::find($index);
                 $detalle_compra_entrada->recibido = $item;
@@ -118,14 +121,26 @@ class CompraController extends Controller
                 $detalle_compra->subtotal = $subtotal;
                 $detalle_compra->impuestos = $impuestos;
                 $detalle_compra->total = $impuestos + $subtotal;
+                if($compra->tipo == 'OC'){
+                    $product = Product::find($detalle_compra->producto_id);
+                    $product->existence = ((int)$product->existence ?? 0) + $item;
+                    $product->save();
 
-                $product = Product::find($detalle_compra->producto_id);
-                $product->existence = $product->existence + $item;
-                $product->save();
+                    if($product->getPartToProduct){
+                        $presentacion = $product->getPartToProduct;
+                        $presentacion->stock = $presentacion->stock + $item;
+                        $presentacion->save();
+                    }
+
+                    if($product->getPartToProductDespiezado){
+                        $despiezado = $product->getPartToProductDespiezado;
+                        $despiezado->stock = $despiezado->stock + $item;
+                        $despiezado->save();
+                    }
+                }
                 $detalle_compra->save();
             }
 
-            $compra = Compra::find($compra_id);
             $compra->status = 5;
 
             $impuestos = 0;
@@ -143,7 +158,7 @@ class CompraController extends Controller
             $compra->save();
 
             $cxp = new CuentaPagar();
-            $cxp->newCXP($compra); 
+            $cxp->newCXP($compra, Auth::User()->branch_id); 
 
             return redirect()->back()->with('success', 'Compra cerrada con exito.');
         } catch (\Throwable $th) {

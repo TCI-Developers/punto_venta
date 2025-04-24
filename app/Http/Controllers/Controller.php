@@ -6,7 +6,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Auth;
-use App\Models\{User, Product, Brand, Customer, PaymentMethod, UnidadSat, Role, Turno, UserRole, Box, Driver, Proveedor};
+use App\Models\{User, Product, Brand, Customer, PaymentMethod, UnidadSat, Role, Turno, UserRole, Box, Driver, Proveedor, EmpresaDetail};
 
 class Controller extends BaseController
 {
@@ -104,6 +104,10 @@ class Controller extends BaseController
             $data['db'] = 'bqa4qy387';
             $data['query'] = '';
             $data['clist'] = '3.17.6.8.16.19.18.28.29.20.30';
+        }else if($table_name_db == 'empresa'){
+            $data['db'] = 'bqa4qy3xm';
+            $data['query'] = '';
+            $data['clist'] = '6.12.14';
         }
        
         return $data;
@@ -126,6 +130,22 @@ class Controller extends BaseController
             if(!is_null($branch_id)){
                 return redirect()->back()->with('success', 'Importación de choferes con exito.');
             }
+        }
+    }
+
+    //funcion para obtener datos de empresa
+    function getEmpresa($branch_id = null){
+        $empresa_exist = EmpresaDetail::first();
+        if(!is_object($empresa_exist)){
+            $response = $this->getQuickBase('empresa');
+            $empresa = new EmpresaDetail();
+            $empresa2 = $empresa->setEmpresa($response);
+        }
+
+        $this->getProducts($branch_id);
+
+        if(!is_null($branch_id)){
+            return redirect()->back()->with('success', 'Importación de productos y marcas con exito.');
         }
     }
 

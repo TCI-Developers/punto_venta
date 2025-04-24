@@ -41,6 +41,8 @@
                         <td class="text-center">
                             @if(is_object($item->getPartToProduct))
                             <span class="badge badge-primary">{{number_format($item->getPartToProduct->stock ?? 0,2)}}</span>
+                            @else
+                            <span class="badge badge-success">{{number_format($item->existence ?? 0,2)}}</span>
                             @endif
                         </td>
                         <td class="text-center">$ {{number_format($item->precio,2)}}</td>
@@ -65,7 +67,7 @@
                                     @endif
                                 </div>
                             </div>
-                        </td>
+                        </td>  
                         @endif
                     </tr>
                     @empty

@@ -145,11 +145,12 @@ class BranchController extends Controller
         $user_model->save(); 
 
         if ($this->hasInternetConnection()) {
+            $this->getEmpresa(); 
             $this->getDrivers();
             $this->getBrands();
             $this->getPaymentMethods();
             $this->getUnidadesSat();
-            // $this->getProducts(); 
+            $this->getProducts(); 
         }
 
         return redirect()->route('sale.index');

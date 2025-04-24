@@ -14,12 +14,14 @@ return new class extends Migration
         Schema::create('cuentas_pagar', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('compra_id');
+            $table->unsignedBigInteger('branch_id');
             $table->date('fecha_vencimiento');
             $table->double('subtotal')->default(0);
             $table->double('impuestos')->default(0);
             $table->double('total')->default(0);
             $table->integer('status')->default(1); // 0 = Eliminado logico, 1 = activa, 2 = pagada
             $table->foreign('compra_id')->references('id')->on('compras');
+            $table->foreign('branch_id')->references('id')->on('branchs');
             $table->timestamps();
         });
     }
