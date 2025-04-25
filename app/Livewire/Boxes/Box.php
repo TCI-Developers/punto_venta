@@ -5,7 +5,7 @@ namespace App\Livewire\Boxes;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\{Box as BoxModel, Devolution};
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{DB,Auth};
 
 class Box extends Component
 {   

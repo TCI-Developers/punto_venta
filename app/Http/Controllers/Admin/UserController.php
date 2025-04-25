@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\{User, Product, Brand, Customer, PaymentMethod, UnidadSat, Role, Turno, UserRole, Box, Branch, BranchUser};
-use Illuminate\Support\Facades\{Auth};
+use Illuminate\Support\Facades\{DB, Auth};
 use Illuminate\Support\Carbon;
 
 class UserController extends Controller
@@ -43,6 +43,14 @@ class UserController extends Controller
         $user->phone = $request->phone;
         $user->password = bcrypt($request->password);
         $user->save();
+
+        $externalUser = new User();
+        $externalUser->setConnection('db_externa'); // Usar conexión externa
+        $externalUser->name = $user->name;
+        $externalUser->email = $user->email;
+        $externalUser->phone = $user->phone;
+        $externalUser->password = $user->password;
+        $externalUser->save();
 
         return redirect()->back()->with('success', 'Usuario creado con exito.');
     }

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\{User, Sale, SaleDetail};
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{DB,Auth};
 
 class SaleController extends Controller
 {    

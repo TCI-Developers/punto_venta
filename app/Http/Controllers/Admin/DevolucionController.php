@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{DB,Auth};
 use App\Models\{Devolucion, Product, Sale, SaleDetail, SaleDetailCant, PartToProduct, Branch, Driver};
 
 class DevolucionController extends Controller

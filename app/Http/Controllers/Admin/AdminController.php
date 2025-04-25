@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\EmpresaDetail;
-use Illuminate\Support\Facades\Auth;
+use App\Models\{User, EmpresaDetail};
+use Illuminate\Support\Facades\{DB, Auth};
 
 class AdminController extends Controller
 {

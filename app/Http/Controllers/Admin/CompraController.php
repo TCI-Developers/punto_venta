@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{DB,Auth};
 use App\Models\{Compra, DetalleCompra, DetalleCompraEntrada, Proveedor, Product, CuentaPagar};
 use Barryvdh\DomPDF\Facade\PDF;
 

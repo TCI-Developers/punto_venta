@@ -1,4 +1,5 @@
 <?php
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', 'Admin\AdminController@index')->name('admin.index'); //vista principal
 Route::get('/empresa', 'Admin\AdminController@empresa')->name('admin.empresa'); //vista muetsra datos de la empresa

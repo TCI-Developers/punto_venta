@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\{Product, PresentationProduct, UnidadSat, Box, Promotion, PartToProduct};
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{DB,Auth};
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ProductsImport;
 

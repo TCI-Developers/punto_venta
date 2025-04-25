@@ -4,7 +4,7 @@ namespace App\Livewire\Products;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{DB,Auth};
 use App\Models\{Product as ProductModel, PresentationProduct, PartToProduct, UnidadSat, Promotion};
 
 class Product extends Component
