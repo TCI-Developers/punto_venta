@@ -14,11 +14,11 @@ class Driver extends Model
     public function setDrivers($drivers) {
         if(count($drivers)){
             foreach($drivers as $item){
-                $driver = Driver::find((int)$item->record_id_);
+                $driver = Driver::find((int)$item->{'record_id#'});
                 if(!isset($driver)){
                     $driver = new Driver();
                 } 
-                $driver->id = (int)$item->record_id_;
+                $driver->id = (int)$item->{'record_id#'};
                 $driver->name = $item->nombre;
                 $driver->save();
             }

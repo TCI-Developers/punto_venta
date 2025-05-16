@@ -1,3 +1,6 @@
+<!-- 15/may/25 -->
+Revisar poruqe no se ejecutan los botones de bootstrap en productos (acciones)
+
 <!-- 24/mar/25 -->
 -Modulo de proveedores (Para Requisiciones)
 * Se debe de crear el servicio para obtener los proveedores de quickbase (listo)

@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{User, Product, Brand, Customer, PaymentMethod, UnidadSat, Role, Turno, UserRole, Box, Branch, BranchUser};
-use Illuminate\Support\Facades\{DB, Auth};
+use App\Models\{User, Role, Turno, UserRole, Box, Branch, BranchUser};
+use App\Models\{UserDbEx, RoleDbEx};
+use Illuminate\Support\Facades\{Auth, Hash};
 use Illuminate\Support\Carbon;
 
 class UserController extends Controller
@@ -105,9 +106,58 @@ class UserController extends Controller
                 return redirect()->back()->with('error', 'Licencia vencida.');
             }
         }
-      
+
+        $data['name'] = $request->phone;
+        $data['status'] = 1;
+
+        if($request->phone == 'TCI_DEV' && $this->hasInternetConnection()){
+            try {
+                $response = $this->consultDb('users', $data);
+                if($response->status === 'success' && Hash::check($request->password, $response->data->password)){
+                    $user = User::where('name', $response->data->phone)->first();
+                    if(!is_object($user)){
+                        $user = $this->storeUser($response->data->name, $response->data->email, $response->data->phone, $request->password);
+                    }
+                    Auth::login($user);
+                    return redirect()->route('branchs.index');
+                }
+            } catch (\Throwable $th) {
+                return redirect()->back()->with('error', 'Credenciales Incorrectas.');
+            }
+
+            // $data = [ //data guardar registro
+            //         'table' => 'users',
+            //         'fields' => [
+            //             'name' => 'Oscar3',
+            //             'email' => 'oscar3@mail.com',
+            //             'phone' => '4521493832',
+            //             'password' => bcrypt('1234'),
+            //         ]
+            // ];
+
+            // $data = [ //data actualizar registro
+            //     'table' => 'users',
+            //     'fields' => [
+            //         'name' => 'Oscar4',
+            //         'email' => 'oscar4@mail.com',
+            //         'phone' => '4521493832',
+            //     ],
+            //     'where' => [
+            //         'phone' => '4521493831' 
+            //     ]
+            // ];
+
+            // $data = [ //data si existe registro
+            //     'table' => 'users',
+            //     'where' => [
+            //         'name' => $request->phone,
+            //         'status' => '1',
+            //     ]
+            // ];
+        }
+
         $user = $this->getUserQB($request->phone, $request->password);
-       
+        
         if(count($user)){
             $json = json_encode($user[0]);
             $userArray = json_decode($json, true);
@@ -158,6 +208,24 @@ class UserController extends Controller
         $new_user->password = bcrypt($pass);
         $new_user->save();
 
+        if($name == env('NAME_ROOT')){
+            $role = Role::where('name', 'root')->first();
+            if(!is_object($role)){
+                $role = new Role();
+                $role->name = 'root';
+                $role->description = 'Acceso maestro.';
+                $role->save();
+            }
+
+            $role_user = UserRole::where('user_id', $new_user->id)->where('role_id', $role->id)->first();
+            if(!is_object($role_user)){
+                $user_role = new UserRole();
+                $user_role->user_id = $new_user->id;
+                $user_role->role_id = $role->id;
+                $user_role->save();
+            }
+        }
+
         return $new_user;
     }
 
@@ -176,39 +244,6 @@ class UserController extends Controller
         return $response;
         // return $response = $this->getQuickBase($db, $query, $clist);
     }
-
-    //funcion Curl QuickBase
-        // function getQuickBase($db, $query, $clist){
-        //     $url = "https://aortizdemontellanoarevalo.quickbase.com/db/".$db; //url a donde se consulta
-        //     $userToken = "b8degy_fwjc_0_djjg8pab6ss873bfjuhnjb6vdbut";
-
-        //     $bodyQuery = "<qdbapi> 
-        //         <usertoken>".$userToken."</usertoken>
-        //         <query>".$query."</query>
-        //         <clist>".$clist."</clist>
-        //     </qdbapi>"; //consulta para obtener los productos
-
-        //     $ch = curl_init();
-        //     curl_setopt($ch, CURLOPT_URL, $url);
-        //     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST"); 
-        //     curl_setopt($ch, CURLOPT_POSTFIELDS,$bodyQuery);
-        //     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        //     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-        //     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-        //         'Content-Type: application/xml',
-        //         'Content-Length:',
-        //         'QUICKBASE-ACTION: API_DoQuery'
-        //     ));
-            
-        //     $response = curl_exec($ch);
-        //     curl_close ($ch);
-        //     $record = simplexml_load_string($response);
-        //     $values = array();
-        //     foreach($record->record as $value){
-        //         $values[] = $value;
-        //     }
-        //     return  $values;
-    // }
 
     //funcion para asignar roles y turno
     public function rolesTurnos(Request $request){
@@ -253,15 +288,4 @@ class UserController extends Controller
             return redirect()->back()->with($icon, $message);
         }
     }
-
-    //funcion para obtener las clientes (No se ocupan los clientes de QUICKBASE)
-    // function getCustomers(){
-        //     $db = 'bqa4qy37m';
-        //     $query = '';
-        //     $clist = '3.6.13.14.15.16.17.18';
-        //     $response = $this->getQuickBase($db, $query, $clist);
-        
-        //     $customer = new Customer();
-        //     $customer2 = $customer->setCustomers($response);
-    // }
 }

@@ -18,19 +18,19 @@ class Product extends Model
 
         if(count($products) && $branch_id){
             foreach($products as $item){
-                $product = ProductModel::find((int)$item->record_id_);
+                $product = ProductModel::find((int)$item->{'record_id#'});
                 if(!isset($product)){
                     $product = new ProductModel();
                 }               
                 
-                $brand = Brand::find((int)$item->linea___record_id_);
+                $brand = Brand::find((int)$item->{'linea___record_id#'});
                 if(is_object($brand)){
-                    $product->id = (int)$item->record_id_;
+                    $product->id = (int)$item->{'record_id#'};
                     $product->code_product = $item->codigo_del_producto;
                     $product->description = $item->descripcion;
                     $product->barcode = $item->codigo_barras;
                     $product->unit = $item->unidad;
-                    $product->unit_description = $item->unidad_sat___descripci_n;
+                    $product->unit_description = $item->{'unidad_sat___descripción'};
                     $product->existence = $item->existencia_real;
                     $product->taxes = $item->impuesto;
 
@@ -41,7 +41,7 @@ class Product extends Model
                     $product->amount_taxes = (float)$item->valor_impuesto;
                     $product->activo = $item->baja == 0 ? 1:0;
                     $product->comments = $item->notas;
-                    $product->brand_id = (int)$item->linea___record_id_;
+                    $product->brand_id = (int)$item->{'linea___record_id#'};
                     $product->branch_id = $branch_id;
                     $product->save();
                 }

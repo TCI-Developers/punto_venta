@@ -13,11 +13,11 @@ class Brand extends Model
     public function setBrands($brands) {
         if(count($brands)){
             foreach($brands as $item){
-                $brand = Brand::find((int)$item->record_id_);
+                $brand = Brand::find((int)$item->{'record_id#'});
                 if(!isset($brand)){
                     $brand = new Brand();
                 } 
-                $brand->id = (int)$item->record_id_;
+                $brand->id = (int)$item->{'record_id#'};
                 $brand->name = $item->linea;
                 $brand->description = $item->descripcion;
                 $brand->save();

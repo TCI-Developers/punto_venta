@@ -204,7 +204,7 @@ class DevolucionController extends Controller
 
         //logica para mandar guardar a QuickBase
         // $data['table_id'] = "bqa4qy3sd";
-        // $data['usertoken'] = "b8degy_fwjc_0_djjg8pab6ss873bfjuhnjb6vdbut";
+        // $data['usertoken'] = env('USER_TOKEN');
         // $data['apptoken'] = "dkxavxndzybjwqi43f52dsyakvp"; 
         // $data['dominio'] = "aortizdemontellanoarevalo.quickbase.com";
 
@@ -254,7 +254,7 @@ class DevolucionController extends Controller
 
     //funcion para 
     function postQuickBase($data, $request){
-        $url = "https://aortizdemontellanoarevalo.quickbase.com/db/".$data['table_id']; //url a donde se consulta
+        $url = "https://".env('DOMINIO').".quickbase.com/db/".$data['table_id']; //url a donde se consulta
     
         $body = "<qdbapi>
             <usertoken>".$data['usertoken']."</usertoken>

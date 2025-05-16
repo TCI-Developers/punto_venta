@@ -14,14 +14,14 @@ class UnidadSat extends Model
     public function setUnidades($unidades) {
         if(count($unidades)){
             foreach($unidades as $item){
-                $unidad = UnidadSat::find((int)$item->record_id_);
+                $unidad = UnidadSat::find((int)$item->{'record_id#'});
                 if(!isset($unidad)){
                     $unidad = new UnidadSat();
-                    $unidad->id = (int)$item->record_id_;
+                    $unidad->id = (int)$item->{'record_id#'};
                 }                
                 $unidad->clave_unidad = $item->c_claveunidad;
                 $unidad->name = $item->nombre;
-                $unidad->description = $item->descripci_n;
+                $unidad->description = $item->{'descripción'};
                 // $unidad->status = 1;
                 $unidad->save();
             }

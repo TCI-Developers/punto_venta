@@ -13,13 +13,13 @@ class PaymentMethod extends Model
     public function setPaymentMethods($payment_methods) {
         if(count($payment_methods)){
             foreach($payment_methods as $item){
-                $payment_method = PaymentMethod::find((int)$item->record_id_);
+                $payment_method = PaymentMethod::find((int)$item->{'record_id#'});
                 if(!isset($payment_method)){
                     $payment_method = new PaymentMethod();
                 } 
-                $payment_method->id = (int)$item->record_id_;
+                $payment_method->id = (int)$item->{'record_id#'};
                 $payment_method->pay_method = $item->c_metodopago;
-                $payment_method->description = $item->descripci_n;
+                $payment_method->description = $item->{'descripción'};
                 $payment_method->status = 1;
                 $payment_method->save();
             }
