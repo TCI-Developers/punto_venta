@@ -1,0 +1,136 @@
+    document.querySelectorAll('select.choices').forEach(function(select) {
+        select.choices = new Choices(select, {
+            searchEnabled: false,
+            itemSelectText: '',
+            shouldSort: false,
+        });
+    });
+
+    //funcion para validar campos de descuento
+    function selectsDescuento(type, value){
+        if(type == 'mont_porc'){
+            $('#title_monto_porcentaje').html(value == 'monto' ? 'Monto':'Porcentaje');
+            $('#basic-addon1').html(value == 'monto' ? '$':'%');
+        }else if(type == 'cant_fecha'){
+            $('#title_vigencia').html(value == 'fecha' ? 'Fecha':'Cantidad');
+            if(value == 'fecha'){
+                $('#vigencia_cantidad').addClass('d-none');
+                $('#vigencia_fecha').removeClass('d-none');
+            }else{
+                $('#vigencia_fecha').addClass('d-none');
+                $('#vigencia_cantidad').removeClass('d-none');
+            }
+        }
+    }
+
+    function update(product){  
+        Swal.fire('Actualización habilitada.', '', 'success');
+
+        // Activar botón de envío
+        const btnSubmit = document.getElementById('btnSubmit');
+        btnSubmit.disabled = false;
+        btnSubmit.type = 'submit';
+        btnSubmit.classList.remove('d-none');
+
+        // Asignar valor al input
+        document.querySelector('input[name="part_product_id"]').value = product.id;
+
+        // Ocultar btnCancelar y mostrar btnCancelarUpdate
+        const btnCancelar = document.getElementById('btnCancelar');
+        const btnCancelarUpdate = document.getElementById('btnCancelarUpdate');
+        btnCancelar.classList.add('d-none');
+        btnCancelarUpdate.classList.remove('d-none');
+
+        // Cambiar título del botón
+        document.getElementById('titleBtnSubmit').innerHTML = 'Actualizar';
+        
+        // Presentaciones
+        setValue('unidad_sat_id', product.unidad_sat_id);
+        if(document.getElementById('precio_mayoreo')){
+            document.getElementById('precio_mayoreo').value = product.price_mayoreo;
+            document.getElementById('cantidad_mayoreo').value = product.cantidad_mayoreo;
+        }
+
+        document.querySelectorAll('.price').forEach(el => el.value = product.price);
+        document.getElementById('code_bar').value = product.code_bar;
+        document.getElementById('stock').value = product.stock;
+        document.getElementById('cantidad_despiezado').value = product.cantidad_despiezado;
+        document.getElementById('price_general').value = document.getElementById('price_general').getAttribute('precio_despiece');
+
+        
+        // Descuento
+        setValue('tipo_descuento', product.tipo_descuento);
+        document.getElementById('title_monto_porcentaje').innerHTML = product.tipo_descuento === 'monto' ? 'Monto' : 'Porcentaje';
+        document.getElementById('basic-addon1').innerHTML = product.tipo_descuento === 'monto' ? '$' : '%';
+        document.getElementById('monto_porcentaje').value = product.monto_porcentaje;
+        setValue('vigencia_cantidad_fecha', product.vigencia_cantidad_fecha);
+
+        if (product.vigencia_cantidad_fecha === 'fecha') {
+            document.getElementById('vigencia_fecha').value = product.vigencia;
+            document.getElementById('title_vigencia').innerHTML = 'Fecha';
+            document.getElementById('vigencia_cantidad').classList.add('d-none');
+            document.getElementById('vigencia_fecha').classList.remove('d-none');
+        } else {
+            document.getElementById('vigencia_cantidad').value = product.vigencia;
+            document.getElementById('title_vigencia').innerHTML = 'Cantidad';
+            document.getElementById('vigencia_fecha').classList.add('d-none');
+            document.getElementById('vigencia_cantidad').classList.remove('d-none');
+        }
+        
+        // Despiezado
+        if (product.cantidad_despiezado > 0) {
+            document.querySelectorAll('.presentation').forEach(el => {
+                el.classList.add('d-none');
+                el.disabled = true;
+            });
+
+            document.querySelectorAll('.despiezado').forEach(el => {
+                el.classList.remove('d-none');
+                el.disabled = false;
+            });
+
+            priceDespiece();
+            console.log('aqui', product.price);
+        } else {
+            document.querySelectorAll('.presentation').forEach(el => {
+                el.classList.remove('d-none');
+                el.disabled = false;
+            });
+
+            document.querySelectorAll('.despiezado').forEach(el => {
+                el.classList.add('d-none');
+                el.disabled = true;
+            });
+        }        
+    }
+
+    //funcion para cancelar la actualizacion
+    function cancelarUpdate(){
+        $('input[name=part_product_id]').val('');
+        $('.inputModal').val('');
+        $('.selectpicker').val('');
+        $('#titleBtnSubmit').html('Asignar');
+        $('#btnCancelarUpdate').addClass('d-none');
+        $('#btnCancelar').removeClass('d-none');
+        $('#btnSubmit').attr('disabled', true).attr('type', 'button').addClass('d-none');
+        Swal.fire('Actualización Cancelada.', '', 'success');
+    }
+
+    function setValue(id, value = 0) {
+        const el = document.getElementById(id);
+        console.log('****', el, id);
+        
+        if (el && el.choices) {
+            el.choices.setChoiceByValue(value.toString());
+        } else {
+            el.value = value;
+        }
+    }
+
+    //funcion para sacar el calculo del precio para el despieceç
+    function priceDespiece(){
+        let precio_general = $('#price_general').val();
+        let cantidad_despiezado = $('#cantidad_despiezado').val();            
+        
+        $('.price').val(parseFloat(precio_general/cantidad_despiezado).toFixed(2));
+    }

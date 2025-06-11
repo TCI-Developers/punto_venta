@@ -1,0 +1,79 @@
+  body {
+    height: auto;
+    width: auto;
+    margin: 0;
+    overflow-x: hidden;
+    font-size: 20px;
+    background: gainsboro;
+  }
+  /* Style the buttons */
+  .app-button {
+    border: none;
+    outline: none;
+    padding: 12px 16px;
+    background-color: gainsboro;
+    cursor: pointer;
+  }
+  
+  .app-button:hover {
+    background-color: #ddd;
+  }
+  
+  .app-button.active {
+    background-color: #666;
+    color: white;
+  }
+  .app-main {
+    max-width: 100%;
+    margin: auto;
+    padding: 1rem;
+    background: white;
+  }
+  
+  h1 {
+    font-size: 50px;
+    word-break: break-all;
+  }
+  
+  .app-row {
+    margin: 8px -16px;
+  }
+  
+  .app-row,
+  .app-row > .app-column {
+    padding: 8px;
+  }
+  
+  .app-row:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  .app-column {
+    float: left;
+    width: 33.33%;
+  }
+  .place_image_here {
+    width: 100%;
+  }
+  
+  .app-content {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.8);
+    background-color: #fff;
+    padding: 10px;
+  }
+  /*MEDIA QUERIES*/
+  @media screen and (max-width: 900px) {
+    .app-column {
+      width: 50%;
+    }
+  }
+  
+  @media screen and (max-width: 600px) {
+    .app-column {
+      width: 100%;
+    }
+  }
+  /*MEDIA QUERIES*/
+  /*RESPONSIVE PORTFOLIO GALLERY END*/
+  
