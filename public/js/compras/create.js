@@ -82,9 +82,7 @@
     }
 
     //funcion para deshabilitar un detalle de compra
-    function btnDestroyEntrada(detalle_id){   
-        console.log(detalle_id);
-        
+    function btnDestroyEntrada(detalle_id){           
         let url = compraDestroyRoute.replace(':id', detalle_id);
         Swal.fire({
             title: "¿Seguro que quieres eliminar el producto?",

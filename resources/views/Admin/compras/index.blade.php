@@ -74,7 +74,7 @@
                                     </button>
                                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="position:relative !important;">
                                         <a class="dropdown-item" href="{{route('compra.show', $item->id)}}"><i class="fa fa-eye"></i> &nbsp; Visualizar</a>
-                                        <a class="dropdown-item" href="{{route('compra.pdf', $item->id)}}"><i class="fa fa-file"></i> &nbsp; PDF</a>
+                                        <a class="dropdown-item" href="{{route('compra.pdf', $item->id)}}" target="_blank"><i class="fa fa-file"></i> &nbsp; PDF</a>
                                         @if($item->getCuentaPagar)
                                             <a class="dropdown-item" href="{{route('cxp.show', $item->getCuentaPagar->id)}}"><i class="fa fa-address-book"></i> &nbsp; Cuenta por pagar</a>
                                         @endif 

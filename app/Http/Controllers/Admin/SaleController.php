@@ -17,7 +17,35 @@ class SaleController extends Controller
 
     //funcion para crear venta
     public function create(){
-        return view('admin.sales.create', ['type' => 'create', 'id' => null]);
+        try {
+            $empresa = EmpresaDetail::first();
+            $user = Auth::User();
+            $payment_method = PaymentMethod::where('pay_method', 'PUE')->first();
+            $sale = new Sale();
+            $sale->user_id = $user->id;
+            $sale->branch_id = $empresa->branch_id;
+            $sale->folio = 0;
+            $sale->customer_id = 1;
+            $sale->date = date('Y-m-d');
+            $sale->payment_method_id = $payment_method->id;
+            $sale->type_payment = 'efectivo';
+            $sale->coin = 'MXN';
+            $sale->save();
+
+            $folio = $sale->addFolio($sale->id);
+            if($folio){
+                $sale->folio = $folio;
+                $sale->save();
+            }else{
+                $sale->delete();
+                return redirect()->back()->with('error', 'Ocurrio un error al generar el folio.');
+            }
+
+            return redirect()->route('sale.show', $sale->id)->with('success', 'Venta creada con exito.');
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', 'Ocurrio un error inesperado.');
+        }
+        // return view('admin.sales.create', ['type' => 'create', 'id' => null]);
     }
 
     //funcion para mostrar vista edit de venta
@@ -109,7 +137,18 @@ class SaleController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $sale = Sale::find($id);
+            if($sale->getDetails){
+                $sale->status = 0;
+                $sale->save();
+                return redirect()->back()->with('success', 'Venta eliminada con exito.');
+            }else{
+                return redirect()->back()->with('info', 'Esta venta no puede ser eliminada, contiene productos.');
+            }
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', 'No se puedo completar la acción.');
+        }
     }
 
     //funcion para guardar un movimiento de almacen

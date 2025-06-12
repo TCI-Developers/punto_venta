@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{CuentaPagar, CuentaPagarDetail};
+use App\Models\{CuentaPagar, CuentaPagarDetail, EmpresaDetail};
 use Illuminate\Support\Facades\{DB,Auth};
 
 class CuentaPagarController extends Controller
@@ -12,7 +12,7 @@ class CuentaPagarController extends Controller
     //index vista principal
     public function index($status = null)
     {    
-        $branch_id = Auth::User()->branch_id;
+        $branch_id = EmpresaDetail::first()->branch_id;
         if(is_null($status)){
             $cuentas = CuentaPagar::where('status', '!=', 0)->where('branch_id', $branch_id)->orderBy('fecha_vencimiento', 'desc')->get();
         }else{

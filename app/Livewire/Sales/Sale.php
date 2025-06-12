@@ -4,7 +4,7 @@ namespace App\Livewire\Sales;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\{Sale as SaleModel, Customer, PaymentMethod, Product, Price, SaleDetail, SaleDetailCant, PartToProduct, UnidadSat, Devolucion};
+use App\Models\{Sale as SaleModel, Customer, PaymentMethod, Product, EmpresaDetail, SaleDetail, SaleDetailCant, PartToProduct, UnidadSat, Devolucion};
 use Illuminate\Support\Facades\{Auth, Log, DB};
 use Livewire\Attributes\Validate;
 
@@ -70,28 +70,36 @@ class Sale extends Component
             return view('livewire.sales.show', ['sale' => $sale, 'devoluciones' => $devoluciones, 'products' => $products]);
         }
         $user = Auth::User();
+        $empresa = EmpresaDetail::first();
 
         if($this->search != ''){
             if($user->hasRole(['root','admin'])){
-                $sales = SaleModel::where('branch_id', $user->branch_id)->where('folio', 'LIKE', "%{$this->search}%")
-                    ->orWhereHas('paymentMethod', function($query) {
-                        $query->where('pay_method', 'LIKE', "%{$this->search}%");
+                $sales = SaleModel::where('status', '!=', 0)->where('branch_id', $empresa->branch_id)
+                   ->where(function($query) {
+                    $query->where('folio', 'LIKE', "%{$this->search}%")
+                        ->orWhere('date', 'LIKE', date('Y-m-d', strtotime($this->search)))
+                        ->orWhereHas('paymentMethod', function($q) {
+                            $q->where('pay_method', 'LIKE', "%{$this->search}%");
+                        });
                     })
                     ->orderBy('folio', 'desc')->paginate($this->paginate_cant);
             }else{
-                $sales = SaleModel::where('user_id', $user->id)
-                ->where('folio', 'LIKE', "%{$this->search}%")
-                ->orWhereHas('paymentMethod', function($query) {
-                    $query->where('pay_method', 'LIKE', "%{$this->search}%");
-                })
+                $sales = SaleModel::where('status', '!=', 0)->where('user_id', $user->id)
+                    ->where(function($query) {
+                    $query->where('folio', 'LIKE', "%{$this->search}%")
+                        ->orWhere('date', 'LIKE', date('Y-m-d', strtotime($this->search)))
+                        ->orWhereHas('paymentMethod', function($q) {
+                            $q->where('pay_method', 'LIKE', "%{$this->search}%");
+                        });
+                    })
                 ->orderBy('folio', 'desc')->paginate($this->paginate_cant);
             }
         }else{
             if($user->hasRole(['root', 'admin'])){
-                $sales = SaleModel::where('branch_id', $user->branch_id)->whereBetween($this->whatDate, $this->date)
+                $sales = SaleModel::where('status', '!=', 0)->where('branch_id', $empresa->branch_id)->whereBetween($this->whatDate, $this->date)
                     ->orderBy('folio', 'desc')->paginate($this->paginate_cant);
             }else{
-                $sales = SaleModel::where('user_id', $user->id)
+                $sales = SaleModel::where('status', '!=', 0)->where('user_id', $user->id)
                         ->whereBetween($this->whatDate, $this->date)
                         ->orderBy('folio', 'desc')->paginate($this->paginate_cant);
             }
@@ -427,6 +435,7 @@ class Sale extends Component
 
     //funcion para agregar manual la cantidad de productos
     public function updateCant($presentation_id, float $cant){  //seguirle aqui con las cantidades manuales
+
         $presentation = PartToProduct::find($presentation_id);
 
             $cantidad_sales_detail_cant = SaleDetailCant::where('sale_id', $this->id)

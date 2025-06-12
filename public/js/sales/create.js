@@ -1,4 +1,6 @@
-document.addEventListener('DOMContentLoaded', function () {
+const { default: Swal } = require("sweetalert2");
+
+        document.addEventListener('DOMContentLoaded', function () {
             //select tipo de pago
             $('#type_payment').on('change', function(){
                 if($(this).val() == 'tarjeta'){
@@ -30,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         //funcion para habilitar campos de venta para actualizar
         function cancelEditSale(){
-            $('.input_sale').attr('disabled', true);
+            $('.input_sale').attr('readonly', true);
 
             $('#btnUpdateSale').addClass('d-none');
             $('#btnCobro').removeClass('d-none');
@@ -44,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 $('#amount_received').val('');
                 $('#change').val('');
-                $('.input_amounts').attr('disabled', true);
+                $('.input_amounts').attr('readonly', true);
 
             $('#btnCancelSale').addClass('d-none');
             $('#btnAcept').addClass('d-none');
@@ -177,9 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         //funcion para modificar cantidad de productos registrados
-        function btnCantProduct(presentation_id){
-            console.log(presentation_id);
-            
+        function btnCantProduct(presentation_id){           
             $('#presentation_id').val(presentation_id);
             $('#modal_cant').show();
         }
@@ -188,8 +188,16 @@ document.addEventListener('DOMContentLoaded', function () {
         function updateCant(){
             let presentation_id = $('#presentation_id').val();
             let cant = $('#update_cant_prod').val();
+            let aux = esNumero(cant);
             
-            Livewire.dispatch('updateCant', {'presentation_id' : presentation_id, 'cant' : cant});
+            if(aux && cant>0){
+                Livewire.dispatch('updateCant', {'presentation_id' : presentation_id, 'cant' : cant});
+            }else if(!aux){
+                Swal.fire('Solo se permiten valores numericos','','info');
+            }else{
+                Swal.fire('No se permiten valores negativos','','info');
+            }
+            
         }
 
         //funcion para eliminar detalle de venta
@@ -254,12 +262,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         //funcion para obtener el cambio
         function getChange(amount_received){
+            $('#btnAcept').addClass('d-none');
             let total = $('#total_sale').val();
             let change = amount_received - total;
             change = change.toFixed(2);
             
             $('#change').val(change);
-            if(change>=0){
+            if(change>=0 || parseInt(change) == 0){
                 $('#btnAcept').removeClass('d-none');
             }
         }
@@ -277,3 +286,8 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             });
         });
+
+        //funcion para validar que sea un valor numerico
+        function esNumero(valor) {
+            return /^\d*\.?\d+$/.test(valor);  // Permite .5, 123.45, etc.
+        }

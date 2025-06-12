@@ -52,6 +52,7 @@ Route::get('/sales-create', 'Admin\SaleController@create')->name('sale.create');
 Route::post('/sales-store', 'Admin\SaleController@store')->name('sale.store');
 Route::get('/sales-show/{id}', 'Admin\SaleController@show')->name('sale.show');
 Route::post('/sales-update/{id}', 'Admin\SaleController@update')->name('sale.update');
+Route::get('/sales-destroy/{id}', 'Admin\SaleController@destroy')->name('sale.destroy');
 
 //compras
 Route::get('/compras/{status?}', 'Admin\CompraController@index')->name('compra.index');

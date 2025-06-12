@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB,Auth};
-use App\Models\{Compra, DetalleCompra, DetalleCompraEntrada, Proveedor, Product, CuentaPagar, PartToProduct};
+use App\Models\{Compra, DetalleCompra, DetalleCompraEntrada, Proveedor, Product, CuentaPagar, EmpresaDetail};
 use Barryvdh\DomPDF\Facade\PDF;
 
 class CompraController extends Controller
@@ -13,7 +13,8 @@ class CompraController extends Controller
     //listado de proveedores
     public function index($status = 1)
     {      
-        $branch_id = Auth::User()->branch_id;
+        $empresa = EmpresaDetail::first();
+        $branch_id = $empresa->branch_id;
         $compras = Compra::where('branch_id', $branch_id)->get();
         return view('Admin.compras.index', ['compras' => $compras, 'status' => $status]);
     }
@@ -37,12 +38,13 @@ class CompraController extends Controller
                 $message = 'generada';
             }
             $user = Auth::User();
+            $empresa = EmpresaDetail::first();
             
             if(is_null($compra_id)){
                 $compra->folio = 0;
             }
 
-            $compra->branch_id = $user->branch_id;
+            $compra->branch_id = $empresa->branch_id;
             $compra->proveedor_id = $request->proveedor_id;
             $compra->user_id = $user->id;
             $compra->programacion_entrega = $request->programacion_entrega;
@@ -158,8 +160,9 @@ class CompraController extends Controller
             $compra->total = $total;
             $compra->save();
 
+            $empresa = EmpresaDetail::first();
             $cxp = new CuentaPagar();
-            $cxp->newCXP($compra, Auth::User()->branch_id); 
+            $cxp->newCXP($compra, $empresa->branch_id); 
 
             return redirect()->back()->with('success', 'Compra cerrada con exito.');
         } catch (\Throwable $th) {

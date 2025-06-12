@@ -50,11 +50,13 @@ class Compra extends Component
 
     //funcion para cuando seleccionan un producto se agrege en el cuerpo de la tabla
     public function selectProducts(){
-        if(count($this->select_product)){
-            foreach($this->select_product as $item){
-                $product = Product::find($item);
-                if(!isset($this->compra) || isset($this->compra) && $this->compra->hasProduct($item) == false){
-                   $this->product_arr[$product->id] = $product;
+        foreach($this->select_product ?? [] as $item){
+            $product = Product::find($item);
+            if(!isset($this->compra) || isset($this->compra) && $this->compra->hasProduct($item) == false){
+                if(!isset($this->product_arr[$item])){
+                    $this->product_arr[$product->id] = $product;
+                }else{
+                    unset($this->product_arr[(int)$item]);
                 }
             }
         }

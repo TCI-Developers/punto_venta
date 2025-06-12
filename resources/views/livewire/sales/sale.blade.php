@@ -53,7 +53,7 @@
             <table class="table table-striped table-bordered">
                 <thead>
                     <tr class="text-center">
-                        @if(Auth::User()->hasRole('admin'))
+                        @if(Auth::User()->hasAnyRole(['root','admin']))
                         <th class="w-10">Usuario</th>
                         @endif
                         <th class="w-10">Folio</th>
@@ -67,7 +67,7 @@
                 <tbody>
                     @forelse($sales as $item)
                     <tr class="text-center {{$item->status == 2 ? 'table-success':''}}">
-                        @if(Auth::User()->hasRole('admin'))<td class="text-sm">{{$item->getUser->name}}</td>@endif
+                        @if(Auth::User()->hasAnyRole(['root','admin']))<td class="text-sm">{{$item->getUser->name}}</td>@endif
                         <td>{{$item->folio}}</td>
                         <td>{{date('d-m-Y', strtotime($item->date))}}</td>
                         <td>{{$item->getPaymentMethod->pay_method}}</td> 
@@ -77,10 +77,14 @@
                         <td>
                             <a href="{{route('sale.show', $item->id)}}" class="btn btn-info btn-sm" data-toggle="tooltip" data-placement="top" title="Ver venta">
                                 <i class="fa fa-eye"></i></a>
+                            @if(!count($item->getDetails))
+                            <a href="{{route('sale.destroy', $item->id)}}" class="btn btn-danger btn-sm" data-toggle="tooltip" data-placement="top" title="Eliminar venta">
+                                <i class="fa fa-trash"></i></a>
+                            @endif
                         </td>
                     </tr>
                     @empty
-                    <tr id="trEmpty"><td colspan="{{Auth::User()->hasRole('admin') ? '7':'6'}}" class="table-warning text-center">Sin Ventas</td></tr>
+                    <tr id="trEmpty"><td colspan="{{Auth::User()->hasAnyRole(['root','admin']) ? '7':'6'}}" class="table-warning text-center">Sin Ventas</td></tr>
                     @endforelse
                     
                     @if(!Auth::User()->hasAnyRole(['admin', 'root']))
