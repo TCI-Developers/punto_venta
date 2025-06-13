@@ -6,7 +6,8 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\{DB,Auth, Http};
-use App\Models\{User, Product, Brand, Customer, PaymentMethod, UnidadSat, Role, Turno, UserRole, Box, Driver, Proveedor, EmpresaDetail};
+use App\Models\{Product, Brand, Sale, PaymentMethod, UnidadSat, Driver, Proveedor, EmpresaDetail};
+use Barryvdh\DomPDF\Facade\PDF;
 
 class Controller extends BaseController
 {
@@ -15,22 +16,22 @@ class Controller extends BaseController
     // public function __construct(){
 
     //     $this->middleware(function ($request, $next) {
-    //         $controller = class_basename($request->route()->getController());
-    //         $controllers_excluidos = ['AdminController','BranchController', 'UserController', 'RoleController', 'Controller', 'RootController'];
-    //         $ban = 0;
-    //         foreach($controllers_excluidos as $item){
-    //             if($item == $controller){
-    //                 $ban = 1;
-    //                 break;
-    //             }
-    //         }
+        //         $controller = class_basename($request->route()->getController());
+        //         $controllers_excluidos = ['AdminController','BranchController', 'UserController', 'RoleController', 'Controller', 'RootController'];
+        //         $ban = 0;
+        //         foreach($controllers_excluidos as $item){
+        //             if($item == $controller){
+        //                 $ban = 1;
+        //                 break;
+        //             }
+        //         }
 
-    //         if(!$ban && $this->sucursalUser() === false){
-    //             return redirect()->route('branchs.index')->with('error', 'Selecciona una sucursal para poder acceder al sistema.');
-    //         }
-            
-    //         return $next($request);
-    //     });
+        //         if(!$ban && $this->sucursalUser() === false){
+        //             return redirect()->route('branchs.index')->with('error', 'Selecciona una sucursal para poder acceder al sistema.');
+        //         }
+                
+        //         return $next($request);
+        //     });
     // }
 
     //funcion para obtener data de quickbase
@@ -338,5 +339,22 @@ class Controller extends BaseController
 
         $db = $this->db_externa($data, 'exist_data.php');
         return json_decode($db);
+    }
+
+    //generamos tickets
+    public function ticket($id){      
+        if(request()->is('ticket-sale/'.$id)){
+            $sale = Sale::find($id);
+            $empresa = EmpresaDetail::first();
+
+            $pdf = Pdf::loadView('ticket', ['sale' => $sale, 'empresa' => $empresa]);
+
+        }
+            
+        // Opciones para impresión térmica
+        $pdf->setPaper([0, 0, 226.77, 500], 'portrait'); // 80mm de ancho (~226.77pt)
+        $pdf->setOption('isRemoteEnabled', true);
+        
+        return $pdf->stream("ticket.pdf");
     }
 }

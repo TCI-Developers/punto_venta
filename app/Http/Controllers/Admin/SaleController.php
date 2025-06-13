@@ -41,7 +41,7 @@ class SaleController extends Controller
                 return redirect()->back()->with('error', 'Ocurrio un error al generar el folio.');
             }
 
-            return redirect()->route('sale.show', $sale->id)->with('success', 'Venta creada con exito.');
+            return redirect()->route('sale.show', $sale->id)->with('success', 'Venta creada con exito.'); 
         } catch (\Throwable $th) {
             return redirect()->back()->with('error', 'Ocurrio un error inesperado.');
         }
@@ -109,9 +109,6 @@ class SaleController extends Controller
        
         $sale->user_id = Auth::User()->id;
         if($request->status == 'cobro'){
-            $sale->amount_received = $request->amount_received ?? 0;
-            $sale->total_sale = $request->total_sale ?? 0;
-            $sale->change = $request->change ?? 0;
             $sale->status = 2;
 
             $message = 'realizada';

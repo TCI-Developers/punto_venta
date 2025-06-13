@@ -15,6 +15,7 @@ class Sale extends Component
         'updateCant' => 'updateCant',
         'destroyProduct' => 'destroyProduct',
         'stockOff' => 'stockOff',
+        'cobrar' => 'cobrar',
     ];
 
     use WithPagination;
@@ -45,7 +46,7 @@ class Sale extends Component
         public $sales_detail_dev = [];
         public $scan_presentation_id = '';
         public $total_sale = 0.00;
-    public $total_desc = 0.00;
+    public $total_desc = 0.00; 
 
     public function mount($type, $id){
         $this->customers = Customer::orderBy('name', 'asc')->get();
@@ -517,5 +518,16 @@ class Sale extends Component
 
         $this->setStock($presentation, $cant, 'otro');
         $this->calculoImpuestos($sale_detail, $presentation); //calculo de impuestos
+    }
+
+    //funcion para guardar el monto recibido, total venta y el cambio
+    function cobrar($monto, $total_venta, $change){
+        $sale = SaleModel::find($this->id);
+        $sale->amount_received = $monto;
+        $sale->total_sale = $total_venta;
+        $sale->change = $change;
+        $sale->save();
+
+        $this->dispatch('showTicket', ['sale_id' => $this->id]);
     }
 }

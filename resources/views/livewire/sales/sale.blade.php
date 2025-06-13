@@ -77,6 +77,9 @@
                         <td>
                             <a href="{{route('sale.show', $item->id)}}" class="btn btn-info btn-sm" data-toggle="tooltip" data-placement="top" title="Ver venta">
                                 <i class="fa fa-eye"></i></a>
+                            <a href="{{route('ticket.sale', $item->id)}}" class="btn btn-success btn-sm" data-toggle="tooltip" 
+                                target="_blank" data-placement="top" title="Ver ticket">
+                                <i class="fa fa-file"></i></a>
                             @if(!count($item->getDetails))
                             <a href="{{route('sale.destroy', $item->id)}}" class="btn btn-danger btn-sm" data-toggle="tooltip" data-placement="top" title="Eliminar venta">
                                 <i class="fa fa-trash"></i></a>

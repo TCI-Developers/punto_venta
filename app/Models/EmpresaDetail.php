@@ -35,4 +35,9 @@ class EmpresaDetail extends Model
         }
         return false;
     }
+
+    //Funcion para obtener el la sucursal asignada
+    public function getBranch(){
+        return $this->hasOne('App\Models\Branch', 'id', 'branch_id');
+    }
 }

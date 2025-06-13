@@ -265,7 +265,7 @@ class RootController extends Controller
     //fucnion para hacer un reinicio a la app
     public function resetDatabase()
     {   
-        if (!app()->isLocal() || !Auth::User()->hasRole('root')) {
+        if (!Auth::User()->hasRole('root')) {
             abort(403, 'No permitido');
         }
 

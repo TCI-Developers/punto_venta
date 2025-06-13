@@ -291,3 +291,24 @@ const { default: Swal } = require("sweetalert2");
         function esNumero(valor) {
             return /^\d*\.?\d+$/.test(valor);  // Permite .5, 123.45, etc.
         }
+
+        //funcion para cerrar la venta
+        function cerrarVenta(show = true) {
+           $('#formSale').submit();
+        }
+
+        //funcion para cerrar venta
+        function submitSale() {
+            Livewire.dispatch('cobrar', {
+                    'monto': $('#amount_received').val(), 
+                    'total_venta':$('#total_sale').val(),
+                    'change':$('#change').val(),
+            })
+        }
+
+        //funcion para mostrar ticket
+        window.addEventListener('showTicket', event => {  
+            $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+event.detail[0].sale_id);
+             $('#modalTicket').show();
+        });
+

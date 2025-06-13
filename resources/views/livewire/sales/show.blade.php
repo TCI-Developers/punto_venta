@@ -5,8 +5,8 @@
                 Venta</h2>
         </div>
         <div class="card-body">
-            <form action="{{route('sale.update', $sale->id)}}" method="post">
-                @csrf
+            <form action="{{route('sale.update', $sale->id)}}" method="post" id="formSale">
+            @csrf
             <input type="hidden" name="status" value="">
             <div class="row">
                 <!-- Cliente y fecha -->
@@ -94,8 +94,10 @@
                 @if((float)$sale->amount_received == 0) 
                 {{-- <button type="button" class="btn btn-info float-left" onClick="btnOpenModal()" id="btnAddMov">Agregar Movimiento Almacen</button>--}}
                 <button type="button" class="btn btn-primary float-right" onClick="editSale()" id="btnEnableEdit">Habilitar Edición</button> 
+                <button type="button" class="btn btn-primary float-right" onClick="showTicket()">Ticket</button> 
 
-                <button type="submit" class="btn btn-success float-right mr-2 d-none" id="btnAcept">Aceptar</button> 
+                <button type="button" class="btn btn-success float-right mr-2 d-none" onclick="submitSale()" id="btnAcept">Aceptar</button> 
+                {{--<button type="submit" class="btn btn-success float-right mr-2 d-none" id="btnAcept">Aceptar</button> --}}
                 <button type="submit" class="btn btn-success float-right mr-5 d-none" id="btnUpdateSale">Actualizar venta</button> 
                 <button type="button" class="btn btn-light float-right mr-5 d-none" id="btnCancelSale" onClick="cancelEditSale()">Cancelar</button> 
                 @endif
@@ -116,4 +118,5 @@
 
         @include('Admin.sales._modal')
         @include('Admin.sales._modal_products')
+        @include('Admin.sales._modal_ticket')
   </div>

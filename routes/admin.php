@@ -105,3 +105,6 @@ Route::get('/users-destroy/{id}/{status}', 'Admin\UserController@destroy')->name
 Route::post('/users-turnos-roles', 'Admin\UserController@rolesTurnos')->name('users.setRolesTurnos');
 Route::post('/users-update-turnos-roles', 'Admin\UserController@updateRolesTurnos')->name('users.updateRolesTurnos');
 Route::get('/users-logout', 'Admin\UserController@logout')->name('logout_');
+
+Route::get('/ticket-sale/{sale_id}', 'Controller@ticket')->name('ticket.sale');
+Route::get('/ticket-box/{user_id}', 'Controller@ticket')->name('ticket.box');
