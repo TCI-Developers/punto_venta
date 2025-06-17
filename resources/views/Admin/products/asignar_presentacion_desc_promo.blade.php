@@ -68,7 +68,7 @@
                         <div class="input-group-prepend">
                             <span class="input-group-text" id="basic-addon1">$</span>
                         </div>
-                        <input type="number" class="form-control inputModal" name="monto_porcentaje" id="monto_porcentaje" placeholder="0" aria-describedby="basic-addon1">
+                        <input type="number" class="form-control inputModal" name="monto_porcentaje" id="monto_porcentaje" placeholder="0" aria-describedby="basic-addon1" step="0.01">
                     </div>                                
                 </label>
 

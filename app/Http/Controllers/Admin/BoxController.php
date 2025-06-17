@@ -47,7 +47,7 @@ class BoxController extends Controller
     }
 
     //funcion para guardar el monto incial de la caja
-    public function storeStarAmountBox(Request $request){
+    public function storeStarAmountBox(Request $request){ 
         $validatedData = $request->validate([
             'start_amount_box' => 'required'],['start_amount_box.required' => 'El monto inicial es requerido.']
         );
@@ -75,7 +75,6 @@ class BoxController extends Controller
     //funcion para guardar cierre de caja
     public function store(Request $request)
     {   
-        //pruebas
         $user_id = Auth::User()->id;
         $box = Box::where('user_id', $user_id)->where('status', 0)->orderBy('id', 'desc')->first();
         $start_date = $box->start_date;
@@ -139,12 +138,22 @@ class BoxController extends Controller
         $ingresado = $request->monto_tarjeta + ($request->monto_efectivo - $box->start_amount_box); //ingresdo empleado
 
         $box->status = (($totales - $ingresado) < 1) ? 1:2;
-        // dd($box);
+        $box->save();
+        
+        return redirect()->back()->with('ticket', 'ok');
+    }
+
+    function statusBox($status = 1){
+        if($status){
+            Auth::logout(Auth::User());
+            return redirect()->route('login')->with('success', 'Cierre de caja con exito.');
+        }
+        
+        $box = Box::where('user_id', Auth::User()->id)->orderBy('id', 'desc')->first();
+        $box->status = 0;
         $box->save();
 
-        Auth::logout(Auth::User());
-
-        return redirect()->route('login')->with('success', 'Cierre de caja con exito.');
+        return redirect()->back();
     }
 
     //funcion para obtener el conteo de billetes y monedas

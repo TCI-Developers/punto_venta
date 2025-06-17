@@ -526,6 +526,7 @@ class Sale extends Component
         $sale->amount_received = $monto;
         $sale->total_sale = $total_venta;
         $sale->change = $change;
+        $sale->status = 2;
         $sale->save();
 
         $this->dispatch('showTicket', ['sale_id' => $this->id]);

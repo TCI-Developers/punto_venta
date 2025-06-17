@@ -13,6 +13,7 @@ Route::get('/turn-off', 'Admin\BoxController@index')->name('box.index');
 Route::post('/store-start-amount', 'Admin\BoxController@storeStarAmountBox')->name('box.storeStarAmountBox');
 Route::get('/turn-off-view', 'Admin\BoxController@turnOff')->name('box.turnOff');
 Route::post('/turn-off-store', 'Admin\BoxController@store')->name('box.store');
+Route::get('/turn-off-store-ticket/{status?}', 'Admin\BoxController@statusBox')->name('box.statusBox');
 
 //sucursal
 Route::get('/quickbase-import/{table_name}', 'Admin\BranchController@importarQuickbase')->name('branchs.import'); //importar sucursales de quickbase
@@ -108,3 +109,4 @@ Route::get('/users-logout', 'Admin\UserController@logout')->name('logout_');
 
 Route::get('/ticket-sale/{sale_id}', 'Controller@ticket')->name('ticket.sale');
 Route::get('/ticket-box/{user_id}', 'Controller@ticket')->name('ticket.box');
+// Route::get('/ticket2-sale', 'Controller@ticket2')->name('ticket.sale2');

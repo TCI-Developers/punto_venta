@@ -29,7 +29,27 @@
                 $('#totalCoins').html('Total en monedas: $'+total);
             }
         }
+
+        //funcion para mostrar el ticket del usuario
+        function ticket(){
+            $('#modalTicket').show();
+        }
     </script>
+
+    <style>
+         .modalProducts .modal-body {
+            max-height: 60vh; 
+            overflow-y: auto;
+        }
+    </style>
+
+    @if(session('ticket'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    $('#modalTicket').show();
+                });
+            </script>
+        @endif
 </head>
 <body>
     <main class="content">

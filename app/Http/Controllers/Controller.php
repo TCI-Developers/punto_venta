@@ -6,7 +6,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\{DB,Auth, Http};
-use App\Models\{Product, Brand, Sale, PaymentMethod, UnidadSat, Driver, Proveedor, EmpresaDetail};
+use App\Models\{Product, Brand, Sale, PaymentMethod, UnidadSat, Driver, Proveedor, EmpresaDetail, User, Box};
 use Barryvdh\DomPDF\Facade\PDF;
 
 class Controller extends BaseController
@@ -342,19 +342,35 @@ class Controller extends BaseController
     }
 
     //generamos tickets
-    public function ticket($id){      
+    public function ticket($id){    
+        $alto = 500;  
+        $empresa = EmpresaDetail::first();
         if(request()->is('ticket-sale/'.$id)){
             $sale = Sale::find($id);
-            $empresa = EmpresaDetail::first();
-
+            $lines = count($sale->getDetails ?? []) + 30;
+            $alto = ($lines * 15) + 50;
             $pdf = Pdf::loadView('ticket', ['sale' => $sale, 'empresa' => $empresa]);
-
+        }else{
+            $user = User::find($id);
+            $box = Box::where('user_id', $user->id)->orderBy('id', 'desc')->first();
+            $number_ventas = Sale::where('user_id', $user->id)->whereBetween('updated_at', [$box->start_date, $box->end_date])->count();
+            $pdf = Pdf::loadView('ticket_box', ['user' => $user, 'empresa' => $empresa, 'box' => $box, 'number_ventas' => $number_ventas]);
         }
-            
-        // Opciones para impresión térmica
-        $pdf->setPaper([0, 0, 226.77, 500], 'portrait'); // 80mm de ancho (~226.77pt)
+
+        $pdf->setPaper([0, 0, 226.77, $alto], 'portrait'); // 80mm de ancho (~226.77pt)
         $pdf->setOption('isRemoteEnabled', true);
-        
         return $pdf->stream("ticket.pdf");
     }
+
+    // public function ticket2(){   
+    //     $empresa = EmpresaDetail::first();
+    //     $pdf = Pdf::loadView('ticket2', ['empresa' => $empresa]);
+    //     $pdf->setPaper([0, 0, 226.77, 500], 'portrait'); // 80mm de ancho (~226.77pt)
+    //     $pdf->setOption('isRemoteEnabled', true);
+    //     // $pdf->save(storage_path('ticket.pdf'));
+    //     exec('start /min "" "ticket.pdf" /p /h');
+    //     return $pdf->stream("ticket.pdf");
+    //     // return redirect()->back();
+    // }
 }
+ 

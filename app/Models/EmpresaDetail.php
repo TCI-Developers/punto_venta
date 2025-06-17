@@ -16,6 +16,7 @@ class EmpresaDetail extends Model
         'rfc',
         'address',
         'vigencia',
+        'path_logo',
     ];
     
     public function setEmpresa($detail) {
@@ -29,6 +30,7 @@ class EmpresaDetail extends Model
                 $empresa->rfc = $item->rfc;
                 $empresa->address = $item->direccion;
                 $empresa->vigencia = $item->vigencia;
+                $empresa->path_logo = $item->path_logo;
                 $empresa->save();
             }
             return true;

@@ -1,5 +1,3 @@
-const { default: Swal } = require("sweetalert2");
-
         document.addEventListener('DOMContentLoaded', function () {
             //select tipo de pago
             $('#type_payment').on('change', function(){
@@ -253,8 +251,8 @@ const { default: Swal } = require("sweetalert2");
             
             if($('#payment_method_id option:selected').data('name') == 'PPD'){
                 $('#amount_received').val($('#total_sale').val()).attr('readonly', true);
-                getChange($('#total_sale').val());
-            }
+            }            
+            getChange($('#total_sale').val());
 
             $('#btnCobro').addClass('d-none');
             $('input[name=status]').val('cobro');
@@ -266,9 +264,10 @@ const { default: Swal } = require("sweetalert2");
             let total = $('#total_sale').val();
             let change = amount_received - total;
             change = change.toFixed(2);
+            console.log($('#btnAcept'));
             
             $('#change').val(change);
-            if(change>=0 || parseInt(change) == 0){
+            if(change>=0 || parseInt(change) == 0){                
                 $('#btnAcept').removeClass('d-none');
             }
         }

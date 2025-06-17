@@ -12,6 +12,12 @@
             </div>
         @endif
 
+        @if (session('success'))
+            <div class="mb-4 font-medium text-sm text-green-600">
+                {{ session('success') }}
+            </div>
+        @endif
+
         <form action="{{ route('user.login') }}" method="post">
         {{--<form method="POST" action="{{ route('login') }}">--}}
             @csrf

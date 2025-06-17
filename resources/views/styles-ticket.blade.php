@@ -1,8 +1,8 @@
 <style>
     body {
         font-family: 'DejaVu Sans Mono', monospace;
-        font-size: 10px;
-        margin: -20px -30px -20px -30px !important;
+        font-size: 9px;
+        margin: -20px -45px -20px -45px !important;
         padding: 0;
         display: flex;
         justify-content: center;

@@ -98,8 +98,8 @@
               <a href="{{route('sale.index')}}" class="btn btn-light text-dark">
                 <i class="fa fa-times"></i>&nbsp;Cancelar
               </a>
-              <button type="submit" class="btn btn-primary text-white" id="btnAddEdit">
-                <i class="fa fa-check"></i>&nbsp;Cerrar turno</button>
+              <button type="submit" class="btn btn-success text-white" id="btnAddEdit">
+                <i class="fa fa-arrow-right"></i>&nbsp;Siguiente</button>
           </div>
       </form>
       @else
@@ -114,4 +114,5 @@
       @endif
     </div>
   </div>
+  @include('Admin.box._modal_ticket')
 </div>

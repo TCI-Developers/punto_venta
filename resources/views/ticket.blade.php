@@ -9,6 +9,9 @@
     <div class="ticket-container">
         <!-- Encabezado -->
         <div class="header">
+            <div>
+                <img src="{{$empresa->path_logo}}" alt="logo" width="70">
+            </div>
             <div><strong>{{$empresa->razon_social}}</strong></div>
             <div>RFC: {{$empresa->rfc}}</div>
             <div>{{$empresa->getBranch->address}}</div>
@@ -33,31 +36,43 @@
                 </tr>
             </thead>
             <tbody>
+                @php $subtotal = 0; $descuento = 0; @endphp
                 @foreach($sale->getDetails ?? [] as $item)
-                <tr>
-                    <td>{{ number_format($item->getCantSalesDetail->sum('cant'),2) }}</td>
-                    <td>{{ $item->getPartToProduct->getProduct->description }}</td>
-                    <td class="text-right">$ {{ $item->unit_price }}</td>
-                    <td class="text-right">$ {{  number_format( ($item->getCantSalesDetail->sum('cant')*$item->unit_price ) ,2) }}</td>
-                </tr>
+                    @foreach($item->getCantSalesDetail ?? [] as $cantDetails)
+                    @php
+                        $price =  $item->unit_price - $cantDetails->descuento ?? 0;
+                        $price_total = ($cantDetails->cant * $price);
+                        $descuento += $cantDetails->cant * $cantDetails->descuento ?? 0; 
+                        $subtotal += $price_total;
+                    @endphp
+                    <tr>
+                        <td>{{ number_format($cantDetails->cant,2) }}</td>
+                        <td width="110">{{ $item->getPartToProduct->getProduct->description }}</td>
+                        <td class="text-right">$ {{ number_format($price,2) }}</td>
+                        <td class="text-right">$ {{  number_format($price_total ,2) }}</td>
+                    </tr>
+                    @endforeach
                 @endforeach
             </tbody>
         </table>
 
         <!-- Totales -->
         <div class="text-right">
-            <div>Subtotal: $ {{$sale->getDetailsTotales('subtotal')}}</div>
+            <div>Subtotal: $ {{number_format($subtotal, 2)}}</div>
             <div>IVA: $ {{number_format($sale->getDetailsTotales('iva'),2)}}</div>
+             @if($descuento > 0)
+             <div>Usted ahorró: $ {{number_format($descuento ,2)}}</div>
+             @endif
             @if($sale->getDetailsTotales('ieps') > 0)
             <div>IEPS: $ {{number_format($sale->getDetailsTotales('ieps'),2)}}</div>
             @endif
-            <div class="total">TOTAL: $ {{number_format($sale->getDetailsTotales('total'),2)}}</div>
+            <div class="total">TOTAL: $ {{number_format($subtotal + $sale->getDetailsTotales('iva') + $sale->getDetailsTotales('ieps'),2)}}</div>
         </div>
 
         <!-- Método de Pago -->
         <div class="info-venta">
             <div><strong>Método de pago:</strong> {{$sale->type_payment}}</div>
-            <div><strong>Efectivo:</strong> $ {{number_format($sale->amount_received, 2)}}</div>
+            <div><strong>{{ $sale->type_payment == 'tarjeta' ? 'Monto':'Efectivo'}} :</strong> $ {{number_format($sale->amount_received, 2)}}</div>
             <div><strong>Cambio:</strong> $ {{number_format($sale->change, 2)}}</div>
         </div>
 

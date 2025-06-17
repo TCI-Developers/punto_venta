@@ -91,13 +91,12 @@
                 </div>
             </div> <br>
                 <!-- Si no se a cobrado, podemos agregar mas movimientos -->
-                @if((float)$sale->amount_received == 0) 
+                @if($sale->status == 1) 
+                {{-- @if((float)$sale->amount_received == 0) --}} 
                 {{-- <button type="button" class="btn btn-info float-left" onClick="btnOpenModal()" id="btnAddMov">Agregar Movimiento Almacen</button>--}}
-                <button type="button" class="btn btn-primary float-right" onClick="editSale()" id="btnEnableEdit">Habilitar Edición</button> 
-                <button type="button" class="btn btn-primary float-right" onClick="showTicket()">Ticket</button> 
+                <button type="button" class="btn btn-primary float-right" onClick="editSale()" id="btnEnableEdit">Habilitar Edición</button>  
 
                 <button type="button" class="btn btn-success float-right mr-2 d-none" onclick="submitSale()" id="btnAcept">Aceptar</button> 
-                {{--<button type="submit" class="btn btn-success float-right mr-2 d-none" id="btnAcept">Aceptar</button> --}}
                 <button type="submit" class="btn btn-success float-right mr-5 d-none" id="btnUpdateSale">Actualizar venta</button> 
                 <button type="button" class="btn btn-light float-right mr-5 d-none" id="btnCancelSale" onClick="cancelEditSale()">Cancelar</button> 
                 @endif

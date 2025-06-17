@@ -110,7 +110,6 @@ class SaleController extends Controller
         $sale->user_id = Auth::User()->id;
         if($request->status == 'cobro'){
             $sale->status = 2;
-
             $message = 'realizada';
             $sale->save();
             return redirect()->route('sale.index')->with('success', 'Venta '.$message.' con exito.');

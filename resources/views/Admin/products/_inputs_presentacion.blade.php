@@ -6,5 +6,5 @@
 </label>
 <label for="cantidad_mayoreo" class="col-lg-4 col-md-4 col-sm-12 presentation">Cantidad minima mayoreo
     <input type="number" class="form-control pass" name="cantidad_mayoreo" id="cantidad_mayoreo" step="0.01" value="0"
-     {{$product->precio_mayoreo > 0 ? '':'readonly'}} onchange="matchPass()">
+     {{$product->precio_mayoreo > 0 ? '':'readonly'}} >
 </label>

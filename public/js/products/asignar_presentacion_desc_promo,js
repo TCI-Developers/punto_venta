@@ -54,8 +54,10 @@
         document.querySelectorAll('.price').forEach(el => el.value = product.price);
         document.getElementById('code_bar').value = product.code_bar;
         document.getElementById('stock').value = product.stock;
-        document.getElementById('cantidad_despiezado').value = product.cantidad_despiezado;
-        document.getElementById('price_general').value = document.getElementById('price_general').getAttribute('precio_despiece');
+        if (product.cantidad_despiezado > 0) {        
+            document.getElementById('cantidad_despiezado').value = product.cantidad_despiezado ?? 0;
+            document.getElementById('price_general').value = document.getElementById('price_general').getAttribute('precio_despiece');
+        }
 
         
         // Descuento
@@ -118,7 +120,6 @@
 
     function setValue(id, value = 0) {
         const el = document.getElementById(id);
-        console.log('****', el, id);
         
         if (el && el.choices) {
             el.choices.setChoiceByValue(value.toString());
@@ -133,4 +134,16 @@
         let cantidad_despiezado = $('#cantidad_despiezado').val();            
         
         $('.price').val(parseFloat(precio_general/cantidad_despiezado).toFixed(2));
+    }
+
+    //funcion para habilitar o deshabilitar precio mayoreo
+    function precioMayoreo(input){
+        let precio = $(input).val()
+        console.log(precio);
+        
+        if(precio == 0){
+            $('#cantidad_mayoreo').attr('readonly', true).val(0);
+        }else{
+            $('#cantidad_mayoreo').removeAttr('readonly').val(0);
+        }
     }

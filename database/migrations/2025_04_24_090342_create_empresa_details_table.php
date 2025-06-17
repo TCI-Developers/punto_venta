@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('rfc')->nullable();
             $table->string('address');
             $table->string('vigencia');
+            $table->string('path_logo')->nullable();
              $table->unsignedBigInteger('branch_id')->nullable();
              $table->foreign('branch_id')->references('id')->on('branchs');
             $table->timestamps();
