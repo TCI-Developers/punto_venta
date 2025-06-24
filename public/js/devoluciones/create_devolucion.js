@@ -18,6 +18,7 @@
 
         $('#cant').attr('max', parseFloat(cant));
         $('#modal_cant').show();
+        $('#cant').focus();
     }
 
     //funcion para cerrar modal

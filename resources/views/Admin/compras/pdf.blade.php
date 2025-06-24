@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <title>Requisición</title>
     @include('style')
 </head>
 <body>
     <!-- Logo, Datos compañia y fecha -->
     <div class="container">
-        <div class="box box-3">Logo
-            <img class="thumb mt-5" src="" alt="Logo de la Empresa">
+        <div class="box box-3">
+            <img src="{{ $logoBase64 }}" alt="logo" width="170">
         </div>
         <div class="box box-3 mt-30">
             <p class="text text-lg text-left text-bold">Pequeñita</p>

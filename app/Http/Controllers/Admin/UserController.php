@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{User, Role, Turno, UserRole, Box, Branch, BranchUser, EmpresaDetail};
-use App\Models\{UserDbEx, RoleDbEx};
+use App\Models\{User, Role, Turno, UserRole, Branch, BranchUser, EmpresaDetail};
 use Illuminate\Support\Facades\{Auth, Hash, Crypt};
-use Illuminate\Support\Carbon;
 
 class UserController extends Controller
 {

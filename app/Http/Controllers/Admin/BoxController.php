@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{DB,Auth};
-use App\Models\{Sale, Box, Devolucion};
+use Illuminate\Support\Facades\{Auth};
+use App\Models\{Sale, Box, Devolucion, Compra};
+use Carbon\Carbon;
 
 class BoxController extends Controller
 {
@@ -75,6 +76,9 @@ class BoxController extends Controller
     //funcion para guardar cierre de caja
     public function store(Request $request)
     {   
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
+
         $user_id = Auth::User()->id;
         $box = Box::where('user_id', $user_id)->where('status', 0)->orderBy('id', 'desc')->first();
         $start_date = $box->start_date;
@@ -139,7 +143,11 @@ class BoxController extends Controller
 
         $box->status = (($totales - $ingresado) < 1) ? 1:2;
         $box->save();
-        
+
+        $this->getSalesDbExt();
+        $this->getDevolutionDBExt();
+        $this->getComprasDbExt();
+
         return redirect()->back()->with('ticket', 'ok');
     }
 
@@ -202,6 +210,33 @@ class BoxController extends Controller
         ];
        
         return $rules;
+    }
+
+    //funcion para consultar ultima venta y almacenar ventas pendientes
+    function getSalesDbExt(){
+        $date = date('Y-m-d');
+        $sales = Sale::where('date', $date)->where('user_id', Auth::User()->id)->where('status', 2)->get();
+        $ctrl = new \App\Http\Controllers\Controller();
+        $ctrl->getSales($sales);
+    }
+
+    // funcion para consultar las devoluciones de 7 dias atras para almacenar lo pendiente
+    function getDevolutionDBExt(){
+        $date = Carbon::now()->format('Y-m-d');
+        $start_date = Carbon::now()->subDays(8)->format('Y-m-d');
+
+        $devoluciones = Devolucion::whereBetween('fecha_devolucion', [$start_date, $date])->get();
+        $ctrl = new \App\Http\Controllers\Controller();
+        $ctrl->getDevoluciones($devoluciones);
+    }
+
+    //funcion para consultar ultima venta y almacenar ventas pendientes
+    function getComprasDbExt(){
+        $date = Carbon::now()->format('Y-m-d');
+        $start_date = Carbon::now()->subDays(8)->format('Y-m-d');
+        $compras = Compra::whereBetween('created_at', [$start_date.'00:00:00', $date.'23:59:59'])->get();
+        $ctrl = new \App\Http\Controllers\Controller();
+        $ctrl->getCompras($compras);
     }
 
 }

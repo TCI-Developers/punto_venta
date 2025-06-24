@@ -50,7 +50,10 @@
                            <td class="text-center">${{number_format($item->total_descuentos, 2)}}</td>
                            <td class="text-center">${{number_format(($item->total_devolucion - $item->total_descuentos), 2)}}</td>
                             <td class="text-center">
-                                <a href="{{route('devoluciones.showDevSale', $item->id)}}" class="btn btn-info"><i class="fa fa-eye"></i></a>
+                                <a href="{{route('devoluciones.showDevSale', $item->id)}}" class="btn btn-info btn-sm"><i class="fa fa-eye"></i></a>
+                                <a href="{{route('ticket.devolution', $item->id)}}" class="btn btn-success btn-sm" data-toggle="tooltip" 
+                                    target="_blank" data-placement="top" title="Ver ticket">
+                                    <i class="fa fa-file"></i></a>
                             </td>
                        </tr>
                     @empty

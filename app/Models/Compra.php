@@ -21,6 +21,11 @@ class Compra extends Model
         return false;
     }
 
+    //Funcion para obtener el user
+    public function getUser(){
+        return $this->hasOne('App\Models\User', 'id', 'user_id');
+    }
+
     //Funcion para obtener el proveedor
     public function getProveedor(){
         return $this->hasOne('App\Models\Proveedor', 'id', 'proveedor_id');
@@ -29,6 +34,11 @@ class Compra extends Model
     //Funcion para obtener los detalles
     public function getDetalles(){
         return $this->hasMany('App\Models\DetalleCompra', 'compra_id', 'id')->where('status', 1);
+    }
+
+    //Funcion para obtener los detalles cantidades
+    public function getDetallesEntra(){
+        return $this->hasMany('App\Models\DetalleCompraEntrada', 'compra_id', 'id');
     }
 
     //Funcion para obtener los detalles

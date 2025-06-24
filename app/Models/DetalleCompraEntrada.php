@@ -11,11 +11,12 @@ class DetalleCompraEntrada extends Model
     protected $table = 'detalle_compra_entradas';
 
     //funcion para guardar la entrada
-    public function storeEntrada($entrada, $detalle_compra_id, $user_id){
+    public function storeEntrada($entrada, $detalle_compra, $user_id){
         $detalle_compra_entrada = new DetalleCompraEntrada();
         $detalle_compra_entrada->entrada = $entrada;
-        $detalle_compra_entrada->detalle_compra_id = $detalle_compra_id;
+        $detalle_compra_entrada->detalle_compra_id = $detalle_compra->id;
         $detalle_compra_entrada->user_id = $user_id;
+        $detalle_compra_entrada->compra_id = $detalle_compra->compra_id;
         $detalle_compra_entrada->save();
     }
 

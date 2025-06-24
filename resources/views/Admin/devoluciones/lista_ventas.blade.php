@@ -14,7 +14,10 @@
         @include('components.use.notification_success_error')
         <div class="card card-primary" style="height:90vh;">
             <div class="card-header">
-                <h2>Listado de ventas</h2>
+                <h2 class="text-center">
+                    <a href="{{route('devoluciones.index')}}" class="btn btn-success btn-sm float-left"><i class="fa fa-arrow-left"></i></a>
+                    Listado de ventas
+                </h2>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -33,6 +36,7 @@
                         </thead>
                         <tbody>
                             @forelse($sales as $item)
+                                @if(!is_object($item->hasDevolution))
                                 <tr class="text-center">
                                     <td>{{$item->folio}}</td>
                                     <td>{{$item->customer->name}}</td>
@@ -40,6 +44,7 @@
                                     <td>$ {{number_format($item->total_sale)}}</td>
                                     <td><a href="{{route('devoluciones.createSaleToDevolucion', $item->id)}}" class="btn btn-warning"><i class="fa fa-undo"></i></a></td>
                                 </tr>
+                                @endif
                                 @empty
                                 <tr>
                                     <td colspan="5" class="table-warnign">Sin registros</td>

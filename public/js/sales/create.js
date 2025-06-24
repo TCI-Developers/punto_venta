@@ -307,7 +307,7 @@
 
         //funcion para mostrar ticket
         window.addEventListener('showTicket', event => {  
-            $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+event.detail[0].sale_id);
+            $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+event.detail[0].sale_id+'/true');
              $('#modalTicket').show();
         });
 

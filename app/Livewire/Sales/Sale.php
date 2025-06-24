@@ -5,8 +5,7 @@ namespace App\Livewire\Sales;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\{Sale as SaleModel, Customer, PaymentMethod, Product, EmpresaDetail, SaleDetail, SaleDetailCant, PartToProduct, UnidadSat, Devolucion};
-use Illuminate\Support\Facades\{Auth, Log, DB};
-use Livewire\Attributes\Validate;
+use Illuminate\Support\Facades\{Auth};
 
 class Sale extends Component
 {
@@ -57,7 +56,7 @@ class Sale extends Component
         $this->id = $id;
     }
 
-    public function render(){   
+    public function render(){
         $this->unidades_sat = UnidadSat::where('status', 1)->get();
         if($this->type == 'create'){//funcion para mostrar vista de crear
             return view('livewire.sales.create');
@@ -529,6 +528,28 @@ class Sale extends Component
         $sale->status = 2;
         $sale->save();
 
+        if($this->hasInternetConnection()){
+            $ctrl = new \App\Http\Controllers\Controller();
+            $ctrl->saveSaleDBExt($sale);
+        }
+
         $this->dispatch('showTicket', ['sale_id' => $this->id]);
     }
+
+    //funcion para saber si existe conexion a internet
+    function hasInternetConnection(): bool
+    {
+        try {
+            $connected = @fsockopen("www.google.com", 80);
+            if ($connected) {
+                fclose($connected);
+                return true;
+            }
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        return false;
+    }
+
 }

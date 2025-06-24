@@ -5,3 +5,6 @@ Route::get('/import-datas/{table}', 'Admin\RootController@setDataDB')->name('imp
 Route::get('/import-data-local/{model}/{table}', 'Admin\RootController@setDataDBLocal')->name('import.dataLocal');
 Route::post('/import-conf-local', 'Admin\RootController@setConfDBLocal')->name('import.setConfDBLocal');
 Route::post('/reset-app', 'Admin\RootController@resetDatabase')->name('resetDatabase');
+
+Route::get('/logs', 'Admin\RootController@viewLogs')->name('logs');
+Route::get('/clear-logs', 'Admin\RootController@clearLogs')->name('clearLogs');

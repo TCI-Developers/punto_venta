@@ -138,7 +138,6 @@ class DevolucionController extends Controller
 
     //funcion para guardar una devolucion de venta
     public function store(Request $request, $devolucion_id = null){ 
-        
         if(isset($request->part_to_product_id) && count($request->part_to_product_id)){
             $cantidad = 0;
             $total_descuentos = 0;
@@ -200,18 +199,13 @@ class DevolucionController extends Controller
             $devolucion->total_devolucion = $total_devolucion; //total devolucion sin aplicar los descuentos que tenian los productos
             $devolucion->save();
 
-            return redirect()->route('devoluciones.index')->with('success', 'Devolucion registrada con exito.');
+            if($this->hasInternetConnection()){
+                $ctrl = new \App\Http\Controllers\Controller();
+                $ctrl->saveDevolutionDBExt($devolucion, $devolucion_id ? true:false);
+            }
+
+            return redirect()->route('devoluciones.showDevSale', $devolucion->id)->with('ticket', 'ok');
         }
-
-        // $this->saveDBExterna($request); //Guardado en DB externa
-
-        //logica para mandar guardar a QuickBase
-        // $data['table_id'] = "bqa4qy3sd";
-        // $data['usertoken'] = env('USER_TOKEN');
-        // $data['apptoken'] = "dkxavxndzybjwqi43f52dsyakvp"; 
-        // $data['dominio'] = "aortizdemontellanoarevalo.quickbase.com";
-
-        // $this->postQuickBase($data, $request);
 
         return redirect()->route('devoluciones.index')->with('error', 'No se pudo completar la acción.');
     }

@@ -109,6 +109,12 @@
                     Importación
                 </a>
             </li>
+             <li class="nav-item"> <!-- Logs -->
+                <a href="{{route('logs')}}">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    Logs
+                </a>
+            </li>
         @endif
 
         @if(Auth::User()->hasAnyRole(['root','admin']))
@@ -137,6 +143,12 @@
                 <a href="{{route('admin.empresa')}}">
                     <i class="fa fa-id-card"></i>
                     Empresa
+                </a>
+            </li>
+            <li class="nav-item"> <!-- Empresa -->
+                <a href="{{route('box.getDevolutionDBExt')}}">
+                    <i class="fa fa-id-card"></i>
+                    test
                 </a>
             </li>
         @endif

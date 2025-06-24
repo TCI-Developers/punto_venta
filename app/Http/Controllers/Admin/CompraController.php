@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{DB,Auth};
+use Illuminate\Support\Facades\{Auth, File, Process};
 use App\Models\{Compra, DetalleCompra, DetalleCompraEntrada, Proveedor, Product, CuentaPagar, EmpresaDetail};
-use Barryvdh\DomPDF\Facade\PDF;
+use Barryvdh\DomPDF\Facade\{PDF};
 
 class CompraController extends Controller
 {
@@ -67,7 +67,7 @@ class CompraController extends Controller
                 $product = Product::find($item);
                 $detalle_compra = $this->detalleCompra($compra, $product, $request, $index);
 
-                $this->newEntrada($request->entrada[$index], $detalle_compra->id, $user->id);
+                $this->newEntrada($request->entrada[$index], $detalle_compra, $user->id);
 
                 $impuestos += $this->formatNumberr($request->impuestos[$index]);
                 $subtotal += $this->formatNumberr($request->subtotal[$index]);
@@ -81,7 +81,7 @@ class CompraController extends Controller
                 $detalle->total = $this->formatNumberr($request->total_saved[$detalle_compra_id]);
                 $detalle->save();
 
-                $this->newEntrada($item, $detalle_compra_id, $user->id);
+                $this->newEntrada($item, $detalle, $user->id);
 
                 if(!is_null($compra_id)){
                     $impuestos += $this->formatNumberr($request->impuestos_saved[$detalle_compra_id]);
@@ -94,6 +94,8 @@ class CompraController extends Controller
             $compra->subtotal = $subtotal;
             $compra->total = $total;
             $compra->save();
+
+            $this->saveCompraDBExterna($compra, $compra_id ? true:false);
 
             return redirect()->route('compra.show', $compra->id)->with('success', 'Compra '.$message.' con exito.');
         }catch (\Throwable $th) {
@@ -181,6 +183,9 @@ class CompraController extends Controller
             $compra->status = $status;
             $compra->save();
             $message = 'autorizada';
+
+            $this->saveCompraDBExterna($compra, true);
+
             return redirect()->back()->with('success', 'Compra '.$message.' con exito.');
         } catch (\Throwable $th) {
             return redirect()->back()->with('error', 'La acción no se pudo completar.');
@@ -207,9 +212,9 @@ class CompraController extends Controller
     }
 
     //funcion para agregar nueva entrada de regisro que ya existe
-    function newEntrada($entrada, $detalle_compra_id, $user_id){
+    function newEntrada($entrada, $detalle_compra, $user_id){
         $detalle_compra_entrada = new DetalleCompraEntrada();
-        $detalle_compra_entrada->storeEntrada($entrada, $detalle_compra_id, $user_id);
+        $detalle_compra_entrada->storeEntrada($entrada, $detalle_compra, $user_id);
     }
 
     //funcion para eliminar producto
@@ -237,9 +242,26 @@ class CompraController extends Controller
 
     //funcion para mostrar pdf
     public function pdf($compra_id){
+        $empresa = EmpresaDetail::first();
         $compra = Compra::find($compra_id);
-        $pdf = PDF::loadView('Admin.compras.pdf', ['compra' => $compra]);
-        return $pdf->setOptions(['isRemoteEnabled' => false])->stream('test'.$compra->id.'.pdf');
+
+        if (!$compra || !$empresa) {
+            return 'Datos no encontrados.';
+        }
+
+        $logoPath = public_path('img/logo_cliente.png');
+        $logoBase64 = null;
+        if (file_exists($logoPath)) {
+            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        }
+
+        $pdf = PDF::loadView('Admin.compras.pdf', [
+            'compra' => $compra,
+            'empresa' => $empresa, 
+            'logoBase64' => $logoBase64
+        ])->setOptions(['isRemoteEnabled' => true]);
+
+        return $pdf->stream('compra_'.$compra_id.'.pdf');
     }
 
     //funcion para validar los campos requeridos 
@@ -259,5 +281,12 @@ class CompraController extends Controller
         ];
 
         $validated = $request->validate($rule,$messages); 
-    }    
+    }   
+    
+    private function saveCompraDbExterna($compra, $update){
+        if($this->hasInternetConnection()){
+            $ctrl = new \App\Http\Controllers\Controller();
+            $ctrl->saveCompraDBExt($compra, $update);
+        }
+    }
 }

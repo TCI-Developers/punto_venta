@@ -13,6 +13,16 @@
     <main class="content">
         @include('components.use.nav-slider')
         @include('components.use.notification_success_error')
+
+        @if(session('ticket'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    $('#modalTicket').show();
+                });
+            </script>
+        @endif
+
+
         <div class="card card-primary">
             <div class="card card-header">
                 <h2>Devolución Venta {{$sale->folio}}
@@ -195,5 +205,6 @@
         </div>
         </div>
 </main>   
+    @include('Admin.devoluciones._modal_ticket')
 </body>
 </html>

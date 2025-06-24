@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Ticket de Venta</title>
+    <title>Ticket De Devolución</title>
     @include('styles-ticket')
 </head>
 <body>
@@ -19,8 +19,8 @@
 
         <!-- Info Venta -->
         <div class="info-venta">
-            <div><strong>Ticket:</strong> {{$sale->folio}}</div>
-            <div><strong>Fecha:</strong> {{date('d-m-Y', strtotime($sale->date))}}</div>
+            <div><strong>Folio:</strong> {{$sale->folio}}</div>
+            <div><strong>Fecha Devolución:</strong> {{date('d-m-Y', strtotime($devolucion->fecha_devolucion))}}</div>
             <div><strong>Cliente:</strong> {{$sale->getClient->name}}</div>
             <div><strong>Atendió:</strong> {{$sale->getUser->name}}</div>
         </div>
@@ -37,8 +37,8 @@
             </thead>
             <tbody>
                 @php $subtotal = 0; $descuento = 0; @endphp
-                @foreach($sale->getDetails ?? [] as $item)
-                    @foreach($item->getCantSalesDetail ?? [] as $cantDetails)
+                @foreach($products ?? [] as $item)
+                    @foreach($item->getCantSalesDetailDev ?? [] as $cantDetails)
                     @php
                         $price =  $item->unit_price - $cantDetails->descuento ?? 0;
                         $price_total = ($cantDetails->cant * $price);
@@ -59,26 +59,25 @@
         <!-- Totales -->
         <div class="text-right">
             <div>Subtotal: $ {{number_format($subtotal, 2)}}</div>
-            <div>IVA: $ {{number_format($sale->getDetailsTotales('iva'),2)}}</div>
+            <div>IVA: $ {{number_format($sale->getDetailsDevTotales('iva'),2)}}</div>
              @if($descuento > 0)
              <div>Usted ahorró: $ {{number_format($descuento ,2)}}</div>
              @endif
-            @if($sale->getDetailsTotales('ieps') > 0)
-            <div>IEPS: $ {{number_format($sale->getDetailsTotales('ieps'),2)}}</div>
+            @if($sale->getDetailsDevTotales('ieps') > 0)
+            <div>IEPS: $ {{number_format($sale->getDetailsDevTotales('ieps'),2)}}</div>
             @endif
-            <div class="total">TOTAL: $ {{number_format($subtotal + $sale->getDetailsTotales('iva') + $sale->getDetailsTotales('ieps'),2)}}</div>
+            <div class="total">TOTAL DEVOLUCIÓN: $ {{number_format($subtotal + $sale->getDetailsDevTotales('iva') + $sale->getDetailsDevTotales('ieps'),2)}}</div>
         </div>
 
         <!-- Método de Pago -->
         <div class="info-venta">
-            <div><strong>Método de pago:</strong> {{$sale->type_payment}}</div>
-            <div><strong>{{ $sale->type_payment == 'tarjeta' ? 'Monto':'Efectivo'}} :</strong> $ {{number_format($sale->amount_received, 2)}}</div>
-            <div><strong>Cambio:</strong> $ {{number_format($sale->change, 2)}}</div>
+            <div><strong>Método de reembolso:</strong> Efectivo</div>
+            <div><strong>Efectivo entregado:</strong> $ {{number_format($devolucion->total_devolucion, 2)}}</div>
         </div>
 
         <!-- Pie -->
         <div class="footer">
-            <div>¡Gracias por su compra!</div>
+            <div>¡Gracias por su preferencia!</div>
             <div>{{$empresa->razon_social}}</div>
             <div>-- Este ticket no es válido como factura --</div>
         </div>

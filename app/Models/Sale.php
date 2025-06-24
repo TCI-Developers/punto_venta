@@ -12,6 +12,11 @@ class Sale extends Model
     protected $table = 'sales';
 
     //Funcion para obtener marca (linea) del producto
+    public function hasDevolution(){
+        return $this->hasOne('App\Models\Devolucion', 'sale_id', 'id');
+    }
+
+    //Funcion para obtener marca (linea) del producto
     public function getClient(){
         return $this->hasOne('App\Models\Customer', 'id', 'customer_id');
     }
@@ -27,12 +32,28 @@ class Sale extends Model
     }
 
     //Funcion para obtener marca (linea) del producto
+    public function getDetailsCant(){
+        return $this->hasMany('App\Models\SaleDetailCant', 'sale_id', 'id')->where('status', 1);
+    }
+
+    //Funcion para obtener marca (linea) del producto
     public function getDetailsTotales($type){
         return $this->hasMany('App\Models\SaleDetail', 'sale_id', 'id')->where('status', 1)->sum($type);
     }
+
+    //Funcion para obtener marca (linea) del producto
+    public function getDetailsDevTotales($type){
+        return $this->hasMany('App\Models\SaleDetail', 'sale_id', 'id')->where('status', 0)->sum($type);
+    }
+
     //funcion para obtener los detalles de venta con status 0
     public function getDetailsDev(){
         return $this->hasMany('App\Models\SaleDetail', 'sale_id', 'id')->where('status', 0);
+    }
+
+    //funcion para obtener los detalles de cantidad venta con status 0
+    public function getDetailsCantDev(){
+        return $this->hasMany('App\Models\SaleDetailCant', 'sale_id', 'id')->where('status', 0);
     }
 
     // Definir la relación con Customer

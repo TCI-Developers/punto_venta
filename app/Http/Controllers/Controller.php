@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Support\Facades\{DB,Auth, Http};
-use App\Models\{Product, Brand, Sale, PaymentMethod, UnidadSat, Driver, Proveedor, EmpresaDetail, User, Box};
+use Illuminate\Support\Facades\{DB,Auth, Http, Storage, Log};
+use App\Models\{Product, Brand, Sale, PaymentMethod, UnidadSat, Driver, Proveedor, EmpresaDetail, User, Box, Devolucion, Compra};
 use Barryvdh\DomPDF\Facade\PDF;
 
 class Controller extends BaseController
@@ -273,7 +273,7 @@ class Controller extends BaseController
     }
 
     //funcion para saber si existe conexion a internet
-    function hasInternetConnection(): bool
+    static function hasInternetConnection(): bool
     {
         try {
             $connected = @fsockopen("www.google.com", 80);
@@ -294,7 +294,7 @@ class Controller extends BaseController
     }
 
     //funcion para db externa
-    function db_externa($data, $endpoint){    
+    function db_externa($data, $endpoint){  
         $encoded = base64_encode(json_encode($data));
 
         $response = Http::withHeaders([
@@ -309,14 +309,26 @@ class Controller extends BaseController
         }
     }
 
-    //funcion para consultar en DB Externa
-    function saveDb($table, $data){
+    //funcion para guardar en DB Externa
+    public function saveDb($table, $data){
         $data = [
             'table' => $table,
             'fields' => $data,
         ];
 
         $db = $this->db_externa($data, 'save_data.php');
+        return json_decode($db);
+    }
+
+    //funcion para guardar en DB Externa
+    public function updateDb($table, $fields, $where){
+        $data = [
+            'table' => $table,
+            'fields' => $fields,
+            'where' => $where,
+        ];
+
+        $db = $this->db_externa($data, 'update_data.php');
         return json_decode($db);
     }
 
@@ -342,35 +354,209 @@ class Controller extends BaseController
     }
 
     //generamos tickets
-    public function ticket($id){    
-        $alto = 500;  
+    public function ticket($id, $auto = false){    
         $empresa = EmpresaDetail::first();
-        if(request()->is('ticket-sale/'.$id)){
+        $logoPath = public_path('img/logo_cliente.png');
+        $logoBase64 = null;
+        if (file_exists($logoPath)) {
+            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+        }
+
+        if(request()->is('ticket-sale/'.$id) || request()->is('ticket-sale/'.$id."/".$auto)){
+            $dir = 'tickets_sale';
             $sale = Sale::find($id);
             $lines = count($sale->getDetails ?? []) + 30;
-            $alto = ($lines * 15) + 50;
-            $pdf = Pdf::loadView('ticket', ['sale' => $sale, 'empresa' => $empresa]);
+            $pdf = Pdf::loadView('ticket', ['sale' => $sale, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
+        }else if(request()->is('ticket-devolution/'.$id) || request()->is('ticket-devolution/'.$id."/".$auto)){
+            $dir = 'tickets_dev';
+            $devolucion = Devolucion::find($id);
+            $sale = $devolucion->getSale;
+            $products = $devolucion->getSale->getDetailsDev;
+            $lines = count($products ?? []) + 30;
+            $pdf = Pdf::loadView('ticket_devolution', ['devolucion' => $devolucion, 'products' => $products, 'sale' => $sale, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
         }else{
+            $dir = 'tickets_box';
             $user = User::find($id);
             $box = Box::where('user_id', $user->id)->orderBy('id', 'desc')->first();
             $number_ventas = Sale::where('user_id', $user->id)->whereBetween('updated_at', [$box->start_date, $box->end_date])->count();
-            $pdf = Pdf::loadView('ticket_box', ['user' => $user, 'empresa' => $empresa, 'box' => $box, 'number_ventas' => $number_ventas]);
+            $pdf = Pdf::loadView('ticket_box', ['user' => $user, 'empresa' => $empresa, 'box' => $box, 'number_ventas' => $number_ventas, 'logoBase64' => $logoBase64]);
         }
 
+        
+
+        if (!Storage::disk('public')->exists($dir)) {
+            Storage::disk('public')->makeDirectory($dir);
+        }
+
+        $alto = isset($lines) ? (($lines * 15)+50):500;
         $pdf->setPaper([0, 0, 226.77, $alto], 'portrait'); // 80mm de ancho (~226.77pt)
         $pdf->setOption('isRemoteEnabled', true);
-        return $pdf->stream("ticket.pdf");
+        
+        if($auto){
+            $path = $this->imprPdf($pdf, $dir);
+            return response()->file($path, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="ticket.pdf"',
+            ]);
+        }
+
+        return $pdf->stream($dir,'/ticket.pdf');
     }
 
-    // public function ticket2(){   
-    //     $empresa = EmpresaDetail::first();
-    //     $pdf = Pdf::loadView('ticket2', ['empresa' => $empresa]);
-    //     $pdf->setPaper([0, 0, 226.77, 500], 'portrait'); // 80mm de ancho (~226.77pt)
-    //     $pdf->setOption('isRemoteEnabled', true);
-    //     // $pdf->save(storage_path('ticket.pdf'));
-    //     exec('start /min "" "ticket.pdf" /p /h');
-    //     return $pdf->stream("ticket.pdf");
-    //     // return redirect()->back();
-    // }
+    //fucnion para imprimir automatico
+    private function imprPdf($pdf, $dir){
+        try {
+            $pdfPath = tempnam(sys_get_temp_dir(), 'ticket_').'.pdf';
+            $pdf->save($pdfPath);
+            $sumatraPath = base_path('SumatraPDF.exe');
+            exec("\"$sumatraPath\" -print-to-default \"$pdfPath\"");
+            return $pdfPath;
+        } catch (\Throwable $th) {
+            dd('Ocurrio un error inesperado.');
+        }
+    }
+
+    //funcion para guardar venta en db externa
+    public function saveSaleDBExt($sale){
+        $data_db[0]['sale_id'] = $sale->id;
+        $data_db[0]['date'] = $sale->date;
+        $data_db[0]['folio'] = $sale->folio; //cambia a no unico
+        $data_db[0]['user'] = $sale->getUser->name; //cambia a string
+        $data_db[0]['branch_id'] = $sale->branch_id;
+        $data_db[0]['uuid'] = $sale->uuid;
+        $data_db[0]['payment_method_id'] = $sale->payment_method_id;
+        $data_db[0]['type_payment'] = $sale->type_payment;
+        $data_db[0]['amount_received'] = $sale->amount_received;
+        $data_db[0]['change_'] = $sale->change;
+        $data_db[0]['sat_document_type'] = $sale->sat_document_type;
+        $data_db[0]['total_sale'] = $sale->total_sale;
+        $data_db[0]['coin'] = $sale->coin;
+        $data_db[0]['status'] = $sale->status;
+        $data_db[0]['customer'] = $sale->getClient->name; //cambia a string
+        $data_db[0]['created_at'] = $sale->created_at->format('d-m-Y H:i:s');
+        $data_db[0]['updated_at'] = $sale->updated_at->format('d-m-Y H:i:s');
+        $data_db[0]['details_json'] = json_encode($sale->getDetails->toArray());
+        $data_db[0]['detail_cant_json'] = json_encode($sale->getDetailsCant->toArray());
+
+        try {
+            $this->saveDb('sales', $data_db);
+            Log::info('Venta guardada');
+        } catch (\Throwable $th) {
+            Log::error('Error al guardar la venta', ['error' => $th->getMessage()]);
+        }
+    }
+
+    //funcion para guardar devolucion en db externa
+    public function saveDevolutionDBExt($devolution, $update){
+        $data_db[0]['devolucion_id'] = $devolution->id;
+        $data_db[0]['sale_id'] = $devolution->sale_id;
+        $data_db[0]['branch_id'] = $devolution->branch_id;
+        $data_db[0]['user'] = $devolution->getUser->name;
+        $data_db[0]['cantidad'] = $devolution->cantidad;
+        $data_db[0]['description'] = $devolution->description;
+        $data_db[0]['fecha_devolucion'] = $devolution->fecha_devolucion;
+        $data_db[0]['total_descuentos'] = $devolution->total_descuentos;
+        $data_db[0]['total_devolucion'] = $devolution->total_devolucion;
+        $data_db[0]['status'] = 1;
+        $data_db[0]['created_at'] = $devolution->created_at;
+        $data_db[0]['updated_at'] = $devolution->updated_at;
+        
+        $data_db[0]['details_json'] = json_encode($devolution->getSale->getDetailsDev);
+        $data_db[0]['details_cant_json'] = json_encode($devolution->getSale->getDetailsCantDev);
+
+        try {
+            if($update){
+                $data_db = $data_db[0];
+                $where['devolucion_id'] = $devolution->id;
+                $this->updateDb('devoluciones', $data_db, $where);
+                Log::info('Devolución actualizada');
+            }else{
+                $this->saveDb('devoluciones', $data_db);
+                Log::info('Devolución guardada');
+            }
+        } catch (\Throwable $th) {
+            Log::error('Error al guardar la devolución', ['error' => $th->getMessage()]);
+        }
+    }
+
+    //funcion para guardar venta en db externa
+    public function saveCompraDBExt($compra, $update){
+        $data_db[0]['compra_id'] = $compra->id;
+        $data_db[0]['folio'] = $compra->folio;
+        $data_db[0]['branch_id'] = $compra->branch_id;
+        $data_db[0]['proveedor_id'] = $compra->proveedor_id;
+        $data_db[0]['user'] = $compra->getUser->name;
+        $data_db[0]['programacion_entrega'] = $compra->programacion_entrega;
+        $data_db[0]['fecha_recibido'] = $compra->fecha_recibido;
+        $data_db[0]['plazo'] = $compra->plazo;
+        $data_db[0]['fecha_vencimiento'] = $compra->fecha_vencimiento;
+        $data_db[0]['moneda'] = $compra->moneda;
+        $data_db[0]['tipo'] = $compra->tipo;
+        $data_db[0]['importe'] = $compra->importe ?? 0;
+        $data_db[0]['impuesto_productos'] = $compra->impuesto_productos ?? 0;
+        $data_db[0]['descuentos'] = $compra->descuentos ?? 0;
+        $data_db[0]['subtotal'] = $compra->subtotal ?? 0;
+        $data_db[0]['total'] = $compra->total ?? 0;
+        $data_db[0]['observaciones'] = $compra->observaciones;
+        $data_db[0]['status'] = $compra->status ?? 1;
+        $data_db[0]['created_at'] = $compra->created_at;
+        $data_db[0]['updated_at'] = $compra->updated_at;
+
+        $data_db[0]['details_json'] = json_encode($compra->getDetalles->toArray());
+        $data_db[0]['details_cant_json'] = json_encode($compra->getDetallesEntra->toArray());
+
+        try {
+            if($update){
+                $data_db = $data_db[0];
+                $where['compra_id'] = $compra->id;
+                $this->updateDb('compras', $data_db, $where);
+                Log::info('Compra actualizada');
+            }else{
+                $this->saveDb('compras', $data_db);
+                Log::info('Compra guardada');
+            }
+        } catch (\Throwable $th) {
+            Log::error('Error al guardar la compra', ['error' => $th->getMessage()]);
+        }
+    }
+
+    //funcion para consultar ultima venta y almacenar ventas pendientes
+    public function getSales($sales){
+        foreach($sales ?? [] as $item){
+            $data['sale_id'] = $item->id;
+            $response = $this->consultDb('sales', $data);
+           
+            if($response->status != 'success'){
+                $ctrl = new \App\Http\Controllers\Controller();
+                $ctrl->saveSaleDBExt($item);
+            }
+        }
+    }
+
+    //funcion para consultar las devoluciones de 7 dias atras y almacenar ventas pendientes
+    public function getDevoluciones($devoluciones){
+        foreach($devoluciones ?? [] as $item){
+            $data['devolucion_id'] = $item->id;
+            $response = $this->consultDb('devoluciones', $data);
+           
+            if($response->status != 'success'){
+                $ctrl = new \App\Http\Controllers\Controller();
+                $ctrl->saveDevolutionDBExt($item, false);
+            }
+        }
+    }
+
+    //funcion para consultar las compras de 7 dias atras y almacenar compras pendientes
+    public function getCompras($compras){
+        foreach($compras ?? [] as $item){
+            $data['compra_id'] = $item->id;
+            $response = $this->consultDb('compras', $data);
+           
+            if($response->status != 'success'){
+                $ctrl = new \App\Http\Controllers\Controller();
+                $ctrl->saveCompraDBExt($item, false);
+            }
+        }
+    }
 }
  

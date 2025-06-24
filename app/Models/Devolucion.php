@@ -15,6 +15,11 @@ class Devolucion extends Model
         return $this->hasOne('App\Models\Sale', 'id', 'sale_id');
     }
 
+    //Funcion para obtener el usuario
+    public function getUser(){
+        return $this->hasOne('App\Models\User', 'id', 'user_dev');
+    }
+
     //Funcion para obtener producto
     public function getPartToProduct(){
         return $this->hasOne('App\Models\PartToProduct', 'id', 'part_to_product_id');

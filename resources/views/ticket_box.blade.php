@@ -11,7 +11,7 @@
         <!-- Encabezado -->
         <div class="header">
             <div>
-                <img src="{{$empresa->path_logo}}" alt="logo" width="70">
+                <img src="{{$logoBase64}}" alt="logo" width="70">
             </div>
             <div><strong>{{$empresa->razon_social}}</strong></div>
             <div>RFC: {{$empresa->rfc}}</div>

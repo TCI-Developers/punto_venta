@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\{Role, UserRole, Customer};
-use Illuminate\Support\Facades\{Auth, Hash, Artisan};
+use Illuminate\Support\Facades\{Auth, Hash, Artisan, File, Http};
 
 class RootController extends Controller
 {
@@ -70,6 +70,9 @@ class RootController extends Controller
 
      //funcion para importar las configuracion incial
     public function setConfDBLocal(Request $request){
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
+
         try {
             $user = Auth::User();
             if($user->name == 'TCI_DEV' && Hash::check($request->password, $user->password) && $this->hasInternetConnection()){
@@ -88,6 +91,21 @@ class RootController extends Controller
                     $user_role->role_id = $rol->id;
                     $user_role->save();
                 }
+
+                //descargar logos e icono
+                $path_logo = public_path('img/logo_cliente.png');
+                $path_pdf = base_path('SumatraPDF.exe');
+
+                $response = Http::get(env('URL_LOGO'));
+                if ($response->successful()) {
+                    File::put($path_logo, $response->body());
+                }
+
+                $response = Http::get(env('URL_PDF'));
+                if ($response->successful()) {
+                    File::put($path_pdf, $response->body());
+                }
+
                 return redirect()->back()->with('success', 'Configuración importada con exito.');
             }
             return redirect()->back()->with('error', 'No tienes permisos para realizar esta acción.');
@@ -274,5 +292,51 @@ class RootController extends Controller
         ]);
 
         return redirect()->back()->with('status', 'Se restauró correctamente.');
+    }
+
+    //funcion para ver los logs
+    public function viewLogs(){
+        $logPath = storage_path('logs/laravel.log');
+
+        if (!File::exists($logPath)) {
+            dd('No hay logs registrados aún.');
+        }
+
+        $rawLines = file($logPath, FILE_IGNORE_NEW_LINES);
+        $rawLines = array_reverse($rawLines); // Más recientes primero
+
+        $logs = [];
+        $current = '';
+
+        foreach ($rawLines as $line) {
+            if (preg_match('/^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]/', $line)) {
+                // Nueva entrada: guarda la anterior si existe
+                if ($current !== '') {
+                    $logs[] = trim($current);
+                }
+                $current = $line;
+            } else {
+                // Continuación del log anterior
+                $current .= ' ' . trim($line);
+            }
+        }
+
+        if ($current !== '') {
+            $logs[] = trim($current); // última entrada
+        }
+
+        return view('logs', ['lines' => $logs]);
+    }
+
+    //funcion para limpiar archivo de logs
+    public function clearLogs()
+    {
+        $logPath = storage_path('logs/laravel.log');
+
+        if (File::exists($logPath)) {
+            File::put($logPath, '');
+        }
+
+        return redirect()->back()->with('success', 'Logs limpiados correctamente.');
     }
 }

@@ -14,6 +14,7 @@ Route::post('/store-start-amount', 'Admin\BoxController@storeStarAmountBox')->na
 Route::get('/turn-off-view', 'Admin\BoxController@turnOff')->name('box.turnOff');
 Route::post('/turn-off-store', 'Admin\BoxController@store')->name('box.store');
 Route::get('/turn-off-store-ticket/{status?}', 'Admin\BoxController@statusBox')->name('box.statusBox');
+Route::get('/test', 'Admin\BoxController@getComprasDbExt')->name('box.getDevolutionDBExt');
 
 //sucursal
 Route::get('/quickbase-import/{table_name}', 'Admin\BranchController@importarQuickbase')->name('branchs.import'); //importar sucursales de quickbase
@@ -107,6 +108,6 @@ Route::post('/users-turnos-roles', 'Admin\UserController@rolesTurnos')->name('us
 Route::post('/users-update-turnos-roles', 'Admin\UserController@updateRolesTurnos')->name('users.updateRolesTurnos');
 Route::get('/users-logout', 'Admin\UserController@logout')->name('logout_');
 
-Route::get('/ticket-sale/{sale_id}', 'Controller@ticket')->name('ticket.sale');
-Route::get('/ticket-box/{user_id}', 'Controller@ticket')->name('ticket.box');
-// Route::get('/ticket2-sale', 'Controller@ticket2')->name('ticket.sale2');
+Route::get('/ticket-sale/{sale_id}/{auto?}', 'Controller@ticket')->name('ticket.sale');
+Route::get('/ticket-devolution/{devolution_id}/{auto?}', 'Controller@ticket')->name('ticket.devolution');
+Route::get('/ticket-box/{user_id}/{auto?}', 'Controller@ticket')->name('ticket.box');
