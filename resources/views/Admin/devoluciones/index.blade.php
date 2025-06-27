@@ -18,6 +18,7 @@
         </div>
         <div class="card-body table-responsive">
             <div class="form-group">
+                @if(auth()->user()->hasPermissionThroughModule('devoluciones', 'punto_venta', 'create'))
                 <a class="btn btn-primary" href="{{route('devoluciones.createMatriz')}}"
                     data-bs-toggle="tooltip" data-bs-placement="top" title="Nueva devolución"><i class="fa fa-plus"> Matriz</i></a>
 
@@ -26,6 +27,7 @@
                 
                 <a href="{{route('devoluciones.index', $status == 0 ? 1:0)}}" class="btn {{$status == 0 ? 'btn-success':'btn-secondary'}} float-right" data-bs-toggle="tooltip" data-bs-placement="top" 
                     title="Usuarios {{$status == 0 ? 'Habilitados':'Inhabilitados'}}"><i class="fa fa-folder"></i></a>
+                @endif
             </div>
 
             <table class="table table-striped table-bordered datatable">

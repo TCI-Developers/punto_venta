@@ -23,4 +23,4 @@ Route::middleware([
     })->name('dashboard');
 });
 
-Route::post('/login-user', 'Admin\UserController@loginUser')->name('user.login')->middleware('web');;
+Route::post('/login-user', 'Admin\UserController@loginUser')->name('user.login')->middleware('web');

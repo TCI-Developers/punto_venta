@@ -38,8 +38,6 @@ class ProductController extends Controller
 
     //funcion para guardar la presentacion/devolucion/promociones asignadas al producto
     public function store(Request $request, $product_id){
-          
-
         if($request->unidad_sat_id != '' && $request->price != '' && $request->code_bar != ''){
             if($request->part_product_id == ''){
                     $exist_presentation = PartToProduct::where('product_id', $product_id)->first();
@@ -51,6 +49,9 @@ class ProductController extends Controller
                 $presentation->product_id = (int)$product_id;
                 $message = 'asginada'; 
             }else{
+                if(!auth()->user()->hasPermissionThroughModule('inventarios', 'punto_venta', 'update')){
+                    return redirect()->back()->with('error', 'Acción no autorizada.');
+                }
                 $presentation = PartToProduct::find($request->part_product_id);
                 $message = 'actualizada';
             }

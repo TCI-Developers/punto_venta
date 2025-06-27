@@ -72,7 +72,9 @@
                         <div class="col-lg-12">
                             <button type="submit" class="btn btn-primary {{$status ? 'd-none':''}}" id="btnSubmit"><i class="fa fa-save"></i> {{$status ? 'Actualizar' : 'Guardar'}}</button>
                             @if(isset($branch))
-                            <button type="button" class="btn btn-success" id="btnEdit" onClick="edit()"><i class="fa fa-pencil"></i> Habilitar edición</button>
+                                @if(auth()->user()->hasPermissionThroughModule('sucursales','punto_venta','update'))
+                                <button type="button" class="btn btn-success" id="btnEdit" onClick="edit()"><i class="fa fa-pencil"></i> Habilitar edición</button>
+                                @endif
                             <button type="button" class="btn btn-light d-none" id="btnCancel" onClick="cancel()"><i class="fa fa-times"></i> Cancelar</button>
                             @endif
                         </div>

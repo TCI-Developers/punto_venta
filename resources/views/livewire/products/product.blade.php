@@ -1,7 +1,9 @@
 <div class="card card-primary">
         <div class="form-group card-header with-border text-center">
             <h2>Productos
+                 @if(Auth::User()->hasPermissionThroughModule('inventarios', 'punto_venta', 'create'))
                 <a href="{{route('product.showUploadExcel')}}" class="btn btn-success btn-sm float-right"><i class="fa fa-upload"></i> Carga Masiva Stock/Codigos de barra</a>
+                @endif
             </h2>
         </div>
         <div class="card-body">
@@ -61,7 +63,6 @@
                                         [$item->id, is_object($item->getPartToProduct) && is_object($item->getPartToProductDespiezado) ? 'only_edit':'']) }}">
                                         <i class="fa fa-list"></i>&nbsp; Presentaciones 
                                     </a>
-
                                     @if(!is_object($item->getPartToProductDespiezado))
                                         <div class="dropdown-divider"></div>
                                         <a class="dropdown-item" href="{{ route('product.create', [$item->id, 'despiece']) }}">

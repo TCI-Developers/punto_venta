@@ -9,12 +9,6 @@ use Illuminate\Support\Facades\{DB, Auth};
 
 class AdminController extends Controller
 {
-    //vista inicio
-    // public function index()
-    // {
-    //     return view('Admin.branchs.index', ['status' => 1]);
-    // }
-
     //funcion para ingresar el monto inicial de la caja
     public function startAmountBox(){
         $empresa = EmpresaDetail::first();

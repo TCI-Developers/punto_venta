@@ -50,14 +50,6 @@ class UserController extends Controller
         $user->password = bcrypt($request->password);
         $user->save();
 
-        $externalUser = new User();
-        $externalUser->setConnection('db_externa'); // Usar conexión externa
-        $externalUser->name = $user->name;
-        $externalUser->email = $user->email;
-        $externalUser->phone = $user->phone;
-        $externalUser->password = $user->password;
-        $externalUser->save();
-
         return redirect()->back()->with('success', 'Usuario creado con exito.');
     }
 

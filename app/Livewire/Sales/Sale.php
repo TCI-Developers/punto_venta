@@ -66,7 +66,6 @@ class Sale extends Component
             $this->sales_detail_dev = SaleDetail::where('sale_id', $this->id)->where('status', 0)->get();
             $devoluciones = Devolucion::where('sale_id', $this->id)->get();
             $products = Product::where('activo', 1)->get();
-
             return view('livewire.sales.show', ['sale' => $sale, 'devoluciones' => $devoluciones, 'products' => $products]);
         }
         $user = Auth::User();

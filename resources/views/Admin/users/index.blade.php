@@ -20,13 +20,19 @@
             </div>
 
             <div class="col-12">
+                @if(auth()->user()->hasPermissionThroughModule('usuarios','punto_venta','create') || auth()->user()->hasPermissionThroughModule('usuarios','punto_venta','destroy'))
                 <div class="card-header">
+                    @if(auth()->user()->hasPermissionThroughModule('usuarios','punto_venta','create'))
                     <a class="btn btn-primary" style="cursor:pointer;" onclick="showModal()"
                     data-bs-toggle="tooltip" data-bs-placement="top" title="Nuevo usuario"><i class="fa fa-plus"></i></a>
-
+                    @endif
+                    
+                    @if(auth()->user()->hasPermissionThroughModule('usuarios','punto_venta','destroy'))
                     <a href="{{route('users.index', $status == 0 ? 1:0)}}" class="btn {{$status == 0 ? 'btn-success':'btn-secondary'}} float-right" data-bs-toggle="tooltip" data-bs-placement="top" 
-                        title="Usuarios {{$status == 0 ? 'Habilitados':'Inhabilitados'}}"><i class="fa fa-folder"></i></a>
+                    title="Usuarios {{$status == 0 ? 'Habilitados':'Inhabilitados'}}"><i class="fa fa-folder"></i></a>
+                    @endif
                 </div>
+                @endif
             </div>
 
             <div class="card-body table-responsive">
@@ -60,14 +66,17 @@
                                 @endforeach
                             </td>
                             <td>
-                                @if(Auth::User()->hasRole('root'))
+                                @if(auth()->user()->hasPermissionThroughModule('usuarios','punto_venta','update') || auth()->user()->hasPermissionThroughModule('usuarios','punto_venta','show'))
                                 <button type="button" class="btn btn-warning btn-sm" onClick="modal({{$item}})"><i class="fa fa-edit"></i></button>
-                                <a href="{{route('users.destroy', [$item->id, $status == 0 ? 1:0])}}" 
-                                    class="btn {{$status == 0 ? 'btn-primary':'btn-danger'}} btn-sm"><i class="fa {{$status == 0 ? 'fa-upload':'fa-trash'}}"></i></a>
                                 @endif
-
+                                @if(auth()->user()->hasPermissionThroughModule('usuarios','punto_venta','destroy'))
+                                <a href="{{route('users.destroy', [$item->id, $status == 0 ? 1:0])}}" 
+                                class="btn {{$status == 0 ? 'btn-primary':'btn-danger'}} btn-sm"><i class="fa {{$status == 0 ? 'fa-upload':'fa-trash'}}"></i></a>
+                                @endif
+                                @if(auth()->user()->hasPermissionThroughModule('usuarios','punto_venta','auth'))
                                 <button type="button" class="btn btn-info btn-sm" onclick="btnShow({{$item}}, {{$user_branch[$item->id]}} )">
                                     <i class="fa fa-bars"></i></button>
+                                @endif
                             </td>
                         </tr>
                         @empty

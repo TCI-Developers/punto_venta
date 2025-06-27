@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('detalles_compra', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('compra_id');
-            $table->unsignedBigInteger('producto_id');
+            $table->unsignedBigInteger('compra_id')->nullable();
+            $table->unsignedBigInteger('producto_id')->nullable();
+            $table->string('code_product');
             $table->string('descripcion_producto');
             $table->string('taxes', 10)->nullable();
             $table->float('amount_taxes')->default(0);

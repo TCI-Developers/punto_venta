@@ -60,7 +60,7 @@
                     <h4 class="col-lg-3 col-sm-12"><strong>Impuestos:</strong> <br> $ {{number_format($cuenta->impuestos, 2)}}</h4>
                     <h4 class="col-lg-3 col-sm-12"><strong>Total:</strong> <br> $ {{number_format($cuenta->total, 2)}}</h4>
                 </div>
-
+                @if(auth()->user()->hasPermissionThroughModule('cuentas_por_pagar', 'punto_venta', 'create') || auth()->user()->hasPermissionThroughModule('cuentas_por_pagar', 'punto_venta', 'update'))
                 <div class="row col-12">
                     <label for="date" class="col-6">Fecha
                         <input type="date" class="form-control" name="date" value="{{date('Y-m-d')}}">
@@ -74,6 +74,7 @@
                         <button type="button" class="btn btn-secondary d-none" id="buttonCancel" onClick="btnCancel('{{date('Y-m-d')}}')"><i class="fa fa-times"></i> Cancelar </button>
                     </div>
                 </div>
+                @endif
                 </form>
 
                 <hr>
@@ -109,8 +110,12 @@
                             <td class="text-right">$ {{number_format(($cuenta->total - $debe),2)}}</td>
                             @if(Auth::User()->hasAnyRole(['admin', 'root']))
                             <td class="text-center">
+                                @if(auth()->user()->hasPermissionThroughModule('cuentas_por_pagar', 'punto_venta', 'update'))
                                 <button type="button" class="btn btn-warning btn-sm" onClick="edit({{$item->id}}, '{{$item->date}}', {{$item->importe}})"><i class="fa fa-edit"></i></button>
+                                @endif
+                                @if(auth()->user()->hasPermissionThroughModule('cuentas_por_pagar', 'punto_venta', 'destroy'))
                                 <a href="{{route('cxp.destroy', $item->id)}}" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></a>
+                                @endif
                             </td>
                             @endif
                         </tr>

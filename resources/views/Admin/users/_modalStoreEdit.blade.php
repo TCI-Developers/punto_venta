@@ -17,7 +17,7 @@
                             <input type="text" name="email" id="email" class="form-control inputs" placeholder="Email" required>
                         </label>
                         <label for="phone" class="col-lg-12 col-md-12 col-sm-12">Telefono
-                            <input type="text" name="phone" id="phone" class="form-control inputs" placeholder="Dirección" required>
+                            <input type="text" name="phone" id="phone" class="form-control inputs" placeholder="Telefono" required>
                         </label>
 
                         <label for="" class="col-lg-12 col-md-12 col-sm-12 d-none" id="switch_pass">

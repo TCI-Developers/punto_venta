@@ -15,13 +15,13 @@ return new class extends Migration
             $table->id();
             $table->string('folio');
             $table->unsignedBigInteger('branch_id');
-            $table->unsignedBigInteger('proveedor_id');
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('proveedor_id')->nullable();
+            $table->string('user');
             $table->date('programacion_entrega')->nullable();
             $table->date('fecha_recibido')->nullable();
             $table->integer('plazo')->default(0);
             $table->date('fecha_vencimiento')->nullable();
-            $table->char('moneda', 3);
+            $table->char('moneda', 3)->defatul('MXN');
             $table->string('tipo');
             $table->double('importe')->default(0);
             $table->double('impuesto_productos')->default(0);
@@ -29,6 +29,9 @@ return new class extends Migration
             $table->double('subtotal')->default(0);
             $table->double('total')->default(0);
             $table->string('observaciones')->nullable();
+            $table->bigInteger('compra_id')->nullable();
+            $table->longText('details_cant_json')->nullable();
+            $table->longText('details_json')->nullable();
             $table->integer('status')->default(1); //0 = Cancelada - 1 = pendiente - 2 = Autorizada - 3 = Solicitado - 4 = Recibido
             $table->foreign('branch_id')->references('id')->on('branchs');
             $table->foreign('user_id')->references('id')->on('users');

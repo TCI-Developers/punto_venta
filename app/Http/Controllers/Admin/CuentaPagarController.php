@@ -43,8 +43,8 @@ class CuentaPagarController extends Controller
 
         try {
             if(isset($request->cxp_detail_id) && $request->cxp_detail_id){
-                if(!Auth::User()->HasAnyrole(['admin', 'root'])){
-                    return redirect()->back()->with('error', 'No tienes permiso para esta acción.');
+                if(!Auth::User()->hasPermissionThroughModule('cuentas_por_pagar','punto_venta', 'update')){
+                    return redirect()->back()->with('error', 'Acción no autorizada.');
                 }
 
                 $cuenta = CuentaPagarDetail::find($request->cxp_detail_id);
@@ -71,10 +71,6 @@ class CuentaPagarController extends Controller
     //funcion para eliminar detalle
     public function destroy($id){
         try {
-            if(!Auth::User()->hasAnyRole(['admin', 'root'])){
-                return redirect()->back()->with('error', 'No tienes permiso para esta acción.');
-            }
-
             $cuenta_detail = CuentaPagarDetail::find($id);
             $total_details = CuentaPagarDetail::where('cxp_id', $cuenta_detail->cxp_id)->sum('importe');
             $cuenta_detail->delete();

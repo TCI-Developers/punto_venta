@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turnos</title>
+    <title>Roles</title>
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('components.use.link_scripts_glabal')
@@ -14,28 +14,25 @@
         }
 
         //funcion para abrir modal editar
-        function btnEdit(turno){
+        function btnEdit(rol){
             $('#modal_create').show();
             $('#title').html('Actualizar');
             $('#btnAddEdit').html('Actualizar');
-            $('#formTurnos').attr('action', $('#formTurnos').attr('edit'));
-            $('input[name=id]').val(turno.id);
-            $('#turno').val(turno.turno);
-            $('#description').val(turno.description);
-            $('#entrada').val(turno.entrada);
-            $('#salida').val(turno.salida);
+            $('#formRoles').attr('action', $('#formRoles').attr('edit'));
+            $('input[name=id]').val(rol.id);
+            $('#name').val(rol.name);
+            $('#description').val(rol.description);
         }
 
         //funcion para cerrar modal
-        function btnCancel(turno){
+        function btnCancel(){
             $('#modal_create').hide();
             $('#title').html('Crear');
             $('#btnAddEdit').html('Crear');
-            $('#formTurnos').attr('action', $('#formTurnos').attr('store'));
+            $('#formRoles').attr('action', $('#formRoles').attr('store'));
             $('.inputModal').val('');
         }
     </script>
-
 </head>
 <body>
     <main class="content">
@@ -43,63 +40,52 @@
         @include('components.use.notification_success_error')
     <div class="card card-primary">
         <div class="form-group card-header with-border text-center">
-            <h2>Turnos {{$status == 0 ? 'Inhabilitados':''}}</h2>
+            <h2>Roles {{$status == 0 ? 'Inhabilitados':''}}</h2>
         </div>
         <div class="card-body table-responsive">
-            @if(auth()->user()->hasPermissionThroughModule('turnos','punto_venta','create') || auth()->user()->hasPermissionThroughModule('turnos','punto_venta','destroy'))
             <div class="form-group">
-                @if(auth()->user()->hasPermissionThroughModule('turnos','punto_venta','create'))
-                <button type="button" class="btn btn-success" onClick="btnShow()"><i class="fa fa-plus"></i> &nbsp; Crear turno</button>
-                @endif
-                @if(auth()->user()->hasPermissionThroughModule('turnos','punto_venta','destroy'))
-                <a href="{{route('turnos.index', $status == 1 ? 0:1)}}" class="btn {{$status == 1 ? 'btn-light':'btn-primary'}} float-right">
-                        <i class="fa fa-archive"></i> &nbsp; Turnos {{$status == 1 ? 'Inhabilitados':'Habilitados'}}</a>
-                @endif
+                <button type="button" class="btn btn-success" onClick="btnShow()"><i class="fa fa-plus"></i> &nbsp; Crear Rol</button>
+                
+                <a href="{{route('roles.index', $status == 1 ? 0:1)}}" class="btn {{$status == 1 ? 'btn-light':'btn-primary'}} float-right">
+                    <i class="fa fa-archive"></i> &nbsp; Roles {{$status == 1 ? 'Inhabilitados':'Habilitados'}}</a>
             </div>
-            @endif
 
             <table class="table table-striped table-bordered datatable">
                 <thead>
                     <tr class="text-center">
                         <th>#</th>
-                        <th>Turno</th>
-                        <th>Horario Entrada/Salida</th>
+                        <th>Rol</th>
                         <th>Descripción</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($turnos as $index => $item)
+                    @forelse($roles as $index => $item)
                     <tr class="text-center">
                         <td>{{$index+1}}</td>
-                        <td>{{$item->turno}}</td>
-                        <td>{{$item->entrada}} - {{$item->salida}}</td>
+                        <td>{{$item->name}}</td>
                         <td>{{$item->description}}</td>
                         <td>
-                            @if(auth()->user()->hasPermissionThroughModule('turnos','punto_venta','show') || auth()->user()->hasPermissionThroughModule('turnos','punto_venta','update'))
                             <button type="button" class="btn btn-warning btn-sm" onClick="btnEdit({{$item}})">
                                 <i class="fa fa-edit"></i></button>
-                            @endif
-                            @if(auth()->user()->hasPermissionThroughModule('turnos','punto_venta','destroy'))
                             @if($status)
-                            <a href="{{route('turnos.destroy', $item->id)}}" class="btn btn-danger  btn-sm">
+                            <a href="{{route('roles.destroy', $item->id)}}" class="btn btn-danger btn-sm">
                                 <i class="fa fa-trash"></i></a>
                             @else
-                            <a href="{{route('turnos.enable', $item->id)}}" class="btn btn-primary btn-sm">
+                            <a href="{{route('roles.enable', $item->id)}}" class="btn btn-primary btn-sm">
                                 <i class="fa fa-refresh"></i></a>
-                            @endif
                             @endif
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="5" class="table-warning text-center">Sin turnos</td></tr>
+                    <tr><td colspan="4" class="table-warning text-center">Sin Roles.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
   </div>
 
-  @include('Admin.turnos._modal')
+  @include('Admin.roles._modal')
   </main>   
 </body>
 </html>

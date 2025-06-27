@@ -109,7 +109,7 @@
             </div>
             <div class="card-footer text-right">
                 @if(isset($compra))
-                    @if($compra->status == 1)
+                    @if($compra->status == 1 && auth()->user()->hasPermissionThroughModule('compras', 'punto_venta', 'auth'))
                     <a href="{{route('compra.status', [$compra->id, 2])}}" class="btn btn-success"><i class="fa fa-circle"></i> Autorizar</a>
                     @elseif($compra->status == 2)
                     <button type="button" class="btn btn-info" onclick="btnSolicitar({{$compra_id}})"><i class="fa fa-circle"></i> Solicitar</button>

@@ -313,7 +313,8 @@ class DevolucionController extends Controller
                 'cant' => 'La cantidad es mayor al stock actual del producto. Cantidad actual '.$presentacion->stock.'.',
             ]);
         }
-        dd($presentacion);
+
+        $this->postQuickBase('table', $request);
         // dd($request);
 
     }

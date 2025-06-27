@@ -49,13 +49,17 @@
             <div class="col-12 mt-2">
                 @if(Auth::User()->hasRole('root'))
                 <div class="card-header">
+                    @if(auth()->user()->hasPermissionThroughModule('sucursales', 'punto_venta', 'create'))
                         <a href="{{route('branchs.create')}}" class="btn btn-primary"
                             data-bs-toggle="tooltip" data-bs-placement="top" title="Nueva sucursal">
                             <i class="fa fa-plus text-light"></i>
                         </a>
+                    @endif
+                    @if(auth()->user()->hasPermissionThroughModule('sucursales', 'punto_venta', 'destroy'))
                         <a href="{{route('branchs.index', $status == 0 ? 1:0)}}" class="btn {{$status == 0 ? 'btn-success':'btn-secondary'}} float-right" data-bs-toggle="tooltip" data-bs-placement="top" title="Sucursales Inhabilitadas">
                             <i class="fa fa-folder text-light"></i>
                         </a>
+                    @endif
                 </div>
                 @endif
                 
@@ -65,9 +69,7 @@
                 <div class="app-main"> <!-- MAIN (Center website) -->
                     <div class="row app-row" id="body_formats">  <!--APP ROW 1-->
                         @forelse($branchs as $item)
-                            @if($user->hasAnyRole(['root', 'admin']))
-                                @include('Admin.branchs._sucursal')
-                            @elseif($user->hasBranch($item->id))
+                            @if($user->hasAnyRole(['root', 'admin']) || $user->hasBranch($item->id))
                                 @include('Admin.branchs._sucursal')
                             @endif
                         @empty

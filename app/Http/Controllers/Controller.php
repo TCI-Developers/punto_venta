@@ -96,16 +96,17 @@ class Controller extends BaseController
                 $values[] = (object) $formattedItem; // Lo convertimos a objeto, como antes
             }
         }
-
         return $values;
     }
 
     //funcion para obtener los parametros que ocupara la consulta de quickbase
     function validacionTabla($table_name_db, $data = null){
         if($table_name_db == 'branchs'){
-            $data['db'] = 'bqbrd7fy7';
-            $data['query'] = '';
-            $data['clist'] = [15,17,16,13,6];
+            // $data['db'] = 'bqbrd7fy7';
+            // $data['clist'] = [15,17,16,13,6];
+            $data['db'] = 'bqa4qy37m';
+            $data['query'] = "{73.EX.'yes'}";
+            $data['clist'] = [25,6,8,9,11,12,19];
         }else if($table_name_db == 'usuarios'){
             $data['db'] = 'brnx9pgfy';
             $data['query'] = "{30.EX.'".$data['tel']."'} AND {8.EX.'".$data['pass']."'}";

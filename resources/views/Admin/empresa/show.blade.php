@@ -47,7 +47,7 @@
                     </select>
                 </label>
 
-                @if(Auth::User()->hasAnyRole('root', 'admin'))
+                @if(Auth::User()->hasRole('root') || auth()->user()->hasPermissionThroughModule('empresa','punto_venta','auth'))
                 <div class="form-group text-right mt-2">
                     <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Guardar</button>
                 </div>
@@ -56,11 +56,11 @@
         </form>
     </div>
     
-    @if(Auth::User()->hasAnyrole(['root', 'admin']))
+    @if(Auth::User()->hasRole(['root']) || auth()->user()->hasPermissionThroughModule('empresa','punto_venta','auth'))
     <div class="card-body">
         <hr>
             <h3 class="text-center text-bold">Importación</h3>
-        @include('Admin.root.importacion_DBExt_DBLocal')
+            @include('Admin.root.importacion_DBExt_DBLocal')
     </div>
     @endif
 </div>

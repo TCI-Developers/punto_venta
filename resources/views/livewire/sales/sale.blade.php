@@ -75,8 +75,11 @@
                         <td>$ {{number_format($item->total_sale,2)}}</td>
                         <td>{{date('d-m-Y H:i:s', strtotime($item->updated_at))}}</td>
                         <td>
+                            @if(auth()->user()->hasPermissionThroughModule('ventas', 'punto_venta', 'update'))
                             <a href="{{route('sale.show', $item->id)}}" class="btn btn-info btn-sm" data-toggle="tooltip" data-placement="top" title="Ver venta">
                                 <i class="fa fa-eye"></i></a>
+                            @endcan
+
                             <a href="{{route('ticket.sale', $item->id)}}" class="btn btn-success btn-sm" data-toggle="tooltip" 
                                 target="_blank" data-placement="top" title="Ver ticket">
                                 <i class="fa fa-file"></i></a>

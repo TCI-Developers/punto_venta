@@ -17,8 +17,8 @@ class SaleController extends Controller
 
     //funcion para crear venta
     public function create(){
+        $empresa = EmpresaDetail::first();
         try {
-            $empresa = EmpresaDetail::first();
             $user = Auth::User();
             $payment_method = PaymentMethod::where('pay_method', 'PUE')->first();
             $sale = new Sale();
@@ -43,9 +43,11 @@ class SaleController extends Controller
 
             return redirect()->route('sale.show', $sale->id)->with('success', 'Venta creada con exito.'); 
         } catch (\Throwable $th) {
+            if(is_null($empresa->branch_id)){
+                return redirect()->back()->with('error', 'Asigna una sucursal a tus datos de empresa.');
+            }
             return redirect()->back()->with('error', 'Ocurrio un error inesperado.');
         }
-        // return view('admin.sales.create', ['type' => 'create', 'id' => null]);
     }
 
     //funcion para mostrar vista edit de venta
@@ -99,7 +101,6 @@ class SaleController extends Controller
      */
     public function update(Request $request, string $id)
     {   
-        
         $validated = $request->validate($this->rulesSales($request->status), $this->messagesError()); 
 
         $sale = Sale::find($id);

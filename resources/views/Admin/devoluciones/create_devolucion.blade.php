@@ -24,9 +24,11 @@
 
 
         <div class="card card-primary">
-            <div class="card card-header">
-                <h2>Devolución Venta {{$sale->folio}}
-                    @if(isset($devolution))
+            <div class="card card-header text-center">
+                <h2>
+                    <a href="{{route('devoluciones.index')}}" class="btn btn-success btn-sm float-left"><i class="fa fa-arrow-left"></i></a>
+                    Devolución Venta {{$sale->folio}}
+                    @if(isset($devolution) && auth()->user()->hasPermissionThroughModule('devoluciones','punto_venta','update'))
                     <button type="button" class="btn btn-warning btn-sm float-right" onclick="editDevolucion(this)"><i class="fa fa-edit"></i> Editar</button>
                     @endif
                 </h2>
@@ -146,7 +148,9 @@
                                         <td class="descuento" val="{{$value->descuento}}">$ {{number_format($value->total_descuento, 2) }}</td>
                                         <td class="total_sale">$ {{number_format(((($item->unit_price * $value->cant) - $value->total_descuento) + $impuestos), 2)}} </td>
                                         <td class="text-center {{isset($devolution) ? 'showEdit d-none':''}}">
+                                            @if(auth()->user()->hasPermissionThroughModule('devoluciones','punto_venta','destroy'))
                                             <a href="{{route('devoluciones.deleteDetailDev', [$devolution->id, $item->id])}}" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></a>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty

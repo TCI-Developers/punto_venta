@@ -13,9 +13,17 @@ class CompraController extends Controller
     //listado de proveedores
     public function index($status = 1)
     {      
+        $response = $this->traspasosMatriz();
         $empresa = EmpresaDetail::first();
         $branch_id = $empresa->branch_id;
-        $compras = Compra::where('branch_id', $branch_id)->get();
+        $compras = Compra::where('branch_id', 8)->get();
+        // $compras = Compra::where('branch_id', $branch_id)->get();
+
+        if($response){
+            return view('Admin.compras.index', ['compras' => $compras, 
+                        'status' => $status, 'info' => 'Tienes compras por importar, pero no tienes actualizados tus productos.']);
+        }
+
         return view('Admin.compras.index', ['compras' => $compras, 'status' => $status]);
     }
 
@@ -180,6 +188,10 @@ class CompraController extends Controller
                 $compra->fecha_recibido = date('Y-m-d');
                 $compra->fecha_vencimiento =  date('Y-m-d', strtotime("+$compra->plazo days", strtotime($compra->fecha_recibido)));
             }
+            if($status == 2 && !Auth::User()->hasPermissionThroughModule('compras','punto_venta','auth')){
+                return redirect()->back()->with('error', 'Acción no autorizada');
+            }
+
             $compra->status = $status;
             $compra->save();
             $message = 'autorizada';
@@ -287,6 +299,89 @@ class CompraController extends Controller
         if($this->hasInternetConnection()){
             $ctrl = new \App\Http\Controllers\Controller();
             $ctrl->saveCompraDBExt($compra, $update);
+        }
+    }
+
+    //consultamos y guardamos los nuevos registros en local
+    private function traspasosMatriz(){
+        $startDate = date('Y-m-d 00:00:00', strtotime('-7 days'));
+        $endDate = date('Y-m-d 23:59:59', strtotime('+1 days'));
+
+        $compras_matriz = $this->consultDb('compras', ['tipo' => 'T',
+                'created_at' => [
+                    'start' => $startDate,
+                    'end' => $endDate
+                ]
+            ]);
+
+        if($compras_matriz->status == 'success'){
+            $ban = 0;
+            $productos = [];
+            foreach($compras_matriz->data ?? [] as $item){
+                $productos = json_decode($item->details_json);
+                foreach ($productos as $value) {
+                    $product = Product::where('code_product', $value->productID)->first();
+                    if(!is_object($product)){
+                        dd($value);
+                        echo '*'.$value->productID.'<br>';
+                        $ban=1;
+                        // break;
+                    }
+                }
+            }
+dd('ok');
+            if($ban == 1){
+                return true;
+                die;
+            }
+
+            foreach($compras_matriz->data ?? [] as $item){
+                $compra = Compra::where('folio', $item->folio)->first();
+                if(!is_object($compra)){
+                    $compra = new Compra();
+                    $compra->folio = $item->folio;
+                    $compra->branch_id = $item->branch_id;
+                    $compra->proveedor_id = 1;//quitar porque seran nullables
+                    $compra->user_id = 1; //quitar porque seran nullables
+                    $compra->user = $item->user;
+                    $compra->programacion_entrega = $item->programacion_entrega;
+                    $compra->plazo = $item->plazo;
+                    $compra->moneda = $item->moneda;
+                    $compra->impuesto_productos = $item->impuesto_productos;
+                    $compra->descuentos = $item->descuentos;
+                    $compra->subtotal = $item->subtotal;
+                    $compra->total = $item->total;
+                    $compra->tipo = $item->tipo;
+                    $compra->observaciones = $item->observaciones;
+                    $compra->status = $item->status;
+                    $compra->created_at = $item->created_at;
+                    $compra->save();
+
+                    $productos = json_decode($item->details_json);
+                    foreach ($productos as $value) {
+                        $product = Product::where('code_product', $value->productID)->first();
+                        $detalle = new DetalleCompra();
+                        $detalle->producto_id = $product->id;
+                        $detalle->taxes = $product->taxes ?? 0;
+                        $detalle->amount_taxes = $product->amount_taxes ?? 0;
+                        $detalle->compra_id = $compra->id;
+                        $detalle->descripcion_producto = $value->productID;
+                        $detalle->precio_unitario = $value->precioUnitario;
+                        $detalle->subtotal = $value->subTotal;
+                        $detalle->total = $value->total;
+                        $detalle->save();
+                        
+                        $detalle_compra_entrada = new DetalleCompraEntrada();
+                        $detalle_compra_entrada->compra_id = $compra->id;
+                        $detalle_compra_entrada->detalle_compra_id = $detalle->id;
+                        $detalle_compra_entrada->entrada = $value->salida;
+                        $detalle_compra_entrada->user_id = 1;
+                        $detalle_compra_entrada->save();
+
+                    }
+
+                }
+            }
         }
     }
 }

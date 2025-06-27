@@ -1,8 +1,9 @@
 <div class="col-lg-4 col-md-4 col-sm-6 item flex-column"> 
     <div class="col-lg-12 col-md-12 col-sm-12">
-        @if(Auth::User()->hasAnyRole(['root', 'admin']))
-        {{-- onClick="modal({{$item}}, {{$item->getUsers($item->id)}}) --}}
+        @if(auth()->user()->hasPermissionThroughModule('sucursales','punto_venta','show') || auth()->user()->hasPermissionThroughModule('sucursales','punto_venta','update'))
         <a href="{{route('branchs.show', $item->id)}}" class="btn fs-6"><i class="fa fa-edit text-info"></i></a>
+        @endif
+         @if(auth()->user()->hasPermissionThroughModule('sucursales','punto_venta','destroy'))
         <a class="btn fs-6 float-right" href="{{route('branchs.destroy', [$item->id, $status == 0 ? 1:0] )}}"><i class="fa {{$status == 0 ? 'fa-upload text-success':'fa-trash text-danger'}} "></i></a>
         @endif
     </div>

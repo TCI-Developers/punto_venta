@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Role;
+use App\Models\{Role, Permission};
 
 class RoleController extends Controller
 {
@@ -72,5 +72,43 @@ class RoleController extends Controller
         }
 
         return redirect()->back()->with('error', 'Ocurrio un error.');
+    }
+
+    public function permissions(Role $role)
+    {
+        $permissions = Permission::orderBy('module')->orderBy('description')->get();
+        $rolePermissions = $role->permissions->pluck('id')->toArray();
+        return view('Admin.roles._permissions', [
+            'role' => $role,
+            'roleId' => $role->id,
+            'permissions' => $permissions,
+            'rolePermissions' => $role->permissions
+        ]);
+    }
+
+    public function syncPermissions(Request $request, Role $role)
+    {
+        $validated = $request->validate([
+        'permissions' => 'sometimes|array',
+        'permissions.*' => 'sometimes|integer|exists:permissions,id'
+        ]);
+
+        try {
+            $role->permissions()->sync($validated['permissions'] ?? []);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Permisos actualizados correctamente',
+                'data' => [
+                    'permissions_count' => $role->permissions()->count()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar permisos',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 }

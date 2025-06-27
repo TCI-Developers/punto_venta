@@ -90,16 +90,12 @@ class User extends Authenticatable
         return $this->hasMany('App\Models\UserRole', 'user_id', 'id');
     }
 
-    //Incializamos roles para el uso en hasRoles y hasAnyRole
-    public function roles(){
-        return $this->belongsToMany('App\Models\Role')->withTimesTamps();
-    }
-
+    
     //Incializamos roles para el uso en hasRoles y hasAnyRole
     public function branchs(){
         return $this->belongsToMany('App\Models\BranchUser')->withTimesTamps();
     }
-
+    
     //funcion para saber si tiene varios roles
     public function hasAnyRole($roles)
     {
@@ -114,10 +110,10 @@ class User extends Authenticatable
                 return true;
             }
         }
-
+        
         return false;
     }
-
+    
     //funcion para saber si tiene un rol en especifico
     public function hasRole($roles)
     {   
@@ -126,5 +122,32 @@ class User extends Authenticatable
         }
         return false;
     }
+    
+    //Incializamos roles para el uso en hasRoles y hasAnyRole
+    public function roles(){
+        return $this->belongsToMany('App\Models\Role')->withTimesTamps();
+    }
 
+    public function hasPermissionTo($permissionName)
+    {
+        foreach ($this->roles as $role) {
+            if ($role->permissions->where('name', $permissionName)->isNotEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function hasPermissionThroughModule($module, $submodule = null, $action = null)
+    {   
+        if($action && $submodule){
+            return $this->roles()->whereHas('permissions', function($q) use ($module, $submodule, $action) {
+                $q->where('module', $module)->where('submodule', $submodule)->where('action', $action);
+            })->exists();
+        }
+            return $this->roles()->whereHas('permissions', function($q) use ($module, $submodule, $action) {
+                $q->where('module', $module);
+            })->exists();
+
+    }
 }

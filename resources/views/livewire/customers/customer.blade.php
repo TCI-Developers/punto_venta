@@ -13,7 +13,9 @@
                 </div>
 
                 <div class="col-lg-1 col-md-1 col-sm-4"> <br>
+                    @if(Auth::User()->hasPermissionThroughModule('clientes', 'punto_venta', 'create'))
                     <button type="button" class="btn btn-success text_color" onClick="showModal()"><i class="fa fa-plus"></i></button>
+                    @endif
                 </div>
 
                 <div class="col-lg-7 col-md-7 col-sm-4">
@@ -58,13 +60,18 @@
                         <td class="text-center">{{$item->rfc}}</td>
                         <td class="text-center">{{$item->postal_code}}</td>
                         <td class="text-center">
+                            @if(Auth::User()->hasPermissionThroughModule('clientes', 'punto_venta', 'update'))
                             <button type="button" class="btn btn-warning btn-sm" wire:click="btnEdit({{$item->id}})"><i class="fa fa-edit"></i></button>
-                            @if($status)
-                            <a href="{{route('customer.destroy', [$item->id, 0])}}" class="btn btn-danger btn-sm"
-                            data-toggle="tooltip" data-placement="top" title="Deshabilitar"><i class="fa fa-trash"></i></a>
-                            @else
-                            <a href="{{route('customer.destroy', [$item->id, 1])}}" class="btn btn-primary btn-sm"
-                            data-toggle="tooltip" data-placement="top" title="Habilitar"><i class="fa fa-refresh"></i></a>
+                            @endif
+
+                            @if(Auth::User()->hasPermissionThroughModule('clientes', 'punto_venta', 'destroy'))
+                                @if($status)
+                                <a href="{{route('customer.destroy', [$item->id, 0])}}" class="btn btn-danger btn-sm"
+                                data-toggle="tooltip" data-placement="top" title="Deshabilitar"><i class="fa fa-trash"></i></a>
+                                @else
+                                <a href="{{route('customer.destroy', [$item->id, 1])}}" class="btn btn-primary btn-sm"
+                                data-toggle="tooltip" data-placement="top" title="Habilitar"><i class="fa fa-refresh"></i></a>
+                                @endif
                             @endif
                         </td>
                     </tr>

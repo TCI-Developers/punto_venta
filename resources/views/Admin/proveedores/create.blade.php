@@ -61,7 +61,9 @@
                     </div>
                 </div>
                 <div class="card-footer text-right">
+                    @if(auth()->user()->hasPermissionThroughModule('proveedores', 'punto_venta', 'create') || auth()->user()->hasPermissionThroughModule('proveedores', 'punto_venta', 'update'))
                     <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> {{isset($proveedor) ? 'Actualizar':'Guardar'}}</button>
+                    @endif
                 </div>
             </form>
     </div>

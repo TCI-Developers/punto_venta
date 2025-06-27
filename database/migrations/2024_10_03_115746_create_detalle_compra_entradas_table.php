@@ -17,8 +17,10 @@ return new class extends Migration
             $table->double('entrada')->default(0);
             $table->double('recibido')->default(0);
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('compra_id');
             $table->foreign('detalle_compra_id')->references('id')->on('detalles_compra');
             $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('compra_id')->references('id')->on('compras');
             $table->timestamps();
         });
     }

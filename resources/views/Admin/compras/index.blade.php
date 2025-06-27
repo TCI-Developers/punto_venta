@@ -28,11 +28,20 @@
         @include('components.use.notification_success_error')
         <div class="card card-primary" style="height:90vh;">
             <div class="form-group card-header with-border text-center">
-                <h2>Compras</h2>            </div>
+                <h2>Compras</h2>           
+            </div>
+
+            @if(isset($info))
+            <div class="card-header ">
+                <span class="text-info"><strong>{{$info}}</strong></span>
+            </div>
+            @endif
 
             <div class="card-body table-responsive">
                 <div class="form-group">
+                    @if(auth()->user()->hasPermissionThroughModule('compras', 'punto_venta', 'create'))
                     <a href="{{route('compra.create')}}" class="btn btn-success"><i class="fa fa-plus"></i> &nbsp; Nueva</a>
+                    @endif
                 </div>
 
                 <table class="table table-striped table-bordered datatable">
@@ -68,14 +77,12 @@
                             </td>
                             <td class="text-center">
                                  <div class="dropdown" style="position: relative; display: inline-block;">
-                                     <button class="btn btn-primary btn-sm dropdown-toggle" type="button" onclick="toggleDropdown(this)">
-                                        
-                                        Acción
-                                    </button>
+                                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" onclick="toggleDropdown(this)">Acción</button>
                                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="position:relative !important;">
                                         <a class="dropdown-item" href="{{route('compra.show', $item->id)}}"><i class="fa fa-eye"></i> &nbsp; Visualizar</a>
-                                        <a class="dropdown-item" href="{{route('compra.pdf', $item->id)}}" target="_blank"><i class="fa fa-file"></i> &nbsp; PDF</a>
-                                        @if($item->getCuentaPagar)
+                                        <a class="dropdown-item" href="{{route('compra.pdf', $item->id)}}" 
+                                        target="{{auth()->user()->hasPermissionThroughModule('compras','punto_venta','show') ? '_blank':''}}"><i class="fa fa-file"></i> &nbsp; PDF</a>
+                                        @if($item->getCuentaPagar && auth()->user()->hasPermissionThroughModule('cuentas_por_pagar'))
                                             <a class="dropdown-item" href="{{route('cxp.show', $item->getCuentaPagar->id)}}"><i class="fa fa-address-book"></i> &nbsp; Cuenta por pagar</a>
                                         @endif 
                                     </div>

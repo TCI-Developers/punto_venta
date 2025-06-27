@@ -123,7 +123,7 @@ class RootController extends Controller
             foreach($data ?? [] as $item){
                 $ban = 0;
                 foreach($dataExterna as $val){
-                    if($item->{$keys['qb']} === $val){
+                    if((int)$item->{$keys['qb']} === (int)$val){
                         $ban = 1;
                         break;
                     }
@@ -200,9 +200,9 @@ class RootController extends Controller
                 $data_db[$index]['contacto'] = $item->contacto;
                 $data_db[$index]['email'] = $item->e_mail;
                 $data_db[$index]['address'] = $item->direccion;
-                $data_db[$index]['credit_days'] = $item->dias_credito;
-                $data_db[$index]['credit'] = $item->credito;
-                $data_db[$index]['saldo'] = $item->saldo;
+                $data_db[$index]['credit_days'] = $item->dias_credito ?? 0;
+                $data_db[$index]['credit'] = $item->credito ?? 0;
+                $data_db[$index]['saldo'] = $item->saldo ?? 0;
             }
         }else if($table == 'brands'){
             foreach($data ?? [] as $index => $item){
@@ -220,9 +220,9 @@ class RootController extends Controller
                 $data_db[$index]['unit'] = $item->unidad;
                 $data_db[$index]['unit_description'] = $item->{'unidad_sat___descripción'};
                 $data_db[$index]['existence'] = $item->existencia_real;
-                $data_db[$index]['precio'] = $item->preciov_1;
-                $data_db[$index]['precio_mayoreo'] = $item->preciov_2;
-                $data_db[$index]['precio_despiece'] = $item->preciov_3;
+                $data_db[$index]['precio'] = $item->preciov_1 ?? 0;
+                $data_db[$index]['precio_mayoreo'] = $item->preciov_2 ?? 0;
+                $data_db[$index]['precio_despiece'] = $item->preciov_3 ?? 0;
                 $data_db[$index]['activo'] = $item->baja;
                 $data_db[$index]['comments'] = $item->notas;
                 $data_db[$index]['brand_id'] = (int)$item->{'linea___record_id#'};
@@ -239,8 +239,10 @@ class RootController extends Controller
                 $data_db[$index]['razon_social'] = $item->razon_social;
                 $data_db[$index]['name'] = $item->nombre;
                 $data_db[$index]['address'] = $item->direccion;
-                $data_db[$index]['phone'] = $item->telefono;
+                $data_db[$index]['phone'] = $item->tel;
                 $data_db[$index]['rfc'] = $item->rfc;
+                $data_db[$index]['id'] = $item->{'código_cliente'};
+                $data_db[$index]['email'] = $item->correo;
             }
         }
         return $data_db ?? [];
@@ -270,8 +272,8 @@ class RootController extends Controller
             $data['qb'] = 'codigo_del_producto';
             $data['dbExt'] = 'code_product';
         }else if($table == 'branchs'){
-            $data['qb'] = 'telefono';
-            $data['dbExt'] = 'phone';
+            $data['qb'] = 'código_cliente';
+            $data['dbExt'] = 'id';
         }else if($table == 'roles'){
             $data['qb'] = '';
             $data['dbExt'] = 'name';

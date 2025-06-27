@@ -15,8 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('folio');
             $table->unsignedBigInteger('branch_id');
-            $table->unsignedBigInteger('proveedor_id');
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('proveedor_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->string('user');
             $table->date('programacion_entrega')->nullable();
             $table->date('fecha_recibido')->nullable();
             $table->integer('plazo')->default(0);
