@@ -35,8 +35,11 @@
         <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
             <form action="{{ route('resetDatabase') }}" method="POST" onsubmit="return confirm('¿Estás seguro de restaurar TCI POS?')">
                 @csrf
-                <button type="submit" class="btn btn-danger"><i class="fa fa-download"></i> Restaurar TCI POS</button>
+                <button type="submit" class="btn btn-danger"><i class="fa fa-refresh"></i> Restaurar TCI POS</button>
             </form>
+        </label>
+        <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
+            <a href="{{env('URL_DOWNLOAD')}}" class="btn btn-success"><i class="fa fa-download"></i> Descargar POS TCI</a>
         </label>
     </div>
 </div>
