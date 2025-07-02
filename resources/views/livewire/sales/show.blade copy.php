@@ -1,4 +1,4 @@
-<div class="card card-primary">
+<div class="card card-primary" wire:ignore>
         <div class="form-group card-header with-border text-center">
             <h2><a href="{{route('sale.index')}}" class="btn btn-success float-left btn-sm"
                 data-toggle="tooltip" data-placement="top" title="Regresar"><i class="fa fa-arrow-left"></i></a>

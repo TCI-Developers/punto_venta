@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('parts_to_product', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id'); //id del producto
-            $table->string('code_bar')->nullable(); //codigo de barras
+            $table->string('code_bar')->nullable()->index(); //codigo de barras
             $table->double('price')->default(0);
             $table->double('price_mayoreo')->default(0); //precio por mayoreo
             $table->double('stock')->default(0);

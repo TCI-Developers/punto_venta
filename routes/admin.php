@@ -35,7 +35,7 @@ Route::post('/presentation-store', 'Admin\ProductController@storePresentationPro
 Route::post('/presentation-update', 'Admin\ProductController@updatePresentationProduct')->name('product.updatePresentationProduct')->middleware('permission:inventarios,punto_venta,update');
 
 Route::get('/products-show-upload-excel', 'Admin\ProductController@showUploadExcel')->name('product.showUploadExcel'); 
-Route::post('/products-upload-excel', 'Admin\ProductController@uploadExcel')->name('product.uploadExcel')->middleware('permission:inventarios, punto_venta, create'); 
+Route::post('/products-upload-excel', 'Admin\ProductController@uploadExcel')->name('product.uploadExcel')->middleware('permission:inventarios,punto_venta,create'); 
 
 //customers
 Route::get('/customers', 'Admin\CustomerController@index')->name('customer.index')->middleware('permission:clientes'); //vista principal clcientes
@@ -56,8 +56,8 @@ Route::get('/sales', 'Admin\SaleController@index')->name('sale.index')->middlewa
 Route::get('/sales-create', 'Admin\SaleController@create')->name('sale.create')->middleware('permission:ventas,punto_venta,create'); //vista principal ventas
 Route::post('/sales-store', 'Admin\SaleController@store')->name('sale.store')->middleware('permission:ventas,punto_venta,create');
 Route::get('/sales-show/{id}', 'Admin\SaleController@show')->name('sale.show')->middleware('permission:ventas,punto_venta,show');
-Route::post('/sales-update/{id}', 'Admin\SaleController@update')->name('sale.update')->middleware('permission:ventas,punto_venta,update');
-Route::get('/sales-destroy/{id}', 'Admin\SaleController@destroy')->name('sale.destroy')->middleware('permission:ventas,punto_venta,destroy');;
+Route::post('/sales-update/{id}', 'Admin\SaleController@update')->name('sale.update')->middleware('permission:ventas,punto_venta,[create|update]');
+Route::get('/sales-destroy/{id}', 'Admin\SaleController@destroy')->name('sale.destroy')->middleware('permission:ventas,punto_venta,destroy');
 
 //compras
 Route::get('/compras/{status?}', 'Admin\CompraController@index')->name('compra.index')->middleware('permission:compras');

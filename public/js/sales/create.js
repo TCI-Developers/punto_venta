@@ -93,11 +93,11 @@
             let total = 0.00;
             let descuento = 0.00;
             
-            if(presentation.length > 0 && presentation[presentation.length - 1].stock < 0){
-                Swal.fire('Sin existencias en sistema.', '', 'info');
-                Livewire.dispatch('stockOff', {'sale_detail_id' : sale_detail[sale_detail.length - 1].id,
-                                                'code': presentation[presentation.length - 1].code_bar});
-            }
+            // if(presentation.length > 0 && presentation[presentation.length - 1].stock < 0){
+            //     Swal.fire('Sin existencias en sistema.', '', 'info');
+            //     Livewire.dispatch('stockOff', {'sale_detail_id' : sale_detail[sale_detail.length - 1].id,
+            //                                     'code': presentation[presentation.length - 1].code_bar});
+            // }
             
             $('#tbody_details').empty();
             if(sale_detail.length){
@@ -176,6 +176,12 @@
             btnOrEnableDisable();
         });
 
+        window.addEventListener('alert', event => {
+            if(event.detail[0].stock_0 == true){
+                Swal.fire('Sin existencias en sistema.', '', 'info');
+            }
+        });
+
         //funcion para modificar cantidad de productos registrados
         function btnCantProduct(presentation_id){           
             $('#presentation_id').val(presentation_id);
@@ -236,6 +242,7 @@
         function modalProductos(type = 'show'){                     
             if(type == 'show'){
                 $('#modal_products').show();
+                $('#searchInput').focus();
             }else{
                 $('#modal_products').hide();
             }   
@@ -273,18 +280,18 @@
         }
 
         //funcion para buscar producto en modal
-         document.addEventListener('DOMContentLoaded', function () {
-            const input = document.getElementById("searchInput");
-            input.addEventListener("keyup", function () {
-            const filter = input.value.toLowerCase();
-            const rows = document.querySelectorAll("#modal_products tbody tr");
+        //  document.addEventListener('DOMContentLoaded', function () {
+        //     const input = document.getElementById("searchInput");
+        //     input.addEventListener("keyup", function () {
+        //     const filter = input.value.toLowerCase();
+        //     const rows = document.querySelectorAll("#modal_products tbody tr");
 
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(filter) ? "" : "none";
-            });
-            });
-        });
+        //     rows.forEach(row => {
+        //         const text = row.textContent.toLowerCase();
+        //         row.style.display = text.includes(filter) ? "" : "none";
+        //     });
+        //     });
+        // });
 
         //funcion para validar que sea un valor numerico
         function esNumero(valor) {
@@ -310,4 +317,3 @@
             $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+event.detail[0].sale_id+'/true');
              $('#modalTicket').show();
         });
-

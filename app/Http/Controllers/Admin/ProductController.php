@@ -39,9 +39,9 @@ class ProductController extends Controller
     //funcion para guardar la presentacion/devolucion/promociones asignadas al producto
     public function store(Request $request, $product_id){
         if($request->unidad_sat_id != '' && $request->price != '' && $request->code_bar != ''){
-            if($request->part_product_id == ''){
+            if($request->part_product_id == '' || is_null($request->part_product_id)){
                     $exist_presentation = PartToProduct::where('product_id', $product_id)->first();
-                    if(is_object($exist_presentation)){
+                    if(is_object($exist_presentation) && $exist_presentation->code_bar == $request->code_bar){
                         return redirect()->back()->with('info', 'Ya existe presentación de este producto.');
                     } 
 
@@ -57,7 +57,7 @@ class ProductController extends Controller
             }
 
             //descuentos
-            if($request->monto_porcentaje > 0 && $request->monto_porcentaje != ''){
+            if($request->monto_porcentaje != '' && $request->monto_porcentaje > 0){
                 $presentation->tipo_descuento = $request->tipo_descuento;
                 $presentation->monto_porcentaje = $request->monto_porcentaje;
                 $presentation->vigencia_cantidad_fecha = $request->vigencia_cantidad_fecha;
@@ -154,7 +154,7 @@ class ProductController extends Controller
     public function uploadExcel(Request $request)
     {
         $request->validate([
-            'excel_file' => 'required|mimes:xlsx,xls',
+            'excel_file' => 'required|mimetypes:application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
 
         Excel::import(new ProductsImport, $request->file('excel_file'));

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\{Role, UserRole, Customer};
 use Illuminate\Support\Facades\{Auth, Hash, Artisan, File, Http};
+use Database\Seeders\DatabaseSeeder;
 
 class RootController extends Controller
 {
@@ -105,6 +106,9 @@ class RootController extends Controller
                 if ($response->successful()) {
                     File::put($path_pdf, $response->body());
                 }
+
+                $seeder = new DatabaseSeeder();
+                $seeder->run();
 
                 return redirect()->back()->with('success', 'Configuración importada con exito.');
             }
@@ -221,8 +225,8 @@ class RootController extends Controller
                 $data_db[$index]['unit_description'] = $item->{'unidad_sat___descripción'};
                 $data_db[$index]['existence'] = $item->existencia_real;
                 $data_db[$index]['precio'] = $item->preciov_1 ?? 0;
-                $data_db[$index]['precio_mayoreo'] = $item->preciov_2 ?? 0;
-                $data_db[$index]['precio_despiece'] = $item->preciov_3 ?? 0;
+                $data_db[$index]['precio_mayoreo'] = $item->preciov_3 ?? 0;
+                $data_db[$index]['precio_despiece'] = $item->preciov_4 ?? 0;
                 $data_db[$index]['activo'] = $item->baja;
                 $data_db[$index]['comments'] = $item->notas;
                 $data_db[$index]['brand_id'] = (int)$item->{'linea___record_id#'};

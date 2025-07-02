@@ -13,16 +13,16 @@ class CompraController extends Controller
     //listado de proveedores
     public function index($status = 1)
     {      
-        $response = $this->traspasosMatriz();
+        // $response = $this->traspasosMatriz();
         $empresa = EmpresaDetail::first();
         $branch_id = $empresa->branch_id;
         $compras = Compra::where('branch_id', 8)->get();
         // $compras = Compra::where('branch_id', $branch_id)->get();
 
-        if($response){
-            return view('Admin.compras.index', ['compras' => $compras, 
-                        'status' => $status, 'info' => 'Tienes compras por importar, pero no tienes actualizados tus productos.']);
-        }
+        // if($response){
+        //     return view('Admin.compras.index', ['compras' => $compras, 
+        //                 'status' => $status, 'info' => 'Tienes compras por importar, pero no tienes actualizados tus productos.']);
+        // }
 
         return view('Admin.compras.index', ['compras' => $compras, 'status' => $status]);
     }
@@ -329,7 +329,7 @@ class CompraController extends Controller
                     }
                 }
             }
-dd('ok');
+        dd('ok');
             if($ban == 1){
                 return true;
                 die;

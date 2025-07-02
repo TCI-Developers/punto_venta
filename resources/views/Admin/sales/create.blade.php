@@ -26,8 +26,11 @@
         @include('components.use.nav-slider')
         @include('components.use.notification_success_error')
         @livewireStyles
-        @livewire('sales.sale', [$type, $id]) 
-        @livewireScripts
+            @if($type == 'show')
+                @livewire('sales.show', [$id]) 
+            @else
+                @livewire('sales.sale', [$type, $id]) 
+            @endif
    </main>   
 </body>
 </html>

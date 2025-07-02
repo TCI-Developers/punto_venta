@@ -10,4 +10,11 @@ class Permission extends Model
     use HasFactory;
     protected $table = 'permissions';
 
+     protected $fillable = [
+        'module',
+        'submodule',
+        'action',
+        'description',
+    ];
+
 }

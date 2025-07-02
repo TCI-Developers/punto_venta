@@ -2,7 +2,8 @@
     <div class="row col-lg-12 col-md-12 col-sm-12">
         <label for="presentation_id" class="col-lg-5 col-md-5 col-sm-12">Presentación* <br>
             <input type="text" class="form-control" name="presentation_id" id="presentation_id" placeholder="Presentación"
-            wire:change="scaner_codigo" wire:model="scan_presentation_id" autofocus {{$sale->status == 2 ? 'readonly':''}}>
+            wire:keydown.enter="scaner_codigo" wire:model.defer="scan_presentation_id" autofocus {{$sale->status == 2 ? 'readonly':''}}>
+            <!-- wire:change="scaner_codigo" wire:model="scan_presentation_id" autofocus {{$sale->status == 2 ? 'readonly':''}}> -->
             <div class="col-lg-12 col-md-12 col-sm-12">
                 <span class="text-danger error" value="presentation_id" style="display:none;">Campo requerido</span>
             </div>
@@ -68,7 +69,6 @@
                 <td>$ {{number_format(((($item->unit_price * $value->cant) - $value->total_descuento) + $impuestos), 2)}}</td>
                 @if($sale->amount_received == 0) 
                 <td>
-                    {{--<button type="button" class="btn btn-warning btn-sm" onClick="btnCantProduct({{$value->id}},{{$value->cant}})"><i class="fa fa-edit"></i></button> --}}
                     <button type="button" class="btn btn-info btn-sm" onClick="btnCantProduct({{$item->getPartToProduct->id}})"><i class="fa fa-plus"></i></button>
                     <button type="button" class="btn btn-danger btn-sm" onClick="btnDestroyProduct({{$value->id}})"><i class="fa fa-trash"></i></button>
                 </td>
