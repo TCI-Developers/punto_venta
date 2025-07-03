@@ -13,7 +13,8 @@
         <div class="dropdown-toggle">
             <i class="fa fa-user-circle"></i> {{ Auth::user()->name }}
         </div>
-        @if(Auth::User()->hasAnyRole(['root', 'admin']))
+
+        @if(!auth()->user()->hasPermissionThroughModule('cierre_caja') || Auth::User()->hasRole('root') || Auth::User()->name == 'TCI_DEV')
         <div class="dropdown-menu">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
