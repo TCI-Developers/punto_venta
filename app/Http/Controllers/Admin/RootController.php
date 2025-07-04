@@ -93,6 +93,9 @@ class RootController extends Controller
                     $user_role->save();
                 }
 
+                $seeder = new DatabaseSeeder();
+                $seeder->run();
+
                 //descargar logos e icono
                 $path_logo = public_path('img/logo_cliente.png');
                 $path_pdf = base_path('SumatraPDF.exe');
@@ -106,9 +109,6 @@ class RootController extends Controller
                 if ($response->successful()) {
                     File::put($path_pdf, $response->body());
                 }
-
-                $seeder = new DatabaseSeeder();
-                $seeder->run();
 
                 return redirect()->back()->with('success', 'Configuración importada con exito.');
             }
