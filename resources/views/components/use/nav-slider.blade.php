@@ -157,7 +157,7 @@
                     Permisos
                 </a>
             </li>
-            <li class="nav-item"> <!-- Empresa -->
+            <li class="nav-item"> <!-- importacion -->
                 <a href="{{route('root.index')}}">
                     <i class="fa fa-file"></i>
                     Importación

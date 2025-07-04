@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Support\Facades\{DB,Auth, Http, Storage, Log};
+use Illuminate\Support\Facades\{DB,Auth, Http, Storage, Log, Artisan};
 use App\Models\{Product, Brand, Sale, PaymentMethod, UnidadSat, Driver, Proveedor, EmpresaDetail, User, Box, Devolucion, Compra};
 use Barryvdh\DomPDF\Facade\PDF;
 
@@ -557,6 +557,17 @@ class Controller extends BaseController
                 $ctrl = new \App\Http\Controllers\Controller();
                 $ctrl->saveCompraDBExt($item, false);
             }
+        }
+    }
+
+    //funcion para regresar a vista anterior
+    public function makeMigration(){
+        if($this->hasInternetConnection()){
+            Artisan::call('migrate', [
+            '--force' => true // Necesario para ejecución sin confirmación
+            ]);
+
+            return redirect()->back()->with('success', 'Completado');
         }
     }
 }

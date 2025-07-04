@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
-use Native\Laravel\Facades\Window;
+use Native\Laravel\Facades\{Window, Menu};
 use Native\Laravel\Contracts\ProvidesPhpIni;
+use Illuminate\Support\Facades\Artisan;
 
 class NativeAppServiceProvider implements ProvidesPhpIni
 {
@@ -13,7 +14,20 @@ class NativeAppServiceProvider implements ProvidesPhpIni
      */
     public function boot(): void
     {
-        Window::open();
+        Menu::create(
+            Menu::make(
+                Menu::fullscreen()->label('Pantalla Completa'),
+                Menu::reload()->label('Recargar'),
+                Menu::separator(),
+                Menu::quit()->label('Salir'),
+            ),
+            Menu::make(
+                Menu::route('migration')->label('Migration'),
+             )->label('Development'),
+        );
+
+             
+        Window::open()->maximized();
     }
 
     /**
