@@ -13,18 +13,19 @@ class CompraController extends Controller
     //listado de proveedores
     public function index($status = 1)
     {      
-        // $response = $this->traspasosMatriz();
-        $empresa = EmpresaDetail::first();
-        $branch_id = $empresa->branch_id;
-        $compras = Compra::where('branch_id', 8)->get();
-        // $compras = Compra::where('branch_id', $branch_id)->get();
+        try {
+            $empresa = EmpresaDetail::first(); 
+            if(!isset($empresa->branch_id)){
+                return redirect()->back()->with('error', 'Asigna una sucursal a tus datos de empresa.');
+            }
+            $branch_id = $empresa->branch_id;
+            $this->traspasosMatriz($branch_id);
+            $compras = Compra::where('branch_id', $branch_id)->get();
 
-        // if($response){
-        //     return view('Admin.compras.index', ['compras' => $compras, 
-        //                 'status' => $status, 'info' => 'Tienes compras por importar, pero no tienes actualizados tus productos.']);
-        // }
-
-        return view('Admin.compras.index', ['compras' => $compras, 'status' => $status]);
+            return view('Admin.compras.index', ['compras' => $compras, 'status' => $status]);
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', $th->getMessage());
+        }
     }
 
     // //funcion para mostrar vista para crear o actuproveedor
@@ -303,11 +304,11 @@ class CompraController extends Controller
     }
 
     //consultamos y guardamos los nuevos registros en local
-    private function traspasosMatriz(){
-        $startDate = date('Y-m-d 00:00:00', strtotime('-7 days'));
+    private function traspasosMatriz($branch_id){
+        $startDate = date('Y-m-d 00:00:00', strtotime('-30 days'));
         $endDate = date('Y-m-d 23:59:59', strtotime('+1 days'));
 
-        $compras_matriz = $this->consultDb('compras', ['tipo' => 'T',
+        $compras_matriz = $this->consultDb('compras', ['tipo' => 'T', 'branch_id' => $branch_id,
                 'created_at' => [
                     'start' => $startDate,
                     'end' => $endDate
@@ -316,24 +317,23 @@ class CompraController extends Controller
 
         if($compras_matriz->status == 'success'){
             $ban = 0;
-            $productos = [];
-            foreach($compras_matriz->data ?? [] as $item){
-                $productos = json_decode($item->details_json);
-                foreach ($productos as $value) {
-                    $product = Product::where('code_product', $value->productID)->first();
-                    if(!is_object($product)){
-                        dd($value);
-                        echo '*'.$value->productID.'<br>';
-                        $ban=1;
-                        // break;
-                    }
-                }
-            }
-        dd('ok');
-            if($ban == 1){
-                return true;
-                die;
-            }
+            // $productos = [];
+            // foreach($compras_matriz->data ?? [] as $item){
+            //     $productos = json_decode($item->details_json);
+            //     foreach ($productos as $value) {
+            //         $product = Product::where('code_product', $value->productID ?? '')->first();
+
+            //         if(!is_object($product)){
+            //             $ban=1;
+            //             break;
+            //         }
+            //     }
+            // }
+
+            // if($ban == 1){
+            //     return true;
+            //     die;
+            // }
 
             foreach($compras_matriz->data ?? [] as $item){
                 $compra = Compra::where('folio', $item->folio)->first();
@@ -359,9 +359,11 @@ class CompraController extends Controller
 
                     $productos = json_decode($item->details_json);
                     foreach ($productos as $value) {
-                        $product = Product::where('code_product', $value->productID)->first();
+                        $product = Product::where('code_product', $value->productID ?? '')->first();
+                        if(is_object($product)){
                         $detalle = new DetalleCompra();
                         $detalle->producto_id = $product->id;
+                        $detalle->code_product = $product->code_product;
                         $detalle->taxes = $product->taxes ?? 0;
                         $detalle->amount_taxes = $product->amount_taxes ?? 0;
                         $detalle->compra_id = $compra->id;
@@ -377,6 +379,10 @@ class CompraController extends Controller
                         $detalle_compra_entrada->entrada = $value->salida;
                         $detalle_compra_entrada->user_id = 1;
                         $detalle_compra_entrada->save();
+
+                        $product->existence = ((float)$product->existence + (float)$value->salida);
+                        $product->save();
+                        }
 
                     }
 

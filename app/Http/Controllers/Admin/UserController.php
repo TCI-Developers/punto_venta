@@ -145,14 +145,14 @@ class UserController extends Controller
     //funcion para logout
     public function logout(){
         //no puede cerrar sesión hasta que no cierre el turno
-        $user = Auth::User();
-        if(!$user->hasAnyRole(['root'])){
-            return redirect()->route('box.turnOff');
-        }
+        // $user = Auth::User();
+        // if(!$user->hasAnyRole(['root'])){
+        //     return redirect()->route('box.turnOff');
+        // }
 
-        $user_model = User::find($user->id);
-        $user_model->branch_id = null;
-        $user_model->save();
+        // $user_model = User::find($user->id);
+        // $user_model->branch_id = null;
+        // $user_model->save();
 
         Auth::logout();
         return redirect()->route('branchs.index');

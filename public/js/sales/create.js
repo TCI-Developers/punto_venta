@@ -14,6 +14,12 @@
             if(!table.attr('id') === 'trEmpty' || table.attr('id') === undefined){
                 $('#btnCobro').removeClass('d-none');
             }
+
+            $('#formSale').on('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                }
+            });
             
         })
 
@@ -267,30 +273,29 @@
 
         //funcion para obtener el cambio
         function getChange(amount_received){
-            $('#btnAcept').addClass('d-none');
+            // $('#btnAcept').addClass('d-none');
             let total = $('#total_sale').val();
             let change = amount_received - total;
             change = change.toFixed(2);
-            console.log($('#btnAcept'));
             
             $('#change').val(change);
-            if(change>=0 || parseInt(change) == 0){                
+            // if(change>=0 || parseInt(change) == 0){                
                 $('#btnAcept').removeClass('d-none');
-            }
+            // }
         }
 
         //funcion para buscar producto en modal
-        //  document.addEventListener('DOMContentLoaded', function () {
-        //     const input = document.getElementById("searchInput");
-        //     input.addEventListener("keyup", function () {
-        //     const filter = input.value.toLowerCase();
-        //     const rows = document.querySelectorAll("#modal_products tbody tr");
+            //  document.addEventListener('DOMContentLoaded', function () {
+            //     const input = document.getElementById("searchInput");
+            //     input.addEventListener("keyup", function () {
+            //     const filter = input.value.toLowerCase();
+            //     const rows = document.querySelectorAll("#modal_products tbody tr");
 
-        //     rows.forEach(row => {
-        //         const text = row.textContent.toLowerCase();
-        //         row.style.display = text.includes(filter) ? "" : "none";
-        //     });
-        //     });
+            //     rows.forEach(row => {
+            //         const text = row.textContent.toLowerCase();
+            //         row.style.display = text.includes(filter) ? "" : "none";
+            //     });
+            //     });
         // });
 
         //funcion para validar que sea un valor numerico
@@ -305,15 +310,21 @@
 
         //funcion para cerrar venta
         function submitSale() {
-            Livewire.dispatch('cobrar', {
-                    'monto': $('#amount_received').val(), 
-                    'total_venta':$('#total_sale').val(),
-                    'change':$('#change').val(),
-            })
+            let amount_received = $('#amount_received').val();
+            let total_sale = $('#total_sale').val();            
+            if(parseFloat(amount_received) > 0 && parseFloat(total_sale) <= parseFloat(amount_received)){
+                Livewire.dispatch('cobrar', {
+                        'monto': $('#amount_received').val(), 
+                        'total_venta':$('#total_sale').val(),
+                        'change':$('#change').val(),
+                })
+            }else{
+                Swal.fire('La cantidad recivida es menor al total de la venta.', '', 'info');
+            }
         }
 
         //funcion para mostrar ticket
         window.addEventListener('showTicket', event => {  
-            $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+event.detail[0].sale_id+'/true');
-             $('#modalTicket').show();
+                $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+event.detail[0].sale_id+'/true');
+                $('#modalTicket').show();
         });

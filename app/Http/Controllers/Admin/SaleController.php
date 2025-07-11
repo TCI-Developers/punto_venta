@@ -60,12 +60,12 @@ class SaleController extends Controller
      */
     public function store(Request $request)
     {
-            $validated = $request->validate([ 
-                'customer_id' => 'required',
-                'date' => 'required',
-                'payment_method_id' => 'required',
-                'coin' => 'required',
-            ]); 
+            // $validated = $request->validate([ 
+                // 'customer_id' => 'required',
+                // 'date' => 'required',
+                // 'payment_method_id' => 'required',
+                // 'coin' => 'required',
+            // ]); 
             
             $empresa = EmpresaDetail::first();
             $user = Auth::User();
@@ -107,7 +107,7 @@ class SaleController extends Controller
         if(!is_object($sale)){
             return redirect()->back()->with('error', 'Ocurrio un error.');
         }
-       
+
         $sale->user_id = Auth::User()->id;
         if($request->status == 'cobro'){
             $sale->status = 2;

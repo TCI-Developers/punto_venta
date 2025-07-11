@@ -86,8 +86,11 @@ Route::post('/devoluciones-store/{devolucion_id?}', 'Admin\DevolucionController@
 Route::get('/devoluciones-sale-create/{sale_id}', 'Admin\DevolucionController@createSaleToDevolucion')->name('devoluciones.createSaleToDevolucion'); // muestra vista de la devolucion de venta
 
 //devoluciones matriz
+Route::get('/devoluciones-compras', 'Admin\DevolucionController@indexCompras')->name('devoluciones.indexCompras'); //crear una devolucion de matriz
 Route::get('/devoluciones-create-matriz', 'Admin\DevolucionController@createMatriz')->name('devoluciones.createMatriz'); //crear una devolucion de matriz
 Route::post('/devoluciones-store-matriz', 'Admin\DevolucionController@storeMatriz')->name('devoluciones.storeMatriz'); //crear una devolucion de matriz
+
+Route::get('/devoluciones-show/{id}', 'Admin\DevolucionController@showMatriz')->name('devoluciones.showMatriz'); //crear una devolucion de matriz
 
 //turnos
 Route::get('/turnos/{status}', 'Admin\TurnoController@index')->name('turnos.index')->middleware('permission:turnos');

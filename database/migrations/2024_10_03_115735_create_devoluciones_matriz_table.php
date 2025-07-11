@@ -13,16 +13,12 @@ return new class extends Migration
     {
         Schema::create('devoluciones_matriz', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('driver_id');
+            $table->string('driver');
             $table->unsignedBigInteger('branch_id');
-            $table->unsignedBigInteger('product_id');
             $table->string('description')->nullable();
-            $table->double('cant')->default(0);
             $table->datetime('date');
             $table->boolean('status')->default(1);
-            $table->foreign('driver_id')->references('id')->on('drivers');
             $table->foreign('branch_id')->references('id')->on('branchs');
-            $table->foreign('product_id')->references('id')->on('products');
             $table->timestamps();
         });
     }

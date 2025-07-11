@@ -14,7 +14,7 @@
             <i class="fa fa-user-circle"></i> {{ Auth::user()->name }}
         </div>
 
-        @if(!auth()->user()->hasPermissionThroughModule('cierre_caja') || Auth::User()->hasRole('root') || Auth::User()->name == 'TCI_DEV')
+        {{--@if(!auth()->user()->hasPermissionThroughModule('cierre_caja') || Auth::User()->hasRole('root') || Auth::User()->name == 'TCI_DEV')--}}
         <div class="dropdown-menu">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
@@ -23,7 +23,7 @@
                 </button>
             </form>
         </div>
-        @endif
+       {{-- @endif --}}
     </div>
 </header>
 

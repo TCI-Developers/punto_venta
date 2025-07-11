@@ -152,13 +152,18 @@ class ProductController extends Controller
 
     //funcion para cargar el excel y procesarlo
     public function uploadExcel(Request $request)
-    {
+    {   
         $request->validate([
             'excel_file' => 'required|mimetypes:application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
 
-        Excel::import(new ProductsImport, $request->file('excel_file'));
+        try {
+            Excel::import(new ProductsImport, $request->file('excel_file'));
 
-        return back()->with('success', 'Archivo procesado correctamente.');
+            return back()->with('success', 'Archivo procesado correctamente.');
+
+        } catch (\Throwable $th) {
+            return back()->with('error', 'Excel Dañado.');
+        }
     }
 }

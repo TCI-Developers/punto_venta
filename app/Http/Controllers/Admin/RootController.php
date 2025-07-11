@@ -46,7 +46,7 @@ class RootController extends Controller
         ini_set('max_execution_time', 600);
         ini_set('memory_limit', '1024M');
 
-        try {
+        // try {
             $model = app("App\Models\\{$modelName}");
             $data_exist = $model::first();
 
@@ -64,9 +64,9 @@ class RootController extends Controller
             }
 
             return redirect()->back()->with('success', 'Importación con exito.');
-        } catch (\Throwable $th) {
-            return redirect()->back()->with('error', 'La importación no se pudo completar.');
-        }
+        // } catch (\Throwable $th) {
+        //     return redirect()->back()->with('error', 'La importación no se pudo completar.');
+        // }
     }
 
      //funcion para importar las configuracion incial
@@ -79,9 +79,12 @@ class RootController extends Controller
             if($user->name == 'TCI_DEV' && Hash::check($request->password, $user->password) && $this->hasInternetConnection()){
                 $this->setDataDBLocal('Role', 'roles');
                 
-                $cliente = new Customer();
-                $cliente->name = 'Publico General';
-                $cliente->save();
+                $cliente = Customer::where('name', 'Publico General')->first();
+                if(!is_object($cliente)){
+                    $cliente = new Customer();
+                    $cliente->name = 'Publico General';
+                    $cliente->save();
+                }
 
                 $rol = Role::where('name', 'root')->first();
                 $role_user = UserRole::where('user_id', $user->id)->where('role_id', $rol->id)->first();

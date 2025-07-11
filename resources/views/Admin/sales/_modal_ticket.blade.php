@@ -1,7 +1,6 @@
 <!-- Modal -->
 <div class="modal modalSale" id="modalTicket" tabindex="-1" aria-labelledby="modalTicketLabel" 
-  aria-hidden="true" data-backdrop="static" data-keyboard="false" 
-  style="position:relative !important; width: auto !important; top: -80vh !important;" wire:ignore>
+  aria-hidden="true" data-backdrop="static" data-keyboard="false" wire:ignore>
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">

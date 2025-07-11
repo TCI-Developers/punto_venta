@@ -42,23 +42,27 @@ class CuentaPagarController extends Controller
         );
 
         try {
+            $old_importe = 0;
             if(isset($request->cxp_detail_id) && $request->cxp_detail_id){
                 if(!Auth::User()->hasPermissionThroughModule('cuentas_por_pagar','punto_venta', 'update')){
                     return redirect()->back()->with('error', 'Acción no autorizada.');
                 }
 
                 $cuenta = CuentaPagarDetail::find($request->cxp_detail_id);
+                $old_importe = $cuenta->importe;
             }else{
                 $cuenta = new CuentaPagarDetail();
                 $cuenta->cxp_id = $cxp_id;
             }
             $cuenta->date = $request->date;
-            $cuenta->importe = $request->importe;
-            $cuenta->save();
-
+            $cuenta->importe = (float)$request->importe;
+            
             $cuenta_pagar_detail = CuentaPagarDetail::where('cxp_id', $cxp_id)->sum('importe');
             $cuenta_pagar = CuentaPagar::find($cxp_id);
-            $cuenta_pagar->status = ($cuenta_pagar->total - $cuenta_pagar_detail) <= 0 ? 2:1;
+
+            $total = $cuenta_pagar->total - (($cuenta_pagar_detail - $old_importe) + (float)$request->importe);
+            $cuenta_pagar->status = $total <= 0 ? 2:1;
+            $cuenta->save();
             $cuenta_pagar->save();
 
             return redirect()->back()->with('success', 'La acción se completo con exito.');

@@ -7,7 +7,7 @@
         <div class="card-body">
             <form action="{{route('sale.update', $sale->id)}}" method="post" id="formSale">
             @csrf
-            <input type="hidden" name="status" value="">
+            <input type="hidden" name="status" value="" wire:ignore>
             <div class="row">
                 <!-- Cliente y fecha -->
                 <label for="customer_id" class="col-lg-4 col-md-4 col-sm-12">Cliente*<br>
@@ -68,7 +68,7 @@
                                 <span class="input-group-text">$</span>
                             </div>
                             <input type="number" name="amount_received" id="amount_received" class="form-control input_amounts input_sale text-center" step="0.01" 
-                            placeholder="0" value="{{(float)$sale->amount_received == 0 ? '':$sale->amount_received}}" onchange="getChange(this.value)" readonly>
+                            placeholder="0" value="{{(float)$sale->amount_received == 0 ? '':$sale->amount_received}}" onchange="getChange(this.value)" readonly required>
                         </div>
                     </label>
                     <label for="total_sale" class="col-lg-3 col-md-3 col-sm-12 padding-0"> Total venta<br>
@@ -103,7 +103,7 @@
                 <!-- Si existen movimientos y no se a cobrado -->
                 <button type="button" class="btn btn-warning float-right mr-2 
                     {{count($sale->getDetails) && (float)$sale->amount_received === 0 || !count($sale->getDetails) && (float)$sale->amount_received === 0 ? '':'d-none'}}"
-                    onClick="cobrar()" id="btnCobro">Cobrar</button> 
+                    onClick="cobrar()" id="btnCobro" wire:ignore>Cobrar</button> 
                 @endif
             </form>
         </div>

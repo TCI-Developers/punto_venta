@@ -11,11 +11,11 @@
 <body>
     <main class="content">
         @include('components.use.nav-slider')
-        @include('components.use.notification_success_error')
+        @include('components.use.notification_success_error') 
 
     <div class="card card-primary">
         <div class="form-group card-header with-border text-center">
-            <h2>Crear Devolución Matriz {{$branch->name}}</h2>
+            <h2>Crear Devolución Matriz {{$branch->name ?? ''}}</h2>
         </div>
         <form action="{{route('devoluciones.storeMatriz')}}" method="post">
         @csrf

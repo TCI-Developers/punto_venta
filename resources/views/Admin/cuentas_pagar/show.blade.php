@@ -8,6 +8,14 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('components.use.link_scripts_glabal')
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            $('#formCXP').on('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                }
+            });
+        })
+
         //funcion para mostrar los valores en campos
         function edit(id, date, importe){
             $('#btnSubmit').html('Actualizar');
@@ -50,7 +58,7 @@
                 </div>
                 <hr>
                 
-                <form action="{{route('cxp.store', $cuenta->id)}}" method="post">
+                <form action="{{route('cxp.store', $cuenta->id)}}" method="post" id="formCXP">
                 @csrf
                 <input type="hidden" name="cxp_detail_id">
 

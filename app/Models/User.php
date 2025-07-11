@@ -145,9 +145,12 @@ class User extends Authenticatable
                 $q->where('module', $module)->where('submodule', $submodule)->where('action', $action);
             })->exists();
         }
+
+        if($module){
             return $this->roles()->whereHas('permissions', function($q) use ($module, $submodule, $action) {
                 $q->where('module', $module);
             })->exists();
+        }
 
     }
 }

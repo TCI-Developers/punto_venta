@@ -92,16 +92,16 @@ class Sale extends Component
                             $q->where('pay_method', 'LIKE', "%{$this->search}%");
                         });
                     })
-                ->orderBy('folio', 'desc')->paginate($this->paginate_cant);
+                ->orderBy('id', 'desc')->paginate($this->paginate_cant);
             }
         }else{
             if($user->hasRole(['root', 'admin'])){
                 $sales = SaleModel::where('status', '!=', 0)->where('branch_id', $empresa->branch_id)->whereBetween($this->whatDate, $this->date)
-                    ->orderBy('folio', 'desc')->paginate($this->paginate_cant);
+                    ->orderBy('id', 'desc')->paginate($this->paginate_cant);
             }else{
                 $sales = SaleModel::where('status', '!=', 0)->where('user_id', $user->id)
                         ->whereBetween($this->whatDate, $this->date)
-                        ->orderBy('folio', 'desc')->paginate($this->paginate_cant);
+                        ->orderBy('id', 'desc')->paginate($this->paginate_cant);
             }
         }
 

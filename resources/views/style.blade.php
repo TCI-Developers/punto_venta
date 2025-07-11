@@ -151,7 +151,7 @@ body {
     border-radius: 5px 5px 0px 0px;
     color: rgba(0, 0, 0, 1);
     font-weight: bold;
-    background: rgba(253, 126, 20, 1);
+    background: rgba(20, 158, 252, 0.63);
     border: 1px solid rgba(2, 41, 110, 1);
 }
 
@@ -160,7 +160,7 @@ body {
     height: 20px;
     color: rgba(0, 0, 0, 1);
     font-weight: bold;
-    background: rgba(253, 126, 20, 1);
+    background: rgba(20, 158, 252, 0.63);
     border: 1px solid rgba(2, 41, 110, 1);
 }
 
@@ -176,7 +176,7 @@ body {
     font-size: .75em;
     border: 1px solid rgba(2, 41, 110, 1);
     border-radius: 5px 5px;
-    background: rgba(253, 126, 20, 1);
+    background: rgba(20, 158, 252, 0.63);
     height: auto;
     padding: 1px;
 }
@@ -303,7 +303,7 @@ body {
  }
 
  .th {
-    background: rgba(253, 126, 20, 1);
+    background: rgba(20, 158, 252, 0.63);
     color: #000;
     text-align: center;
  }

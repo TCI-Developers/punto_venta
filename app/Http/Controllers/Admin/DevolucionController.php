@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB,Auth};
-use App\Models\{Devolucion, Product, Sale, SaleDetail, SaleDetailCant, PartToProduct, Branch, Driver, EmpresaDetail};
+use App\Models\{Devolucion, Product, Sale, SaleDetail, SaleDetailCant, PartToProduct, Branch, Driver, EmpresaDetail, Compra};
 
 class DevolucionController extends Controller
 {
@@ -21,6 +21,22 @@ class DevolucionController extends Controller
             return view('Admin.devoluciones.index', ['status' => $status, 'devoluciones' => $devoluciones]);
         }
         return view('Admin.devoluciones.index', ['status' => $status, 'devoluciones' => []])->with('Selecciona una sucursal.');
+    }
+
+    //funcion para mostrar el listado de compras
+    public function indexCompras(){
+        $compras = Compra::get();
+        return view('Admin.devoluciones_matriz.index', ['compras' => $compras ?? []]);
+    }
+
+    //funcion para mostrar el listado de compras
+    public function showMatriz($id){
+        return view('Admin.devoluciones_matriz.show', ['id' => $id]);
+    }
+
+    //funcion para guardar la devolucion de una compra de matriz
+    public function storeMatriz(Request $request){
+        dd($request);
     }
 
     //funcion para mostrar las devoluciones uqe se hicieron durante las fechas de un corte
@@ -294,14 +310,15 @@ class DevolucionController extends Controller
     }
 
     //funcion para guardar la devolucion a matriz
-    public function storeMatriz(Request $request){
-        $validated = $request->validate([ 
-            'product_id' => 'required',
-            'cant' => 'required',
-            ],[
-            'product_id' => 'El producto es requerido.',
-            'cant' => 'La cantidad es requerida.',
-        ]);
+    public function storeMatriz2(Request $request){
+        dd($request);
+        // $validated = $request->validate([ 
+        //     'product_id' => 'required',
+        //     'cant' => 'required',
+        //     ],[
+        //     'product_id' => 'El producto es requerido.',
+        //     'cant' => 'La cantidad es requerida.',
+        // ]);
 
         $product = Product::find($request->product_id);
         $presentacion = $product->getPartToProduct;

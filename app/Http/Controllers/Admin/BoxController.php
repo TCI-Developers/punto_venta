@@ -23,7 +23,7 @@ class BoxController extends Controller
         $box = Box::where('user_id', $user_id)->where('status', 0)->orderBy('id', 'desc')->first();
         $start_date = $box->start_date ?? null;
         $end_date = date('Y-m-d H:i:s');
-        $ventas = Sale::where('user_id', $user_id)->whereBetween('updated_at', [$start_date, $end_date])->get(); 
+        $ventas = Sale::where('user_id', $user_id)->whereBetween('updated_at', [$start_date, $end_date])->where('status', '!=', 0)->get(); 
         $ventas_cerradas = [];
         $status = 0; //no existen ventas
         if(count($ventas)){

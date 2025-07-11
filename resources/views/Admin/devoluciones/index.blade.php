@@ -19,7 +19,7 @@
         <div class="card-body table-responsive">
             <div class="form-group">
                 @if(auth()->user()->hasPermissionThroughModule('devoluciones', 'punto_venta', 'create'))
-                <a class="btn btn-primary" href="{{route('devoluciones.createMatriz')}}"
+                <a class="btn btn-primary" href="{{route('devoluciones.indexCompras')}}"
                     data-bs-toggle="tooltip" data-bs-placement="top" title="Nueva devolución"><i class="fa fa-plus"> Matriz</i></a>
 
                 <a class="btn btn-success" href="{{route('devoluciones.showListadoVentas')}}"
