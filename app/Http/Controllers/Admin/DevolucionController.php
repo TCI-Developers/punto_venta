@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB,Auth};
-use App\Models\{Devolucion, Product, Sale, SaleDetail, SaleDetailCant, PartToProduct, Branch, Driver, EmpresaDetail, Compra};
+use App\Models\{Devolucion, Product, Sale, SaleDetail, SaleDetailCant, PartToProduct, Branch, Driver, EmpresaDetail, Compra, DetalleCompra, DevolucionMatriz, DevolucionMatrizDetail};
+use Hamcrest\Type\IsObject;
 
 class DevolucionController extends Controller
 {
@@ -36,7 +37,50 @@ class DevolucionController extends Controller
 
     //funcion para guardar la devolucion de una compra de matriz
     public function storeMatriz(Request $request){
-        dd($request);
+        $request->validate([ 
+            'driver' => 'required',
+            'date' => 'required',
+            'devoluciones' => ['required', 'array', 'min:1'],
+            'devoluciones.*' => ['required', 'numeric', 'gt:0']
+            ],[
+            'driver.required' => 'El chofer es requerido.',
+            'date.required' => 'La fecha es requerida.',
+            'devoluciones.required' => 'Debes ingresar devoluciones.',
+            'devoluciones.array' => 'El formato de devoluciones no es válido.',
+            'devoluciones.min' => 'Debes ingresar al menos dos devoluciones.',
+            'devoluciones.*.required' => 'La cantidad es requerida.',
+            'devoluciones.*.numeric' => 'La cantidad debe ser un número.',
+            'devoluciones.*.gt' => 'La cantidad debe ser mayor a cero.',
+        ]);
+        $empresa = EmpresaDetail::first();
+dd($request);
+        $detail = DetalleCompra::find($request->detail_id);
+        if(!is_object($detail)){
+            return redirect()->back()->with('error', 'Ocurrio un error inesperado.');
+        }
+
+        $dev_matriz = new DevolucionMatriz();
+        $dev_matriz->compra_id = $request->compra_id;
+        $dev_matriz->driver = $request->driver;
+        $dev_matriz->date = $request->date;
+        $dev_matriz->branch_id = $empresa->id;
+        $dev_matriz->description = $request->description;
+        $dev_matriz->save();
+
+        foreach ($devoluciones as $key => $item) {
+            $details = new DevolucionMatrizDetail();
+            $details->devolucion_matriz_id = $dev_matriz->id;
+            $details->cantidad = $item->cantidad;
+            $details->code_product = $request->code_produc[$key];
+            $details->impuesto = $request->impuestos[$key];
+            $details->total_impuestos = $request->impuestos[$key]*$item->cantidad;
+            $details->descuentos = 0;
+            $details->subtotal = $request->precio_unit*$item->cantidad;
+            $details->total = $details->subtotal + $details->total_impuestos;
+            $details->save();
+        }
+
+        return redirect()->back()->with('success', 'Devolución realizada con exito.');
     }
 
     //funcion para mostrar las devoluciones uqe se hicieron durante las fechas de un corte

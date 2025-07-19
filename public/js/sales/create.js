@@ -1,3 +1,5 @@
+const { default: Swal } = require("sweetalert2");
+
         document.addEventListener('DOMContentLoaded', function () {
             //select tipo de pago
             $('#type_payment').on('change', function(){
@@ -311,15 +313,35 @@
         //funcion para cerrar venta
         function submitSale() {
             let amount_received = $('#amount_received').val();
-            let total_sale = $('#total_sale').val();            
-            if(parseFloat(amount_received) > 0 && parseFloat(total_sale) <= parseFloat(amount_received)){
+            let total_sale = $('#total_sale').val();  
+
+            let total_ajustado = ajustarMonto(total_sale);
+
+            if (amount_received > 0 && amount_received >= total_ajustado) {
                 Livewire.dispatch('cobrar', {
-                        'monto': $('#amount_received').val(), 
-                        'total_venta':$('#total_sale').val(),
-                        'change':$('#change').val(),
-                })
-            }else{
-                Swal.fire('La cantidad recivida es menor al total de la venta.', '', 'info');
+                    'monto': amount_received, 
+                    'total_venta': total_sale,
+                    'change': $('#change').val(),
+                });
+            } else {
+                Swal.fire(
+                    `La cantidad recibida es menor al total ajustado de la venta: ${total_ajustado.toFixed(2)}`,
+                    '',
+                    'info'
+                );
+            }
+        }
+
+        function ajustarMonto(monto) {
+            let entero = Math.floor(monto);
+            let decimal = monto - entero;
+
+            if (decimal <= 0.25) {
+                return entero;
+            } else if (decimal <= 0.75) {
+                return entero + 0.50;
+            } else {
+                return entero + 1;
             }
         }
 

@@ -17,6 +17,7 @@
                 <div class="form-group" style="display:flex; align-items: center;">
                     <div class="col-md-4">
                         <strong>Folio:</strong> {{ $compra->folio }}
+                        <input type="hidden" name="compra_id" value="{{$compra->id}}">
                     </div>
                      <div class="col-md-4">
                         <strong>Fecha recibido:</strong> {{ $compra->fecha_recibido }}
@@ -42,7 +43,14 @@
                 </div>
                 <hr>
                 <div class="row">
-                     <div class="col-md-4">
+                    <div class="col-md-12">
+                        <strong>Observaciones:</strong> {{ $compra->observaciones }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                     <div class="col-md-3">
+                        <strong>Chofer</strong>
                          <select name="driver" id="driver" class="form-control" placeholder="Selecciona chofer" required>
                             <option value="">Selecciona un chofer</option>
                             @foreach($drivers ?? [] as $item)
@@ -50,8 +58,10 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <strong>Observaciones:</strong> {{ $compra->observaciones }}
+                    <div class="col-md-9">
+                        <label for="description" class="col-md-12"><strong>Nota:</strong>
+                            <textarea name="description" id="description" class="form-control" rows="3"></textarea>
+                        </label> 
                     </div>
                 </div>
             </div>
@@ -96,11 +106,11 @@
                             <td class="text-sm">{{$item->code_product}}</td>
                             <td>{{$item->taxes}}</td>
                             <td>$ {{number_format($item->impuestos, 2)}}</td>
-                            <td class="text-sm">$ {{number_format($item->precio_unitario, 2)}}</td>
-                            <td class="text-sm">$ {{number_format($item->subtotal, 2)}}</td>
-                            <td class="text-sm">$ {{number_format($item->total, 2)}}</td>
+                            <td class="text-sm">$ {{number_format($item->precio_unitario ?? 0, 2)}}</td>
+                            <td class="text-sm">$ {{number_format($item->subtotal ?? 0, 2)}}</td>
+                            <td class="text-sm">$ {{number_format($item->total ?? 0, 2)}}</td>
                             <td>
-                                <input type="number" name="devoluciones[{{$item->id}}][cantidad]" 
+                                <input type="number" name="devoluciones[{{$item->id}}]" 
                                     class="form-control cantidad-input" 
                                     value="0" min="0" 
                                     max="{{$item->getEntrada->recibido}}">
@@ -109,6 +119,10 @@
                                 <input type="checkbox" class="devolver-todo-checkbox" data-max="{{$item->getEntrada->recibido}}">
                             </td>
                         </tr>
+
+                        <input type="hidden" name="code_product[{{$item->id}}]" value="{{$item->getProduct->code_product}}">
+                        <input type="hidden" name="impuestos[{{$item->id}}]" value="{{ $item->impuestos ?? 0/$item->getEntrada->entrada ?? 0}}">
+                        <input type="hidden" name="precio_unit[{{$item->id}}]" value="{{ $item->precio_unitario ?? 0}}">
                         @empty
                         <tr>
                             <td colspan="9" class="table-warnign">Sin registros</td>

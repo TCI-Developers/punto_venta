@@ -20,12 +20,13 @@
             <table class="table table-striped table-bordered datatable" id="table">
                 <thead>
                     <tr class="text-center table-info">
-                        <th colspan="5">Compras</th>
+                        <th colspan="6">Compras</th>
                     </tr>
                     <tr class="text-center">
                         <th>Folio</th>
                         <th>Usuario</th>
                         <th>Fecha</th>
+                        <th>Status</th>
                         <th>Total Venta</th>
                         <th>Acción</th>
                     </tr>
@@ -37,6 +38,16 @@
                             <td>{{$item->folio}}</td>
                             <td>{{$item->user}}</td>
                             <td>{{date('d-m-Y', $item->date)}}</td>
+                            <td>
+                                @if($item->getCuentaPagar)
+                                    <br>
+                                    @if($item->getCuentaPagar->status == 2)
+                                        <span class="badge badge-success">Pagada</span>
+                                    @else
+                                        <span class="badge {{$item->getCuentaPagar->status == 1 ? 'badge-warning':'badge-danger'}}">{{$item->getCuentaPagar->status == 1 ? 'Pendiente':'Cancelada'}}</span>
+                                    @endif
+                                @endif
+                            </td>
                             <td>$ {{number_format($item->total, 2)}}</td>
                             <td>
                                 <a href="{{route('devoluciones.showMatriz', $item->id)}}" class="btn btn-warning btn-sm"><i class="fa fa-refresh"></i></a>
@@ -45,7 +56,7 @@
                         @endif
                         @empty
                         <tr>
-                            <td colspan="5" class="table-warnign">Sin registros</td>
+                            <td colspan="6" class="table-warnign">Sin registros</td>
                         </tr>
                     @endforelse
                 </tbody>
