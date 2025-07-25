@@ -49,7 +49,7 @@
                     <input type="text" name="code_bar" id="code_bar" class="form-control inputModal" placeholder="Codigo" value="">
                 </label>
                 <label for="stock" class="col-lg-4 col-md-4 col-sm-12">Stock General
-                    <input type="number" class="form-control inputModal" name="stock" id="stock" step="0.01" value="{{isset($type) ? $product->getPartToProduct->stock??0:0}}" required {{isset($type) ? 'readonly':''}}>
+                    <input type="number" class="form-control inputModal" name="stock" id="stock" step="0.01" value="{{isset($type) ? $product->existence ?? 0:0}}" required {{isset($type) ? 'readonly':''}}>
                 </label>                
             </div>
             </div>
@@ -102,7 +102,6 @@
                                     <th>Presentación</th>
                                     <th>Precio</th>
                                     <th>Mayoreo</th>
-                                    <th>Stock</th>
                                     <th>Descuento</th>
                                     <th>Stock/Vigencia Desc</th>
                                     <th>Acciones</th>
@@ -115,7 +114,6 @@
                                         <td>{{$item->getUnidadSat->clave_unidad}} - {{$item->getUnidadSat->name}}</td>
                                         <td class="text-center">$ {{$item->price}}</td>
                                         <td class="text-center">{{$item->cantidad_mayoreo > 0 ? '$ '.$item->price_mayoreo:'N/A'}}</td>
-                                        <td class="text-center">{{$item->stock}}</td>
                                         <td class="text-center">
                                             @if($item->monto_porcentaje > 0)
                                                 {{ $item->tipo_descuento == 'monto' ? '$ '.$item->monto_porcentaje: '% '.$item->monto_porcentaje }}
@@ -126,7 +124,7 @@
                                         <td class="text-center">{{$item->vigencia}}</td>
                                         <td class="text-center">
                                             <button type="button" class="btn btn-warning btn-sm" 
-                                            onClick="update({{$item}})"><i class="fa fa-edit"></i></button>
+                                            onClick="update({{$item}}, {{$item->getProduct->existence}})"><i class="fa fa-edit"></i></button>
                                         </td>
                                     </tr>
                                 @empty

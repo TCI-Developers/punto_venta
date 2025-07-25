@@ -97,7 +97,7 @@ class UserController extends Controller
             'password.required' => 'La contraseña es obligatoria.',
         ]);
 
-
+        
         if($request->phone == 'TCI_DEV' && $this->hasInternetConnection()){
             $data['name'] = $request->phone;
             $data['status'] = 1;

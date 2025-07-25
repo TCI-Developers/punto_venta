@@ -37,6 +37,7 @@ class Compra extends Component
 
         if(!is_null($this->compra_id)){
             $this->compra = CompraModel::find($this->compra_id);
+
             $status = $this->compra->status == 1 ? '':'disabled';
             if(is_object($this->compra)){
                 $this->product_saved = $this->compra->getDetalles;

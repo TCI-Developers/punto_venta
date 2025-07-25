@@ -12,7 +12,7 @@ class CompraController extends Controller
 {
     //listado de proveedores
     public function index($status = 1)
-    {      
+    {
         try {
             $empresa = EmpresaDetail::first(); 
             if(!isset($empresa->branch_id)){
@@ -20,11 +20,11 @@ class CompraController extends Controller
             }
             $branch_id = $empresa->branch_id;
             $this->traspasosMatriz($branch_id);
-            $compras = Compra::where('branch_id', $branch_id)->get();
-
+            $compras = Compra::where('branch_id', $branch_id)->orderBy('folio', 'desc')->get();
             return view('Admin.compras.index', ['compras' => $compras, 'status' => $status]);
         } catch (\Throwable $th) {
-            return redirect()->back()->with('error', $th->getMessage());
+            $compras = Compra::where('branch_id', $branch_id)->get();
+            return view('Admin.compras.index', ['compras' => $compras, 'status' => $status])->with('error', $th->getMessage());
         }
     }
 
@@ -134,22 +134,22 @@ class CompraController extends Controller
                 $detalle_compra->subtotal = $subtotal;
                 $detalle_compra->impuestos = $impuestos;
                 $detalle_compra->total = $impuestos + $subtotal;
-                if($compra->tipo == 'OC'){
+                if($compra->tipo == 'OC' || $compra->tipo == 'T'){
                     $product = Product::find($detalle_compra->producto_id);
                     if($product->getPartToProduct){
                         $presentacion = $product->getPartToProduct;
-                        $presentacion->stock = $presentacion->stock + $item;
+                        // $presentacion->stock = $presentacion->stock + $item;
                         $presentacion->save();
                     }
 
                     if($product->getPartToProductDespiezado){
                         $despiezado = $product->getPartToProductDespiezado;
-                        $despiezado->stock = $despiezado->stock + $item;
+                        // $despiezado->stock = $despiezado->stock + $item;
                         $despiezado->save();
                     }
 
-                    $product->existence = ((int)$presentacion->stock) + $item;
-                    // $product->existence = ((int)$product->existence ?? 0) + $item;
+                    // $product->existence = ((int)$presentacion->stock) + $item;
+                    $product->existence = $product->existence + $item;
                     $product->save();
                 }
                 $detalle_compra->save();
@@ -316,33 +316,13 @@ class CompraController extends Controller
             ]);
 
         if($compras_matriz->status == 'success'){
-            $ban = 0;
-            // $productos = [];
-            // foreach($compras_matriz->data ?? [] as $item){
-            //     $productos = json_decode($item->details_json);
-            //     foreach ($productos as $value) {
-            //         $product = Product::where('code_product', $value->productID ?? '')->first();
-
-            //         if(!is_object($product)){
-            //             $ban=1;
-            //             break;
-            //         }
-            //     }
-            // }
-
-            // if($ban == 1){
-            //     return true;
-            //     die;
-            // }
-
             foreach($compras_matriz->data ?? [] as $item){
+
                 $compra = Compra::where('folio', $item->folio)->first();
                 if(!is_object($compra)){
                     $compra = new Compra();
                     $compra->folio = $item->folio;
                     $compra->branch_id = $item->branch_id;
-                    $compra->proveedor_id = 1;//quitar porque seran nullables
-                    $compra->user_id = 1; //quitar porque seran nullables
                     $compra->user = $item->user;
                     $compra->programacion_entrega = $item->programacion_entrega;
                     $compra->plazo = $item->plazo;
@@ -366,6 +346,7 @@ class CompraController extends Controller
                         $detalle->code_product = $product->code_product;
                         $detalle->taxes = $product->taxes ?? 0;
                         $detalle->amount_taxes = $product->amount_taxes ?? 0;
+                        $detalle->descuentos = $product->descuento ?? 0;
                         $detalle->compra_id = $compra->id;
                         $detalle->descripcion_producto = $value->productID;
                         $detalle->precio_unitario = $value->precioUnitario;

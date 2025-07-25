@@ -15,9 +15,9 @@ class DevolucionCompra extends Component
     public function render()
     {   
         if($this->search == ''){
-            $compras = Compra::paginate($this->paginate_cant);
+            $compras = Compra::where('status_devolucion', 0)->orderBy('folio', 'desc')->paginate($this->paginate_cant);
         }else{
-            $compras = Compra::where('folio', 'LIKE', "%{$this->search}%")
+            $compras = Compra::where('status_devolucion', 0)->where('folio', 'LIKE', "%{$this->search}%")
             ->orWhere('user', 'LIKE', "%{$this->search}%")
             ->paginate($this->paginate_cant);
         }

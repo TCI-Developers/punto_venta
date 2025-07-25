@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Devoluciones</title>
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js']) 
     @include('components.use.link_scripts_glabal')
 </head>
 <body>
@@ -30,7 +30,7 @@
                 <label for="product_id" class="col-lg-4 col-sm-12">Producto a devolver*
                     <select name="product_id" id="product_id" class="form-control selectpicker" data-live-search="true" title="Selecciona producto a devolver" required>
                         <option value=""></option>
-                        @foreach($products as $item)
+                        @foreach($products ?? [] as $item)
                             <option value="{{$item->id}}">{{$item->code_product}} - {{$item->description}}</option>
                         @endforeach
                     </select>

@@ -23,7 +23,7 @@
                         <th colspan="6">Compras</th>
                     </tr>
                     <tr class="text-center">
-                        <th>Folio</th>
+                        <th>Folio Compra</th>
                         <th>Usuario</th>
                         <th>Fecha</th>
                         <th>Status</th>

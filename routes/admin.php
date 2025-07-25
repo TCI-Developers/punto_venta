@@ -88,7 +88,8 @@ Route::get('/devoluciones-sale-create/{sale_id}', 'Admin\DevolucionController@cr
 //devoluciones matriz
 Route::get('/devoluciones-compras', 'Admin\DevolucionController@indexCompras')->name('devoluciones.indexCompras'); //crear una devolucion de matriz
 Route::get('/devoluciones-create-matriz', 'Admin\DevolucionController@createMatriz')->name('devoluciones.createMatriz'); //crear una devolucion de matriz
-Route::post('/devoluciones-store-matriz', 'Admin\DevolucionController@storeMatriz')->name('devoluciones.storeMatriz'); //crear una devolucion de matriz
+Route::post('/devoluciones-store-matriz/{compra_id?}', 'Admin\DevolucionController@storeMatriz')->name('devoluciones.storeMatriz'); //crear una devolucion de matriz
+Route::get('/devoluciones-show-dev-matriz/{devolucion_id}', 'Admin\DevolucionController@showDevMatriz')->name('devoluciones.showDevMatriz')->middleware('permission:devoluciones,punto_venta,[show|update]');
 
 Route::get('/devoluciones-show/{id}', 'Admin\DevolucionController@showMatriz')->name('devoluciones.showMatriz'); //crear una devolucion de matriz
 
@@ -126,4 +127,5 @@ Route::get('/users-logout', 'Admin\UserController@logout')->name('logout_');
 
 Route::get('/ticket-sale/{sale_id}/{auto?}', 'Controller@ticket')->name('ticket.sale');
 Route::get('/ticket-devolution/{devolution_id}/{auto?}', 'Controller@ticket')->name('ticket.devolution');
+Route::get('/ticket-devolution-matriz/{devolution_id}/{auto?}', 'Controller@ticket')->name('ticketMatriz.devolution');
 Route::get('/ticket-box/{user_id}/{auto?}', 'Controller@ticket')->name('ticket.box');

@@ -43,8 +43,9 @@ class ProductsImport implements ToCollection
                             }else{
                                 $part_to_product->price = $product->precio;
                             }
+                            
+                            $part_to_product->price_mayoreo = $product->precio_mayoreo;
                             $part_to_product->code_bar = $code_bar;
-                            $part_to_product->stock = $stock;
                             $part_to_product->unidad_sat_id = $unit_sat->id;
                             $part_to_product->save();
                         }

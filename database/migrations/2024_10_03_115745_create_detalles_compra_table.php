@@ -23,6 +23,7 @@ return new class extends Migration
             $table->double('precio_mayoreo')->default(0);
             $table->double('subtotal')->default(0);
             $table->double('impuestos')->default(0);
+            $table->double('descuentos')->default(0);
             $table->double('total')->default(0);
             $table->boolean('status')->default(1);
             $table->foreign('compra_id')->references('id')->on('compras');

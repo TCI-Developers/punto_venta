@@ -60,7 +60,7 @@
                         @forelse($compras as $item)
                         <tr>
                             <td class="text-center">{{$item->folio}}</td>
-                            <td>{{$item->getProveedor->name}}</td>
+                            <td>{{$item->getProveedor->name ?? 'MATRIZ'}}</td>
                             <td class="text-center">{{date('d-m-Y', strtotime($item->created_at))}}</td>
                             <td>{{$item->observaciones}}</td>
                             <td class="text-right">$ {{number_format($item->total, 2)}}</td>

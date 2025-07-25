@@ -46,7 +46,7 @@ class RootController extends Controller
         ini_set('max_execution_time', 600);
         ini_set('memory_limit', '1024M');
 
-        // try {
+        try {
             $model = app("App\Models\\{$modelName}");
             $data_exist = $model::first();
 
@@ -64,9 +64,9 @@ class RootController extends Controller
             }
 
             return redirect()->back()->with('success', 'Importación con exito.');
-        // } catch (\Throwable $th) {
-        //     return redirect()->back()->with('error', 'La importación no se pudo completar.');
-        // }
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', 'La importación no se pudo completar.');
+        }
     }
 
      //funcion para importar las configuracion incial
@@ -177,8 +177,9 @@ class RootController extends Controller
     //campos para mapear los campos que se utlizaran para la data
     function inputsDb($table, $data){
         if($table == 'drivers'){
-            foreach($data ?? [] as $item){
-                $data_db[]['name'] = $item->nombre;
+            foreach($data ?? [] as $index => $item){
+                $data_db[$index]['id'] = $item->{'record_id#'};
+                $data_db[$index]['name'] = $item->nombre;
             }
         }else if($table == 'empresa_details'){
             foreach($data ?? [] as $index => $item){
@@ -226,7 +227,7 @@ class RootController extends Controller
                 $data_db[$index]['amount_taxes'] = $item->valor_impuesto;
                 $data_db[$index]['unit'] = $item->unidad;
                 $data_db[$index]['unit_description'] = $item->{'unidad_sat___descripción'};
-                $data_db[$index]['existence'] = $item->existencia_real;
+                $data_db[$index]['existence'] = 0;
                 $data_db[$index]['precio'] = $item->preciov_1 ?? 0;
                 $data_db[$index]['precio_mayoreo'] = $item->preciov_3 ?? 0;
                 $data_db[$index]['precio_despiece'] = $item->preciov_4 ?? 0;

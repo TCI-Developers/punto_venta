@@ -19,7 +19,9 @@ class NativeAppServiceProvider implements ProvidesPhpIni
                 Menu::fullscreen()->label('Pantalla Completa'),
                 Menu::reload()->label('Recargar'),
                 Menu::separator(),
+                Menu::route('admin.index')->label('Inicio'),
                 Menu::quit()->label('Salir'),
+
             ),
             Menu::make(
                 Menu::route('migration')->label('Migration'),

@@ -6,7 +6,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\{DB,Auth, Http, Storage, Log, Artisan};
-use App\Models\{Product, Brand, Sale, PaymentMethod, UnidadSat, Driver, Proveedor, EmpresaDetail, User, Box, Devolucion, Compra};
+use App\Models\{Product, Brand, Sale, PaymentMethod, UnidadSat, Driver, Proveedor, EmpresaDetail, User, Box, Devolucion, DevolucionMatriz};
 use Barryvdh\DomPDF\Facade\PDF;
 
 class Controller extends BaseController
@@ -375,6 +375,12 @@ class Controller extends BaseController
             $products = $devolucion->getSale->getDetailsDev;
             $lines = count($products ?? []) + 30;
             $pdf = Pdf::loadView('ticket_devolution', ['devolucion' => $devolucion, 'products' => $products, 'sale' => $sale, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
+        }else if(request()->is('ticket-devolution-matriz/'.$id) || request()->is('ticket-devolution-matriz/'.$id."/".$auto)){
+            $dir = 'tickets_dev_matriz';
+            $devolucion = DevolucionMatriz::find($id);
+            $compra = $devolucion->getCompra;
+            $lines = 31;
+            $pdf = Pdf::loadView('ticket_devolution_matriz', ['devolucion' => $devolucion, 'compra' => $compra, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
         }else{
             $dir = 'tickets_box';
             $user = User::find($id);

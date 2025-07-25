@@ -31,6 +31,7 @@ return new class extends Migration
             $table->double('total')->default(0);
             $table->string('observaciones')->nullable();
             $table->integer('status')->default(1); //0 = Cancelada - 1 = pendiente - 2 = Autorizada - 3 = Solicitado - 4 = Recibido
+            $table->boolean('status_devolucion')->default(0); //0 = No tiene devolucion - 1 = Si tiene devolucion
             $table->foreign('branch_id')->references('id')->on('branchs');
             $table->foreign('user_id')->references('id')->on('users');
             $table->timestamps();

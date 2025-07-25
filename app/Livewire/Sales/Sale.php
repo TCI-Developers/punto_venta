@@ -135,7 +135,8 @@ class Sale extends Component
     //funcion para obtener datos con scaner
     public function scaner_codigo($code_bar = null){
         $code = $code_bar ?? $this->scan_presentation_id;
-        $presentation = PartToProduct::where('code_bar', $code)->where('stock', '>', 0)->first();
+        $presentation = PartToProduct::where('code_bar', $code)->first();
+        // $presentation = PartToProduct::where('code_bar', $code)->where('stock', '>', 0)->first(); //old
 
         $this->scan_presentation_id = '';
         if(is_object($presentation)){
@@ -431,23 +432,35 @@ class Sale extends Component
 
     // funcion para cambiar el stock del producto
     function setStock($presentation, $cant = 1, $type = 'menos'){
-        $presentacionese_existentes = PartToProduct::where('product_id', $presentation->product_id)->get();
-        
-        if(count($presentacionese_existentes)){
-            foreach($presentacionese_existentes as $item){
+        // $presentacionese_existentes = PartToProduct::where('product_id', $presentation->product_id)->get();
+        $product_existentes = Product::find($presentation->product_id);
+
+        // if(count($presentacionese_existentes)){
+        //     foreach($presentacionese_existentes as $item){
+                // if($type == 'mas'){
+                //     $val = $presentation->cantidad_despiezado > 0 ? $cant/($presentation->cantidad_despiezado):$cant;
+                //     $item->stock = $item->stock + $val;
+                // }else if($type == 'menos'){
+                //     $val = $presentation->cantidad_despiezado > 0 ? 1/($presentation->cantidad_despiezado):1;
+                //     $item->stock = $item->stock - $val;
+                // }else{
+                //     $val = $presentation->cantidad_despiezado > 0 ? $cant/($presentation->cantidad_despiezado):$cant;
+                //     $item->stock = $item->stock - $val;
+                // }
+                // $item->save();
                 if($type == 'mas'){
                     $val = $presentation->cantidad_despiezado > 0 ? $cant/($presentation->cantidad_despiezado):$cant;
-                    $item->stock = $item->stock + $val;
+                    $product_existentes->existence = $product_existentes->existence + $val;
                 }else if($type == 'menos'){
                     $val = $presentation->cantidad_despiezado > 0 ? 1/($presentation->cantidad_despiezado):1;
-                    $item->stock = $item->stock - $val;
+                    $product_existentes->existence = $product_existentes->existence - $val;
                 }else{
                     $val = $presentation->cantidad_despiezado > 0 ? $cant/($presentation->cantidad_despiezado):$cant;
-                    $item->stock = $item->stock - $val;
+                    $product_existentes->existence = $product_existentes->existence - $val;
                 }
-                $item->save();
-            }
-        }
+                $product_existentes->save();
+        //     }
+        // }
     }
 
 // *****************************************************************

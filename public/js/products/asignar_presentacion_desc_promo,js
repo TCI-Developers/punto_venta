@@ -23,7 +23,7 @@
         }
     }
 
-    function update(product){  
+    function update(product, stock){  
         Swal.fire('Actualización habilitada.', '', 'success');
 
         // Activar botón de envío
@@ -47,13 +47,15 @@
         // Presentaciones
         setValue('unidad_sat_id', product.unidad_sat_id);
         if(document.getElementById('precio_mayoreo')){
+            console.log('price', product);
+            
             document.getElementById('precio_mayoreo').value = product.price_mayoreo;
             document.getElementById('cantidad_mayoreo').value = product.cantidad_mayoreo;
         }
 
         document.querySelectorAll('.price').forEach(el => el.value = product.price);
         document.getElementById('code_bar').value = product.code_bar;
-        document.getElementById('stock').value = product.stock;
+        document.getElementById('stock').value = stock;
         if (product.cantidad_despiezado > 0) {        
             document.getElementById('cantidad_despiezado').value = product.cantidad_despiezado ?? 0;
             document.getElementById('price_general').value = document.getElementById('price_general').getAttribute('precio_despiece');
@@ -138,9 +140,7 @@
 
     //funcion para habilitar o deshabilitar precio mayoreo
     function precioMayoreo(input){
-        let precio = $(input).val()
-        console.log(precio);
-        
+        let precio = $(input).val()        
         if(precio == 0){
             $('#cantidad_mayoreo').attr('readonly', true).val(0);
         }else{
