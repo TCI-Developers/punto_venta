@@ -10,7 +10,14 @@ use App\Models\{User, Branch, BranchUser, Product, Brand, Box};
 class BranchController extends Controller
 {   
     // index
-    public function index($status = 1){      
+    public function index($status = 1){  
+        
+        // $producto = DB::connection('mysql')
+        //       ->table('products')
+        //       ->where('code_product', 'ABABORCRI')
+        //       ->first();
+
+        // dd('ok', $producto);    
         $user = Auth::User();
         $branchs = Branch::where('status', $status)->get();
         $users = User::get(); //validar que no salgan roles que no deben ir
