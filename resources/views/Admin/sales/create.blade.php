@@ -18,6 +18,9 @@
             max-height: 60vh; 
             overflow-y: auto;
         }
+        .highlighted-row {
+            background-color: #fff8dc !important; /* tono amarillito suave (cornsilk) */
+        }
     </style>
 
 </head>

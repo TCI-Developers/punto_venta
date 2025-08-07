@@ -57,7 +57,7 @@
         @include('components.use.notification_success_error')
     <div class="card card-primary">
         <div class="form-group card-header with-border text-center">
-            <h2>Cierre de turno</h2>
+            <h3>Cierre de turno</h3>
         </div>
     </div>
     @include('Admin.box._modal')

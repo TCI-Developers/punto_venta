@@ -20,14 +20,15 @@
                         <th>Presentacion</th>
                       </tr>
                   </thead>
-                  <tbody>
+                  <tbody id="body_products">
                       @foreach($products ?? [] as $index => $item)
                         <tr>
-                          <td>{{$item->code_bar}} {{$item->product_id}}</td>
+                          <td>{{$item->code_bar}}</td>
                           <td>{{$item->getProduct->code_product}}</td>
                           <td>{{$item->getProduct->description}}</td>
                           <td class="text-center">
-                            <button type="button" class="btn {{$item->cantidad_despiezado > 0 ? 'btn-success':'btn-primary'}}" wire:click="scaner_codigo('{{$item->code_bar}}')">Unidad: {{$item->getUnidadSat->name}} $ {{$item->price}}</button> 
+                            <button type="button" class="btn {{$item->cantidad_despiezado > 0 ? 'btn-success':'btn-primary'}} select-button" 
+                             wire:click="scaner_codigo('{{$item->code_bar}}')">Unidad: {{$item->getUnidadSat->name}} $ {{$item->price}}</button> 
                           </td>
                         </tr>
                       @endforeach

@@ -14,9 +14,23 @@ class CuentaPagarController extends Controller
     {    
         $branch_id = EmpresaDetail::first()->branch_id;
         if(is_null($status)){
-            $cuentas = CuentaPagar::where('status', '!=', 0)->where('branch_id', $branch_id)->orderBy('fecha_vencimiento', 'desc')->get();
+            // $cuentas = CuentaPagar::where('status', '!=', 0)->where('branch_id', $branch_id)->orderBy('fecha_vencimiento', 'desc')->get();
+            $cuentas = CuentaPagar::where('status', '!=', 0)
+                ->where('branch_id', $branch_id)
+                ->whereHas('getCompra', function ($query) {
+                    $query->where('tipo', '!=', 'T');
+                })
+                ->orderBy('fecha_vencimiento', 'desc')
+                ->get();
         }else{
-            $cuentas = CuentaPagar::where('status', $status)->where('branch_id', $branch_id)->orderBy('fecha_vencimiento', 'desc')->get();
+            // $cuentas = CuentaPagar::where('status', $status)->where('branch_id', $branch_id)->orderBy('fecha_vencimiento', 'desc')->get();
+            $cuentas = CuentaPagar::where('status', $status)
+                ->where('branch_id', $branch_id)
+                ->whereHas('getCompra', function ($query) {
+                    $query->where('tipo', '!=', 'T');
+                })
+                ->orderBy('fecha_vencimiento', 'desc')
+                ->get();
         }
         return view('Admin.cuentas_pagar.index', ['cuentas' => $cuentas, 'status' => $status ?? 1]);
     }

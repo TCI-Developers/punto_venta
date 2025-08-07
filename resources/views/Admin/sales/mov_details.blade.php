@@ -2,8 +2,7 @@
     <div class="row col-lg-12 col-md-12 col-sm-12">
         <label for="presentation_id" class="col-lg-5 col-md-5 col-sm-12">Presentación* <br>
             <input type="text" class="form-control" name="presentation_id" id="presentation_id" placeholder="Presentación"
-            wire:keydown.enter="scaner_codigo" wire:model.defer="scan_presentation_id" autofocus {{$sale->status == 2 ? 'readonly':''}}>
-            <!-- wire:change="scaner_codigo" wire:model.defer="scan_presentation_id" autofocus {{$sale->status == 2 ? 'readonly':''}}> -->
+            wire:change="scaner_codigo" wire:model.defer="scan_presentation_id" autofocus {{$sale->status == 2 ? 'readonly':''}}>
             <div class="col-lg-12 col-md-12 col-sm-12">
                 <span class="text-danger error" value="presentation_id" style="display:none;">Campo requerido</span>
             </div>

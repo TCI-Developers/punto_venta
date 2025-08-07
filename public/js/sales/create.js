@@ -1,6 +1,71 @@
-const { default: Swal } = require("sweetalert2");
-
         document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('searchInput');
+            const currentIndex = -1;
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    alert('Se presionó Enter en el campo de búsqueda');
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                const buttons = Array.from(document.querySelectorAll('.select-button'));
+
+                // Si no hay resultados, salimos
+                if (buttons.length === 0) return;
+
+                // Elimina el resaltado actual
+                buttons.forEach(btn => {
+                    const row = btn.closest('tr');
+                    if (row) row.classList.remove('highlighted-row');
+                });
+
+                // Flecha abajo
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    currentIndex = (currentIndex + 1) % buttons.length;
+                    buttons[currentIndex].focus();
+                }
+
+                // Flecha arriba
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    currentIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+                    buttons[currentIndex].focus();
+                }
+
+                // Resalta la fila del botón enfocado
+                const currentButton = buttons[currentIndex];
+                if (currentButton) {
+                    const currentRow = currentButton.closest('tr');
+                    if (currentRow) currentRow.classList.add('highlighted-row');
+                }
+
+                // Enter para hacer click
+                if (e.key === 'Enter') {
+                    const active = document.activeElement;
+                    if (active && active.classList.contains('select-button')) {
+                        e.preventDefault();
+                        active.click();
+                    }
+                }
+
+                // Si escriben de nuevo en el input, reiniciar el index
+                if (document.activeElement === input && e.key.length === 1) {
+                    currentIndex = -1;
+                }
+            });
+
+            //cerramos modal y limpiamos con tecla esc
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && $('#modal_products').css('display') === 'block') {
+                    $('#modal_products').hide();
+                    $('#searchInput').val('');
+                    $('#body_products').empty();
+                    currentIndex = -1;
+                }
+            });
+
             //select tipo de pago
             $('#type_payment').on('change', function(){
                 if($(this).val() == 'tarjeta'){
@@ -34,7 +99,7 @@ const { default: Swal } = require("sweetalert2");
             $('#btnCancelSale').removeClass('d-none');
             $('#btnCobro').addClass('d-none');
             
-        }
+        } 
 
         //funcion para habilitar campos de venta para actualizar
         function cancelEditSale(){
@@ -181,6 +246,7 @@ const { default: Swal } = require("sweetalert2");
             }
 
             $('#modal_products').hide();
+            currentIndex = -1;
             btnOrEnableDisable();
         });
 
@@ -250,9 +316,12 @@ const { default: Swal } = require("sweetalert2");
         function modalProductos(type = 'show'){                     
             if(type == 'show'){
                 $('#modal_products').show();
-                $('#searchInput').focus();
+                $('#searchInput').focus().val('');
+                $('#body_products').empty();
             }else{
                 $('#modal_products').hide();
+                $('#searchInput').val('');
+                $('#body_products').empty();
             }   
         }
 
@@ -350,3 +419,16 @@ const { default: Swal } = require("sweetalert2");
                 $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+event.detail[0].sale_id+'/true');
                 $('#modalTicket').show();
         });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F2') {
+                e.preventDefault(); // evita el comportamiento por defecto de F2
+                const modal = document.getElementById('modal_products');
+                if (modal) {
+                    modal.style.display = 'block'; // muestra el modal
+                }
+                $('#searchInput').focus().val('');
+                $('#body_products').empty();
+            }
+        });
+

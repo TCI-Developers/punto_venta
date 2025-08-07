@@ -13,9 +13,9 @@
         <input type="hidden" name="id">
           <div class="modal-body">
                 <div class="row">
-                      <p class="col-lg-12 col-md-12 col-sm-12 text-sm text-center">Por favor, siga los siguientes pasos para proceder con el cierre del turno:</p>
-                      <p class="col-lg-12 col-md-12 col-sm-12 text-sm text-center">Total de Dinero en Caja: Ingrese el monto total de dinero en efectivo que hay en la caja.</p>
-                      <p class="col-lg-12 col-md-12 col-sm-12 text-sm text-center">Cantidad de Billetes y Monedas: <br> Para cada denominación de billetes y monedas, ingrese la cantidad de cada uno que hay en la caja. <br>
+                      <p class="col-lg-12 col-md-12 col-sm-12 text-xs text-center">Por favor, siga los siguientes pasos para proceder con el cierre del turno:</p>
+                      <p class="col-lg-12 col-md-12 col-sm-12 text-xs text-center">Total de Dinero en Caja: Ingrese el monto total de dinero en efectivo que hay en la caja.</p>
+                      <p class="col-lg-12 col-md-12 col-sm-12 text-xs text-center">Cantidad de Billetes y Monedas: <br> Para cada denominación de billetes y monedas, ingrese la cantidad de cada uno que hay en la caja. <br>
                               Por ejemplo:</p> 
                              <p class="col-lg-3 col-md-3 col-sm-12 text-sm  text-center"> Billetes de $100: 5 </p>
                              <p class="col-lg-3 col-md-3 col-sm-12 text-sm  text-center"> Billetes de $50: 10 </p>  

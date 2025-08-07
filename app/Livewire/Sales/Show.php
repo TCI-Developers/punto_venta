@@ -61,10 +61,27 @@ class Show extends Component
         $devoluciones = Devolucion::where('sale_id', $this->id)->get();
 
         if (!empty($this->search)) {    
-            if(Auth::User()->hasPermissionThroughModule('ventas', 'punto_venta', 'auth')){        
-                $this->products = PartToProduct::with('getProduct')->where('code_bar', 'like', '%'.$this->search.'%')->where('price', '>', 0)->get();
+            if(Auth::User()->hasPermissionThroughModule('ventas', 'punto_venta', 'auth')){     
+                $this->products = PartToProduct::with('getProduct')
+                    ->whereHas('getProduct', function ($query) {
+                        $query->where('code_product', 'like', '%'.$this->search.'%')
+                            ->orWhere('description', 'like', '%'.$this->search.'%');
+                    })
+                    ->where('price', '>', 0)
+                    ->get();   
+                // $this->products = Product::where('code_product', 'like', '%'.$this->search.'%')->get();
+                // $this->products = PartToProduct::with('getProduct')->where('code_bar', 'like', '%'.$this->search.'%')->where('price', '>', 0)->get();
             }else{
-                $this->products = PartToProduct::with('getProduct')->where('code_bar', 'like', '%'.$this->search.'%')->where('stock', '>', 0)->where('price', '>', 0)->get();
+                $this->products = PartToProduct::with('getProduct')
+                    ->whereHas('getProduct', function ($query) {
+                        $query->where('code_product', 'like', '%'.$this->search.'%')
+                            ->orWhere('description', 'like', '%'.$this->search.'%')
+                            ->where('existence', '>', 0);
+                    })
+                    ->where('price', '>', 0)
+                    ->get(); 
+
+                // $this->products = PartToProduct::with('getProduct')->where('code_bar', 'like', '%'.$this->search.'%')->where('stock', '>', 0)->where('price', '>', 0)->get();
             }
         }else{
             $this->products = [];
@@ -90,9 +107,10 @@ class Show extends Component
         }else{
             // $presentation = PartToProduct::where('code_bar', $code)->where('stock', '>', 0)->first();
             $presentation = PartToProduct::where('code_bar', $code)->first();
-            if($presentation->getProduct->existence <= 0){
-                $presentation = null; 
-            }
+
+            // if($presentation->getProduct->existence <= 0){
+            //     $presentation = null; 
+            // }
         }
 
         $this->scan_presentation_id = '';
@@ -376,24 +394,8 @@ class Show extends Component
     // funcion para cambiar el stock del producto
     function setStock($presentation, $cant = 1, $type = 'menos'){
         $product_existentes = Product::find($presentation->product_id);
-        if($product_existentes->existence > 0 || !Auth::User()->hasPermissionThroughModule('ventas', 'punto_venta', 'auth')){
-            // $presentacionese_existentes = PartToProduct::where('product_id', $presentation->product_id)->get();
-
-            // if(count($presentacionese_existentes)){
-            //     foreach($presentacionese_existentes as $item){
-            //         if($type == 'mas'){
-            //             $val = $presentation->cantidad_despiezado > 0 ? ($cant/$presentation->cantidad_despiezado):$cant;
-            //             $item->stock = $item->stock + $val;
-            //         }else if($type == 'menos'){
-            //             $val = $presentation->cantidad_despiezado > 0 ? (1/$presentation->cantidad_despiezado):1;
-            //             $item->stock = $item->stock - $val;
-            //         }else{
-            //             $val = $presentation->cantidad_despiezado > 0 ? ($cant/$presentation->cantidad_despiezado):$cant;
-            //             $item->stock = $item->stock - $val;
-            //         }
-            //         $item->save();
-            //     }
-            // }
+        if(!Auth::User()->hasPermissionThroughModule('ventas', 'punto_venta', 'auth')){
+        // if($product_existentes->existence > 0 && !Auth::User()->hasPermissionThroughModule('ventas', 'punto_venta', 'auth')){
                 if($type == 'mas'){
                     $val = $presentation->cantidad_despiezado > 0 ? $cant/($presentation->cantidad_despiezado):$cant;
                     $product_existentes->existence = $product_existentes->existence + $val;

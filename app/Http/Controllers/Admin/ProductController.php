@@ -72,10 +72,18 @@ class ProductController extends Controller
             $presentation->price = $request->price;
             $presentation->price_mayoreo = $request->precio_mayoreo ?? 0;
             $presentation->code_bar = $request->code_bar;
-            $presentation->stock = $request->stock;
+            // $presentation->stock = $request->stock;
             $presentation->cantidad_mayoreo = $request->cantidad_mayoreo ?? 0;
             $presentation->cantidad_despiezado = $request->cantidad_despiezado ?? 0;
+
+            $product_stock = Product::find($product_id);
+            if(is_object($product_stock)){
+                $product_stock->existence = $request->stock;
+                $product_stock->save();
+            }
+
             $presentation->save();
+
 
             return redirect()->back()->with('success', 'Presentación '.$message.' a producto.');
         }

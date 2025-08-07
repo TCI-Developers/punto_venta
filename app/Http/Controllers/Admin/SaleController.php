@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{User, Sale, SaleDetail, PaymentMethod, EmpresaDetail};
+use App\Models\{Product, Sale, SaleDetail, PaymentMethod, EmpresaDetail, PartToProduct};
 use Illuminate\Support\Facades\{DB,Auth};
 
 class SaleController extends Controller
@@ -12,7 +12,12 @@ class SaleController extends Controller
     //vista principal ventas
     public function index()
     {          
-        return view('admin.sales.index', ['type' => 'index', 'id' => null]);
+        try {
+            // $this->updatePricesProducts();
+            return view('admin.sales.index', ['type' => 'index', 'id' => null]);
+        } catch (\Throwable $th) {
+            return view('admin.sales.index', ['type' => 'index', 'id' => null]);
+        }
     }
 
     //funcion para crear venta
@@ -119,7 +124,8 @@ class SaleController extends Controller
 
             $sale->customer_id = $request->customer_id;
             $sale->payment_method_id = $payment_method->id;
-            $sale->type_payment = $payment_method->pay_method == 'PPD' ? 'tarjeta':'efectivo';
+            // $sale->type_payment = $payment_method->pay_method == 'PPD' ? 'tarjeta':'efectivo';
+            $sale->type_payment = $request->type_payment;
             $sale->coin = $request->coin;
 
             $message = 'actualizada';
@@ -212,5 +218,54 @@ class SaleController extends Controller
                 'payment_method_id' => 'Metodo de pago es requerido.',
                 'coin' => 'Moneda es requerido.',
                 'type_payment' => 'Tipo de pago es requerido.',];
+    }
+
+    //actualizamos los precios de productos en dado caso de que existan nuevos
+    function updatePricesProducts(){
+        $startDate = date('Y-m-d H:i:s', strtotime('-7 days'));
+        $endDate = date('Y-m-d').' 23:00:00';
+        $data = [
+            'updated_at' => [
+                'start' => $startDate,
+                'end' => $endDate, 
+            ],
+        ];
+        $db = $this->consultDb('products', $data);
+
+        if(isset($db->status)){
+            foreach ($db->data ?? [] as $value) {
+                $product = Product::find($value->id);
+                dd($value);
+                if(is_object($product)){
+                    $product->precio = $value->precio;
+                    $product->precio_mayoreo = $value->precio_mayoreo;
+                    $product->precio_despiece = $value->precio_despiece;
+                    $product->updated_at = date('Y-m-d H:i:s');
+                    $product->save();
+
+                    if(count($product->getPartToProducts)){ //presentaciones del producto
+                        foreach($product->getPartToProducts as $item){
+                            $presentacion = PartToProduct::find($item->id);
+                            if(is_object($presentacion)){
+                                $presentacion->price = $value->precio;
+                                $presentacion->price_mayoreo = $value->precio_mayoreo;
+                                $presentacion->save();
+                            }
+                        }
+                    }
+
+                    if(count($product->getPagetPartToProductDespiezadostToProducts)){ //despieces del producto
+                        foreach($product->getPartToProductDespiezados as $item){
+                            $presentacion = PartToProduct::find($item->id);
+                            if(is_object($presentacion)){
+                                $presentacion->price = ($value->precio_despiece / $presentacion->cantidad_despiezado);
+                                $presentacion->price_mayoreo = $value->precio_mayoreo;
+                                $presentacion->save();
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

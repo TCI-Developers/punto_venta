@@ -244,7 +244,7 @@ class UserController extends Controller
             }
 
             $date = Date('Y-m-d');
-            $aux = Crypt::decryptString($empresa_local->vigencia);    
+            $aux = Crypt::decrypt($empresa_local->vigencia);  
             if($date > $aux){
                 return true;
             }

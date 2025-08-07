@@ -15,7 +15,7 @@
                 <div class="card-body">
                     <h4 class="text-center mb-4">Ingresar Monto Inicial de la Caja</h4>
 
-                    @if (session('monto'))
+                    @if(session('monto'))
                     <div class="mb-4 font-medium text-sm text-red-600">
                         {{session('monto')}}
                         <div style="    display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: center; align-items: center;">

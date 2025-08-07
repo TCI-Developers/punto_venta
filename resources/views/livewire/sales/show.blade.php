@@ -26,7 +26,7 @@
                 <!-- Tipo de pago, metodo de pago y moneda -->
                 <label for="payment_method_id" class="col-lg-2 col-md-2 col-sm-12">Metodo de Pago* <br>
                     <select name="payment_method_id" id="payment_method_id" class="form-control selectpicker show-tick input_sale" data-live-search="true" 
-                            data-size="8" title="Metodo de pago" onchange="metodoPago()" disabled required>
+                            data-size="8" title="Metodo de pago" {{-- onchange="metodoPago()" --}} disabled required>
                         @forelse($payment_methods as $item)s
                         <option value="{{$item->id}}" data-name="{{$item->pay_method}}" {{$sale->payment_method_id == $item->id ? 'selected':''}}>{{$item->pay_method}}</option>
                         @empty
@@ -39,8 +39,8 @@
                 <label for="type_payment" class="col-lg-2 col-md-2 col-sm-12">Tipo de Pago* <br>
                     <select name="type_payment" id="type_payment" class="form-control selectpicker input_sale show-tick" 
                             data-size="8" title="Metodo de pago" disabled>
-                            <option value="efectivo" {{$sale->type_payment == 'efectivo' ? 'selected':''}} disabled>Efectivo</option>
-                            <option value="tarjeta" {{$sale->type_payment == 'tarjeta' ? 'selected':''}} disabled>Tarjeta</option>
+                            <option value="efectivo" {{$sale->type_payment == 'efectivo' ? 'selected':''}}>Efectivo</option>
+                            <option value="tarjeta" {{$sale->type_payment == 'tarjeta' ? 'selected':''}}>Tarjeta</option>
                     </select>
                 </label>
                 <label for="coin" class="col-lg-2 col-md-2 col-sm-12">Moneda* <br>

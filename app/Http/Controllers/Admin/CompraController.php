@@ -171,9 +171,9 @@ class CompraController extends Controller
             $compra->total = $total;
             $compra->save();
 
-            $empresa = EmpresaDetail::first();
-            $cxp = new CuentaPagar();
-            $cxp->newCXP($compra, $empresa->branch_id); 
+                $empresa = EmpresaDetail::first();
+                $cxp = new CuentaPagar();
+                $cxp->newCXP($compra, $empresa->branch_id); 
 
             return redirect()->back()->with('success', 'Compra cerrada con exito.');
         } catch (\Throwable $th) {
@@ -185,10 +185,12 @@ class CompraController extends Controller
     public function status($compra_id, $status){
         try {
             $compra = Compra::find($compra_id);
+           
             if($status == 4){
                 $compra->fecha_recibido = date('Y-m-d');
                 $compra->fecha_vencimiento =  date('Y-m-d', strtotime("+$compra->plazo days", strtotime($compra->fecha_recibido)));
             }
+
             if($status == 2 && !Auth::User()->hasPermissionThroughModule('compras','punto_venta','auth')){
                 return redirect()->back()->with('error', 'Acción no autorizada');
             }
@@ -297,9 +299,9 @@ class CompraController extends Controller
     }   
     
     private function saveCompraDbExterna($compra, $update){
+       
         if($this->hasInternetConnection()){
-            $ctrl = new \App\Http\Controllers\Controller();
-            $ctrl->saveCompraDBExt($compra, $update);
+            $this->saveCompraDBExt($compra, $update);
         }
     }
 

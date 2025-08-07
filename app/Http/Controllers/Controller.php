@@ -488,11 +488,12 @@ class Controller extends BaseController
 
     //funcion para guardar venta en db externa
     public function saveCompraDBExt($compra, $update){
+     
         $data_db[0]['compra_id'] = $compra->id;
         $data_db[0]['folio'] = $compra->folio;
         $data_db[0]['branch_id'] = $compra->branch_id;
         $data_db[0]['proveedor_id'] = $compra->proveedor_id;
-        $data_db[0]['user'] = $compra->getUser->name;
+        $data_db[0]['user'] =  $compra->getUser->name ?? $compra->user;
         $data_db[0]['programacion_entrega'] = $compra->programacion_entrega;
         $data_db[0]['fecha_recibido'] = $compra->fecha_recibido;
         $data_db[0]['plazo'] = $compra->plazo;
@@ -508,7 +509,7 @@ class Controller extends BaseController
         $data_db[0]['status'] = $compra->status ?? 1;
         $data_db[0]['created_at'] = $compra->created_at;
         $data_db[0]['updated_at'] = $compra->updated_at;
-
+  
         $data_db[0]['details_json'] = json_encode($compra->getDetalles->toArray());
         $data_db[0]['details_cant_json'] = json_encode($compra->getDetallesEntra->toArray());
 

@@ -79,9 +79,19 @@ class Product extends Model
         return $this->hasOne('App\Models\PartToProduct', 'product_id', 'id');
     }
 
+    //Funcion para obtener presentacion
+    public function getPartToProducts(){
+        return $this->hasMany('App\Models\PartToProduct', 'product_id', 'id');
+    }
+
     //Funcion para obtener presentacion que son despiezado
     public function getPartToProductDespiezado(){
         return $this->hasOne('App\Models\PartToProduct', 'product_id', 'id')->where('cantidad_despiezado', '>', 0);
+    }
+
+    //Funcion para obtener presentacion que son despiezado
+    public function getPartToProductDespiezados(){
+        return $this->hasMany('App\Models\PartToProduct', 'product_id', 'id')->where('cantidad_despiezado', '>', 0);
     }
 
     //Funcion para obtener los precios 
