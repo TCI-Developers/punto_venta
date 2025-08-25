@@ -344,6 +344,18 @@ class Controller extends BaseController
         return json_decode($db);
     }
 
+    //funcion para consultar en DB Externa
+    function consultDbPaginate($table, $page, $per_page){
+        $data = [
+            'table' => $table,
+            'page' => $page,
+            'per_page' => $per_page,
+        ];
+
+        $db = $this->db_externa($data, 'get_data_paginate.php');
+        return json_decode($db);
+    }
+
     //funcion para saber si existen registros en la db
     function existDataDb($table){
         $data = [
@@ -525,6 +537,27 @@ class Controller extends BaseController
             }
         } catch (\Throwable $th) {
             Log::error('Error al guardar la compra', ['error' => $th->getMessage()]);
+        }
+    }
+
+    //funcion para guardar cuenta por pagar a db externa
+    public function saveCXPDBExt($cxp, $compra, $detalle_compra){
+        $data_db[0]['compra_id'] = $cxp->id;
+        $data_db[0]['branch_id'] = $cxp->branch_id;
+        $data_db[0]['date'] = date('Y-m-d', strtotime($cxp->created_at));
+        $data_db[0]['fecha_vencimiento'] = $cxp->fecha_vencimiento;
+        $data_db[0]['subtotal'] = $cxp->subtotal;
+        $data_db[0]['impuestos'] = $cxp->impuestos;
+        $data_db[0]['total'] = $cxp->total;
+        $data_db[0]['status'] = 1;
+        $data_db[0]['compra_json'] = json_encode($compra->toArray());
+        $data_db[0]['compra_details_json'] = json_encode($detalle_compra->toArray());
+
+        try {
+            $this->saveDb('cuentas_pagar', $data_db);
+            Log::info('Cuanta por pagar guardada');
+        } catch (\Throwable $th) {
+            Log::error('Error al guardar la cuenta por pagar', ['error' => $th->getMessage()]);
         }
     }
 

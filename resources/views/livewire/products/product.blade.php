@@ -1,10 +1,13 @@
 <div class="card card-primary">
         <div class="form-group card-header with-border text-center">
-            <h2>Productos
-                 @if(Auth::User()->hasPermissionThroughModule('inventarios', 'punto_venta', 'create'))
-                <a href="{{route('product.showUploadExcel')}}" class="btn btn-success btn-sm float-right"><i class="fa fa-upload"></i> Carga Masiva Stock/Codigos de barra</a>
-                @endif
-            </h2>
+            <h2>Productos</h2>
+        </div>
+        <div class="form-group card-header with-border">
+            <a href="{{route('report.index')}}" class="btn btn-info btn-sm"><i class="fa fa-upload"></i> Reportes</a>
+            <a href="{{route('inventarios.index')}}" class="btn btn-warning btn-sm"><i class="fa fa-file"></i> Inventariar</a>
+            @if(Auth::User()->hasPermissionThroughModule('inventarios', 'punto_venta', 'create'))
+            <a href="{{route('product.showUploadExcel')}}" class="btn btn-success btn-sm float-right"><i class="fa fa-upload"></i> Carga Masiva Stock/Codigos de barra</a>
+            @endif
         </div>
         <div class="card-body">
             <div class="col-lg-12 col-md-12 col-sm-12">

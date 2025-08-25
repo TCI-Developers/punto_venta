@@ -39,7 +39,7 @@
                               </div>
                               <input type="number" class="form-control text-center inputModal" name="monto_tarjeta" id="monto_tarjeta" placeholder="0" value="{{old('monto_tarjeta') ?? 0}}" step="0.01">
                           </div>
-                      </label>                    
+                      </label>                        
 
                       <div class="table-responsive">
                         <table class="table table-sm table-striped table-bordered">
@@ -88,9 +88,18 @@
                         </table>
                       </div>
 
-                      <div class="row col-lg-12 col-md-12 col-sm-12" style="display: flex; flex-direction: row; flex-wrap: nowrap; align-content: center; align-items: center; justify-content: flex-start;">
+                      <label for="monto_dejado_caja" class="col-lg-6 col-md-6 col-sm-12 text-center" style="display: flex; flex-direction: row; flex-wrap: nowrap; align-content: center; align-items: center; justify-content: flex-start;">
                         <input type="checkbox" name="acept" class="form-control col-lg-1"> Cerrar turno con montos ingresados.
-                      </div>
+                      </label>
+
+                      <label for="monto_dejado_caja" class="col-lg-6 col-md-6 col-sm-12 text-center">¿Cuanto se deja en caja? <br>
+                          <div class="input-group mb-3">
+                              <div class="input-group-prepend">
+                                  <span class="input-group-text">$</span>
+                              </div>
+                              <input type="number" class="form-control text-center inputModal" name="monto_dejado_caja" id="monto_dejado_caja" placeholder="0" value="{{old('monto_dejado_caja') ?? 0}}" step="0.01" required>
+                          </div>
+                      </label> 
                 </div>
           </div>
           <div class="modal-footer">

@@ -174,4 +174,9 @@ class ProductController extends Controller
             return back()->with('error', 'Excel Dañado.');
         }
     }
+
+    //funcion para vista de inventarios
+    public function indexInventarios(){
+        return view('Admin.inventarios.index');
+    }
 }

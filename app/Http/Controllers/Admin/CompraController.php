@@ -38,7 +38,7 @@ class CompraController extends Controller
     public function store(Request $request, $compra_id = null){
         $this->rules($request, is_null($compra_id) ? 'store':'update');
 
-        try {
+        // try {
             if(!is_null($compra_id)){
                 $compra = Compra::find($compra_id);
                 $message = 'actualizada';
@@ -55,6 +55,7 @@ class CompraController extends Controller
 
             $compra->branch_id = $empresa->branch_id;
             $compra->proveedor_id = $request->proveedor_id;
+            $compra->user = $user->name;
             $compra->user_id = $user->id;
             $compra->programacion_entrega = $request->programacion_entrega;
             $compra->plazo = $request->plazo;
@@ -107,9 +108,9 @@ class CompraController extends Controller
             $this->saveCompraDBExterna($compra, $compra_id ? true:false);
 
             return redirect()->route('compra.show', $compra->id)->with('success', 'Compra '.$message.' con exito.');
-        }catch (\Throwable $th) {
-            return redirect()->back()->with('error', 'La acción no se pudo ejecutar, recarga e intentalo de nuevo.');
-        }
+        // }catch (\Throwable $th) {
+        //     return redirect()->back()->with('error', 'La acción no se pudo ejecutar, recarga e intentalo de nuevo.');
+        // }
     }
 
     //funcion para guardar el cieere de la compra
@@ -173,7 +174,19 @@ class CompraController extends Controller
 
                 $empresa = EmpresaDetail::first();
                 $cxp = new CuentaPagar();
-                $cxp->newCXP($compra, $empresa->branch_id); 
+                $cxp->compra_id = $compra->id;
+                $cxp->branch_id = $empresa->branch_id;
+                $cxp->fecha_vencimiento = $compra->fecha_vencimiento;
+                $cxp->subtotal = $compra->subtotal;
+                $cxp->impuestos = $compra->impuesto_productos;
+                $cxp->total = $compra->total;
+                $cxp->save();
+
+                if($this->hasInternetConnection()){
+                    $this->saveCXPDBExt($cxp, $compra, $detalle_compra);
+                }
+
+                // $cxp->newCXP($compra, $empresa->branch_id); 
 
             return redirect()->back()->with('success', 'Compra cerrada con exito.');
         } catch (\Throwable $th) {
@@ -213,6 +226,7 @@ class CompraController extends Controller
         $detalle_compra = new DetalleCompra();
         $detalle_compra->compra_id = $compra->id;
         $detalle_compra->producto_id = $product->id;
+        $detalle_compra->code_product = $product->code_product;
         $detalle_compra->descripcion_producto = $product->description;
         $detalle_compra->precio_unitario = $product->precio;
         $detalle_compra->precio_mayoreo = $product->precio_mayoreo;

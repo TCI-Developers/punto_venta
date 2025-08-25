@@ -129,3 +129,10 @@ Route::get('/ticket-sale/{sale_id}/{auto?}', 'Controller@ticket')->name('ticket.
 Route::get('/ticket-devolution/{devolution_id}/{auto?}', 'Controller@ticket')->name('ticket.devolution');
 Route::get('/ticket-devolution-matriz/{devolution_id}/{auto?}', 'Controller@ticket')->name('ticketMatriz.devolution');
 Route::get('/ticket-box/{user_id}/{auto?}', 'Controller@ticket')->name('ticket.box');
+
+//rutas de reportes
+Route::get('/reports', 'Admin\ReportController@index')->name('report.index');
+Route::get('/reports-pdf/{startDate}/{endDate}/{code_product?}', 'Admin\ReportController@pdf')->name('report.pdf');
+
+//rutas de inventarios congelar lineas
+Route::get('/inventarios', 'Admin\ProductController@indexInventarios')->name('inventarios.index');

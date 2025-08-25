@@ -57,7 +57,7 @@ class BoxController extends Controller
         $box = Box::where('status', '>', 0)->orderBy('end_date', 'desc')->first();
 
         if(is_object($box) && !isset($request->next) && $request->next != 'on'){
-            if((int)$request->start_amount_box != (int)$box->amount_cash_user){
+            if((int)$request->start_amount_box != (int)$box->monto_dejado_caja){
                 Auth::logout($user);
                 return redirect()->route('sale.index')->with('error', 'El monto inicial no coincide con el último cierre.');
             }
@@ -119,6 +119,7 @@ class BoxController extends Controller
         $box->amount_credit_system = round($total_tarjeta, 2);
         $box->amount_cash_system = round($total_efectivo, 2);
         $box->total_system = round(($total_tarjeta + $total_efectivo), 2);
+        $box->monto_dejado_caja = round($request->monto_dejado_caja, 2);
 
         $box->amount_credit_user = round($request->monto_tarjeta,2);
         $box->amount_cash_user = round($request->monto_efectivo,2);

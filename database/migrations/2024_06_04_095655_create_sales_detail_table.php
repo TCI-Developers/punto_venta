@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('sales_detail', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('part_to_product_id');
+            $table->integer('product_id');
             $table->double('amount')->default(0);
             $table->double('subtotal')->default(0);
             $table->double('iva')->default(0);

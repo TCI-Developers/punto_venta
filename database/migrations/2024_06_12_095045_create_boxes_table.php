@@ -22,6 +22,7 @@ return new class extends Migration
             $table->double('amount_cash_user')->default(0);
             $table->double('amount_cash_system')->default(0);
             $table->double('start_amount_box')->default(0);
+            $table->double('monto_dejado_caja')->default(0);
             $table->double('total_user')->default(0);
             $table->double('total_system')->default(0);
 

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('sale_detail_id');
             $table->unsignedBigInteger('part_to_product_id');
             $table->unsignedBigInteger('sale_id');
+            $table->integer('product_id');
             $table->integer('cant');
             $table->double('descuento')->default(0);
             $table->double('total_descuento')->default(0);

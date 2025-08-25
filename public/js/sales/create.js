@@ -1,6 +1,6 @@
         document.addEventListener('DOMContentLoaded', function () {
             const input = document.getElementById('searchInput');
-            const currentIndex = -1;
+            let currentIndex = -1;
 
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
