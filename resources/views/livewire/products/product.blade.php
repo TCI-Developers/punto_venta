@@ -17,7 +17,7 @@
                 <label for="search" class="float-right">Buscar <br>
                     <input type="text" class="form-control" id="search" value="{{$search}}" placeholder="Buscar" wire:model.live="search" step="10">
                 </label>
-            </div>
+             </div>
             <div class="table-responsive">
             <table class="table table-striped table-bordered datatable">
                 <thead>

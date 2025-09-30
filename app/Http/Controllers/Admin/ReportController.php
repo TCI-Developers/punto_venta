@@ -50,7 +50,7 @@ class ReportController extends Controller
         $finalPdf = $merger->merge();
         $filePath = storage_path("app/public/{$dir}/report.pdf");
         file_put_contents($filePath, $finalPdf);
-
+        
         return response()->file($filePath);
     }
 

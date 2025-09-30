@@ -167,9 +167,7 @@ class ProductController extends Controller
 
         try {
             Excel::import(new ProductsImport, $request->file('excel_file'));
-
             return back()->with('success', 'Archivo procesado correctamente.');
-
         } catch (\Throwable $th) {
             return back()->with('error', 'Excel Dañado.');
         }

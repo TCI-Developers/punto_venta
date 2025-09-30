@@ -161,6 +161,7 @@ class Sale extends Component
         }else{
             $sale_detail = new SaleDetail(); //guardamos el detalle de venta
             $sale_detail->part_to_product_id = $presentation->id;
+            $sale_detail->product_id = $presentation->product_id;
             $sale_detail->sale_id = $this->id;
             $sale_detail->unit_price = round((is_null($type) ? $presentation->price:$presentation->price_mayoreo), 2);
             $sale_detail->save();

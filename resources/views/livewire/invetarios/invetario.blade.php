@@ -1,6 +1,6 @@
 <div class="card card-primary">
         <div class="form-group card-header with-border text-center">
-            <h2>Productos {{count($lineas_id)}}</h2>
+            <h2>Productos</h2>
         </div>
         <div class="form-group card-header with-border">
             <a href="{{route('product.index')}}" class="btn btn-success btn-sm"><i class="fa fa-arrow-left"></i></a>

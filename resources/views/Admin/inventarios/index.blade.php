@@ -29,7 +29,6 @@
                     searchEnabled: true,
                     shouldSort: false,
                 });
-
             }
         });
 
@@ -48,15 +47,12 @@
 
         //asignamos valores al select despues de recargar la vista y se quedaran productos bloqueados
         window.addEventListener('selectAddLines', event => {  
-            console.log(event.detail[0].lines);
             let ids = event.detail[0].lines;
             const select = document.getElementById('linea_id');
 
             for (let option of select.options) {
                 option.selected = ids.includes(parseInt(option.value));
             }
-
-            $('#')
         });
 
         //muestra alerta de completado

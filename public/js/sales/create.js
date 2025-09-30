@@ -333,7 +333,10 @@
             
             $('#amount_received').attr('readonly', false);
             
-            if($('#payment_method_id option:selected').data('name') == 'PPD'){
+            // if($('#payment_method_id option:selected').data('name') == 'PPD'){
+            //     $('#amount_received').val($('#total_sale').val()).attr('readonly', true);
+            // }            
+            if($('#type_payment').val() == 'tarjeta'){
                 $('#amount_received').val($('#total_sale').val()).attr('readonly', true);
             }            
             getChange($('#total_sale').val());

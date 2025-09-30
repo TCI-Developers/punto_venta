@@ -104,15 +104,11 @@ class Show extends Component
     //funcion para obtener datos con scaner
     public function scaner_codigo($code_bar = null){
         $code = $code_bar ?? $this->scan_presentation_id;
-        if(Auth::User()->hasPermissionThroughModule('ventas', 'punto_venta', 'auth')){
-            $presentation = PartToProduct::where('code_bar', $code)->first();
-        }else{
-            // $presentation = PartToProduct::where('code_bar', $code)->where('stock', '>', 0)->first();
-            $presentation = PartToProduct::where('code_bar', $code)->first();
 
-            // if($presentation->getProduct->existence <= 0){
-            //     $presentation = null; 
-            // }
+        if($this->scan_presentation_id != ''){
+            $presentation = PartToProduct::where('code_bar', $this->scan_presentation_id)->first();
+        }else if(!is_null($code_bar)){
+            $presentation = PartToProduct::find($code_bar);
         }
 
         $this->scan_presentation_id = '';

@@ -9,66 +9,7 @@ use Illuminate\Support\Facades\{Log};
 
 class ProductsImport implements ToCollection
 {
-    // public function collection(Collection $rows)
-    // {   
-
-    //     $allProducts = Product::all()->keyBy('code_product');
-    //     $allUnits = UnidadSat::all()->keyBy('clave_unidad');
-    //     $allParts = PartToProduct::all()->keyBy('code_bar');
-
-    //     $partToProductToInsert = [];
-
-    //     foreach ($rows as $index => $row) {
-    //         $code_product = $row[0]; //codigo producto      
-    //         $stock = $row[4];
-
-    //         if($index > 1){
-    //             $product = $allProducts->get($code_product);
-    //             // $product = Product::where('code_product', $code_product)->first();
-    //             if(is_object($product)){
-    //                 $positions = $this->getPositions($rows, $code_product);
-    //                 if(count($positions)){
-    //                     foreach($positions as $item){
-    //                         $code_bar = (string) $rows[$item][6];
-    //                         $code_bar = strtok($code_bar, '.');
-    //                         $equivalencia = $rows[$item][7];
-
-    //                         // $unit_sat = UnidadSat::where('clave_unidad', $product->unit)->first();
-    //                         // $part_to_product = PartToProduct::where('code_bar', $code_bar)->first();
-    //                         $unit_sat = $allUnits->get($product->unit ?? '');
-    //                         $part_to_product = $allParts->get($code_bar);
-
-    //                         $cantidad_despiece = 0;
-    //                         if($equivalencia > 1 || $equivalencia < 1){
-    //                             $cantidad_despiece = $equivalencia < 1 ? (1/$equivalencia) : (100/$equivalencia);
-    //                         }
-
-    //                         if(!is_object($part_to_product)){
-    //                             $part_to_product = new PartToProduct();
-    //                             $part_to_product->product_id = $product->id;
-    //                         }
-                            
-    //                         if($cantidad_despiece > 0){
-    //                             $part_to_product->price = ($product->precio_despiece/$cantidad_despiece);
-    //                             $part_to_product->cantidad_despiezado = $cantidad_despiece;
-    //                         }else{
-    //                             $part_to_product->price = $product->precio;
-    //                         }
-                            
-    //                         $part_to_product->price_mayoreo = $product->precio_mayoreo;
-    //                         $part_to_product->code_bar = $code_bar;
-    //                         $part_to_product->unidad_sat_id = $unit_sat->id;
-    //                         $part_to_product->save();
-    //                     }
-    //                 }
-    //                 $product->existence = $stock >= 1 ? $stock:0;
-    //                 $product->save();
-    //             }  
-    //         }
-    //     }
-    // }
-
-    public function collection(Collection $rows)
+    public function collection_old(Collection $rows)
     {   
         ini_set('memory_limit', '512M');
         set_time_limit(0);
@@ -79,10 +20,10 @@ class ProductsImport implements ToCollection
 
         $partToProductToInsert = [];
 
-        try {
+        // try {
+        
             foreach ($rows as $index => $row) {
                 if ($index <= 1) continue;
-
                 $code_product = $row[0];
                 $stock = $row[4];
 
@@ -90,47 +31,64 @@ class ProductsImport implements ToCollection
                 if (!$product) continue;
 
                 $positions = $this->getPositions($rows, $code_product);
-                if (!count($positions)) continue;
+                if (count($positions)){
+                    foreach ($positions as $item) {
+                        $code_bar = (string) $rows[$item][6];
+                        $code_bar = strtok($code_bar, '.');
+                        $equivalencia = $rows[$item][7];
 
-                foreach ($positions as $item) {
-                    $code_bar = (string) $rows[$item][6];
-                    $code_bar = strtok($code_bar, '.');
-                    $equivalencia = $rows[$item][7];
+                        if (!$code_bar) continue;
 
-                    if (!$code_bar) continue;
+                        $unit_sat = $allUnits->get($product->unit);
+                        if (!$unit_sat) continue;
 
-                    $unit_sat = $allUnits->get($product->unit);
-                    if (!$unit_sat) continue;
+                        $cantidad_despiece = 0;
+                        if ($equivalencia > 1 || $equivalencia < 1) {
+                            $cantidad_despiece = $equivalencia < 1 ? (1 / $equivalencia) : (100 / $equivalencia);
+                        }
 
-                    $cantidad_despiece = 0;
-                    if ($equivalencia > 1 || $equivalencia < 1) {
-                        $cantidad_despiece = $equivalencia < 1 ? (1 / $equivalencia) : (100 / $equivalencia);
+                        $part_to_product = $existingParts->get($code_bar);
+                        if (!$part_to_product) {
+                            $part_to_product = new PartToProduct();
+                            $part_to_product->product_id = $product->id;
+                            $part_to_product->code_bar = $code_bar;
+                        }
+
+                        $part_to_product->unidad_sat_id = $unit_sat->id;
+                        $part_to_product->price_mayoreo = $product->precio_mayoreo;
+
+                        if ($cantidad_despiece > 0) {
+                            $part_to_product->price = ($product->precio_despiece / $cantidad_despiece);
+                            $part_to_product->cantidad_despiezado = $cantidad_despiece;
+                        } else {
+                            $part_to_product->price = $product->precio;
+                        }
+                        // $part_to_product->save();
+                        $partToProductToInsert[] = $part_to_product;
+                        // dd($partToProductToInsert);
                     }
+                }
+                else{
+                    $part_to_product = PartToProduct::where('product_id', $product->id)->first();
+                    $unit_sat = $allUnits->get($product->unit);
+                    if(!is_object($part_to_product)){
+                        if (!$unit_sat) continue;
 
-                    $part_to_product = $existingParts->get($code_bar);
-                    if (!$part_to_product) {
                         $part_to_product = new PartToProduct();
                         $part_to_product->product_id = $product->id;
-                        $part_to_product->code_bar = $code_bar;
+                        $part_to_product->code_bar = 'N/A';
                     }
 
                     $part_to_product->unidad_sat_id = $unit_sat->id;
                     $part_to_product->price_mayoreo = $product->precio_mayoreo;
-
-                    if ($cantidad_despiece > 0) {
-                        $part_to_product->price = ($product->precio_despiece / $cantidad_despiece);
-                        $part_to_product->cantidad_despiezado = $cantidad_despiece;
-                    } else {
-                        $part_to_product->price = $product->precio;
-                    }
-
+                    $part_to_product->price = $product->precio;
+                    // $part_to_product->save();
                     $partToProductToInsert[] = $part_to_product;
                 }
 
                 $product->existence = $stock >= 1 ? $stock : 0;
                 $product->save();
             }
-
             // Guardar todos los PartToProduct en lote
             foreach (array_chunk($partToProductToInsert, 500) as $batch) {
                 $now = now();
@@ -143,9 +101,101 @@ class ProductsImport implements ToCollection
                     })->toArray()
                 );
             }
-        } catch (\Throwable $th) {
-            Log::error('Error al procesar excel: '. $th->getMessage());
-            return redirect()->back();
+        // } catch (\Throwable $th) {
+        //     Log::error('Error al procesar excel: '. $th->getMessage());
+        //     return redirect()->back();
+        // }
+    }
+
+    public function collection(Collection $rows)
+    {   
+        ini_set('memory_limit', '512M');
+        set_time_limit(0);
+
+        $allProducts = Product::all()->keyBy('code_product');
+        $allUnits = UnidadSat::all()->keyBy('clave_unidad');
+
+        $partToProductToInsert = [];
+        foreach ($rows as $index => $row) {
+            if ($index <= 1) continue;
+            $code_product = $row[0];
+            $stock = $row[4] ?? 0;
+            $stockStr = (string) $stock;
+            if (strpos($stockStr, '.') !== false && substr_count($stockStr, '.') > 1) {
+                // si hay más de un punto, el primero es separador de miles
+                $stockStr = str_replace('.', '', $stockStr);
+            }
+            $stockStr = str_replace(',', '.', $stockStr);
+
+            $product = $allProducts->get($code_product);
+            if (!$product) continue;
+            if((float)$stockStr != $product->existence){
+                $product = Product::find($product->id);
+            }
+
+            $positions = $this->getPositions($rows, $code_product);
+            if (count($positions)) {
+                foreach ($positions as $item) {
+                    $code_bar = (string) $rows[$item][6];
+                    $code_bar = strtok($code_bar, '.');
+                    $equivalencia = $rows[$item][7];
+
+                    if (!$code_bar) continue;
+
+                    $unit_sat = $allUnits->get($product->unit);
+                    if (!$unit_sat) continue;
+
+                    $cantidad_despiece = 0;
+                    if ($equivalencia > 1 || $equivalencia < 1) {
+                        $cantidad_despiece = $equivalencia < 1 
+                            ? (1 / $equivalencia) 
+                            : (100 / $equivalencia);
+                    }
+
+                    $partToProductToInsert[] = [
+                        'product_id'        => $product->id,
+                        'code_bar'          => $code_bar,
+                        'unidad_sat_id'     => $unit_sat->id,
+                        'price_mayoreo'     => $product->precio_mayoreo,
+                        'price'             => $cantidad_despiece > 0 
+                                                ? ($product->precio_despiece / $cantidad_despiece) 
+                                                : $product->precio,
+                        'cantidad_despiezado' => $cantidad_despiece > 0 ? $cantidad_despiece : 0,
+                        'created_at'        => now(),
+                        'updated_at'        => now(),
+                    ];
+                }
+            } else {
+                $unit_sat = $allUnits->get($product->unit);
+                if (!$unit_sat) continue;
+
+                $partToProductToInsert[] = [
+                    'product_id'        => $product->id,
+                    'code_bar'          => 'N/A',
+                    'unidad_sat_id'     => $unit_sat->id,
+                    'price_mayoreo'     => $product->precio_mayoreo,
+                    'price'             => $product->precio,
+                    'cantidad_despiezado' => 0,
+                    'created_at'        => now(),
+                    'updated_at'        => now(),
+                ];
+            }
+
+            // Actualizar existencia del producto
+            if($product->id == 8542){
+                // dd($stock);
+            }
+            $product->existence = $stock >= 0.1 ? (float)$stock : 0;
+            $product->save();
+        }
+
+        // Guardar todos los PartToProduct en lote (con upsert)
+        foreach (array_chunk($partToProductToInsert, 500) as $batch) {
+            PartToProduct::upsert(
+                $batch,
+                ['code_bar', 'product_id'], // clave única
+                ['unidad_sat_id','price_mayoreo','price','cantidad_despiezado','updated_at'] // columnas a actualizar
+            );
         }
     }
 

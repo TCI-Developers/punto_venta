@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('product_id'); //id del producto
             $table->string('code_bar')->nullable()->index(); //codigo de barras
+            $table->unique(['product_id','code_bar']); //campo unico para identificar
             $table->double('price')->default(0);
             $table->double('price_mayoreo')->default(0); //precio por mayoreo
             $table->double('stock')->default(0);

@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\{Product, Brand, InventoryAdjustments};
 use Illuminate\Support\Facades\{Auth};
 
+
 use function PHPUnit\Framework\isEmpty;
 
 class Inventario extends Component
@@ -33,7 +34,6 @@ class Inventario extends Component
         if(count($this->getProductsDisabled()['products'])){
             $this->dispatch('refreshTable', ['products' => $this->getProductsDisabled()['products'], 'lineas' => $this->lineas_id, 'status' => $this->status]);
         }
-
         $brands = Brand::where('status', 1)->get();
         return view('livewire.invetarios.invetario', ['lineas' => $brands]);
     }
@@ -41,13 +41,13 @@ class Inventario extends Component
     // función para obtener los productos de las líneas seleccionadas
     public function getProducts($line_id)
     {   
-        $this->products = [];
         if($line_id != ''){
-              array_push($this->lineas_id, (int)$line_id);
-              $this->products = Product::with('getBrand')->whereIn('brand_id', $this->lineas_id)->get();
+            $this->products = [];
+            array_push($this->lineas_id, (int)$line_id);
         }else{
-            $this->lineas_id = $this->remover($this->lineas_id, $line_id);
+            $this->lineas_id = $this->remover($this->lineas_id, $this->linea_id['value']);
         }
+        $this->products = Product::with('getBrand')->whereIn('brand_id', $this->lineas_id)->get();
         $this->dispatch('refreshTable', ['products' => $this->products, 'lineas' => $this->lineas_id, 'status' => $this->status]);
     }
 
@@ -77,11 +77,11 @@ class Inventario extends Component
         $this->dispatch('showInputs', ['status' => $this->status]);
     }
 
-    private function remover ($arr,$valor)
+    private function remover($arr,$valor)
     {
         foreach ($arr ?? [] as $index => $item) 
         {
-            if($item == $valor){
+            if($item == (int)$valor){
                 unset($arr[$index]);
                 break;
             }
