@@ -47,12 +47,14 @@ class Product extends Component
         if($this->search == ''){
             $products = ProductModel::where('activo', 1)->paginate($this->paginate_cant);
         }else{
-            $products = ProductModel::where('code_product', 'LIKE', "%{$this->search}%")
-                ->orWhere('description', 'LIKE', "%{$this->search}%")
-                ->orWhere('unit', 'LIKE', "%{$this->search}%")
-                ->orWhere('existence', 'LIKE', "%{$this->search}%")
+            $products = ProductModel::where('activo', 1)
+                ->where(function($q){
+                    $q->where('code_product', 'LIKE', "%{$this->search}%")
+                      ->orWhere('description', 'LIKE', "%{$this->search}%")
+                      ->orWhere('unit', 'LIKE', "%{$this->search}%")
+                      ->orWhere('existence', 'LIKE', "%{$this->search}%");
+                })
                 ->paginate($this->paginate_cant);
-               
         }
 
         return view('livewire.products.product',['products' => $products]);
@@ -117,7 +119,7 @@ class Product extends Component
     function saveDescuentos(){
         if($this->modal_monto_porcentaje != '' && $this->modal_monto_porcentaje > 0){
             if($this->modal_vigencia_cantidad_fecha == 'fecha'){
-                $arr_inputs[0] = date($this->modal_vigencia_fecha) > date('Y-m-d') ? $this->modal_vigencia_fecha:'vigencia_fecha';
+                $arr_inputs[0] = $this->modal_vigencia_fecha > date('Y-m-d') ? $this->modal_vigencia_fecha:'vigencia_fecha';
             }else{
                 $arr_inputs[0] = $this->modal_vigencia_cantidad > 0 ? $this->modal_vigencia_cantidad:'vigencia_cantidad';
             }
@@ -137,9 +139,9 @@ class Product extends Component
 
     //funcion para mostrar en el modal algun campo vacio
     function alert($inputs, $type){
-       if($type == 'error'){ 
-            for ($i=0; $i <count($inputs) ; $i++) { 
-                if($inputs[$i] == 'presentation_type_id' || $inputs[$i] == 'presentation_type_id' || $inputs[$i] == 'presentation_type_id' || $inputs[$i] == 'vigencia_cantidad'){
+       if($type == 'error'){
+            for ($i=0; $i <count($inputs) ; $i++) {
+                if($inputs[$i] == 'presentation_type_id' || $inputs[$i] == 'price' || $inputs[$i] == 'code_bar'){
                     $this->dispatch('alert', ['input' => $inputs, 'type' => $type]);
                     break;
                 }

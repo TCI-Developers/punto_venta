@@ -114,7 +114,12 @@ class Sale extends Model
 
     //funcion para obtener los totales de tarjetas y efectivo
     public function getTotal($type, $date){
-        $total = Sale::whereBetween('date', [$date])->where('type_payment', $type)->sum('total_sale'); 
+        $total = Sale::whereBetween('date', [$date])->where('type_payment', $type)->sum('total_sale');
         return $total;
+    }
+
+    public function facturas()
+    {
+        return $this->belongsToMany('App\Models\Factura', 'factura_sales', 'sale_id', 'factura_id');
     }
 }

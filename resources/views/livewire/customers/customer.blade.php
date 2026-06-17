@@ -35,7 +35,7 @@
                 <div class="col-lg-2 col-md-2 col-sm-12 float-right">
                 <div class="row">
                     <label for="search" class="col-lg-12 col-md-12 col-sm-12">Buscar <br>
-                        <input type="text" class="form-control" id="search" value="{{$search}}" placeholder="Buscar" wire:model.live="search" step="10">
+                        <input type="text" class="form-control" id="search" value="{{$search}}" placeholder="Buscar" wire:model.live="search">
                     </label>
                 </div>
                 </div>

@@ -18,11 +18,11 @@ class TurnoController extends Controller
     //funcion para guardar turno
     public function store(Request $request)
     {
-        $validated = $request->validate([ 
-            'turno' => 'required',
+        $request->validate([
+            'turno'   => 'required',
             'entrada' => 'required',
-            'salida' => 'required',
-        ]); 
+            'salida'  => 'required',
+        ]);
 
         $turno = new Turno();
         $turno->turno = $request->turno;
@@ -37,11 +37,12 @@ class TurnoController extends Controller
     //funcion para actualizar turno
     public function update(Request $request)
     {
-        $validated = $request->validate([ 
-            'turno' => 'required',
+        $request->validate([
+            'id'      => 'required|integer',
+            'turno'   => 'required',
             'entrada' => 'required',
-            'salida' => 'required',
-        ]); 
+            'salida'  => 'required',
+        ]);
 
         $turno = Turno::find($request->id);
         if(is_object($turno)){

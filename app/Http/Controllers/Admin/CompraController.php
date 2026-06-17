@@ -38,7 +38,7 @@ class CompraController extends Controller
     public function store(Request $request, $compra_id = null){
         $this->rules($request, is_null($compra_id) ? 'store':'update');
 
-        // try {
+        try {
             if(!is_null($compra_id)){
                 $compra = Compra::find($compra_id);
                 $message = 'actualizada';
@@ -75,6 +75,9 @@ class CompraController extends Controller
             
             foreach($request->product_id ?? [] as $index => $item){
                 $product = Product::find($item);
+                if(!is_object($product)){
+                    return redirect()->back()->with('error', 'Producto no encontrado (ID: '.$item.'). Recarga e inténtalo de nuevo.');
+                }
                 $detalle_compra = $this->detalleCompra($compra, $product, $request, $index);
 
                 $this->newEntrada($request->entrada[$index], $detalle_compra, $user->id);
@@ -108,9 +111,9 @@ class CompraController extends Controller
             $this->saveCompraDBExterna($compra, $compra_id ? true:false);
 
             return redirect()->route('compra.show', $compra->id)->with('success', 'Compra '.$message.' con exito.');
-        // }catch (\Throwable $th) {
-        //     return redirect()->back()->with('error', 'La acción no se pudo ejecutar, recarga e intentalo de nuevo.');
-        // }
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', 'La acción no se pudo ejecutar: '.$th->getMessage());
+        }
     }
 
     //funcion para guardar el cieere de la compra
@@ -121,6 +124,10 @@ class CompraController extends Controller
 
         try {
             $compra = Compra::find($compra_id);
+
+            if($compra->status != 4){
+                return redirect()->back()->with('error', 'La compra debe estar en estatus "Recibida" para poder cerrarse.');
+            }
 
             foreach($request->recibido ?? [] as $index => $item){
                 $detalle_compra_entrada = DetalleCompraEntrada::find($index);
@@ -137,19 +144,6 @@ class CompraController extends Controller
                 $detalle_compra->total = $impuestos + $subtotal;
                 if($compra->tipo == 'OC' || $compra->tipo == 'T'){
                     $product = Product::find($detalle_compra->producto_id);
-                    if($product->getPartToProduct){
-                        $presentacion = $product->getPartToProduct;
-                        // $presentacion->stock = $presentacion->stock + $item;
-                        $presentacion->save();
-                    }
-
-                    if($product->getPartToProductDespiezado){
-                        $despiezado = $product->getPartToProductDespiezado;
-                        // $despiezado->stock = $despiezado->stock + $item;
-                        $despiezado->save();
-                    }
-
-                    // $product->existence = ((int)$presentacion->stock) + $item;
                     $product->existence = $product->existence + $item;
                     $product->save();
                 }
@@ -210,7 +204,8 @@ class CompraController extends Controller
 
             $compra->status = $status;
             $compra->save();
-            $message = 'autorizada';
+            $messages = [0 => 'rechazada', 2 => 'autorizada', 3 => 'solicitada', 4 => 'recibida', 5 => 'cerrada'];
+            $message = $messages[$status] ?? 'actualizada';
 
             $this->saveCompraDBExterna($compra, true);
 
@@ -249,6 +244,9 @@ class CompraController extends Controller
     //funcion para eliminar producto
     function destroy($detalle_id){
         $detalle = DetalleCompra::find($detalle_id);
+        if(!is_object($detalle)){
+            return redirect()->back()->with('error', 'Producto no encontrado.');
+        }
         $detalle->status = 0;
         $detalle->save();
 

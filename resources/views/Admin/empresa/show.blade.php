@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sucursal</title>
+    <title>Empresa</title>
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('components.use.link_scripts_glabal')
@@ -27,16 +27,26 @@
             @csrf
             <div class="container">
                 <label for="razon_social" class="col-12">RAZÓN SOCIAL*
-                    <input type="text" class="form-control uppercase" name="razon_social" id="razon_social" value="{{$empresa->razon_social ?? ''}}">
+                    <input type="text" class="form-control uppercase" name="razon_social" id="razon_social" value="{{$empresa?->razon_social ?? ''}}">
                 </label>
                 <label for="name" class="col-12">NOMBRE*
-                    <input type="text" class="form-control uppercase" name="name" id="name" value="{{$empresa->name ?? ''}}" required>
+                    <input type="text" class="form-control uppercase" name="name" id="name" value="{{$empresa?->name ?? ''}}" required>
                 </label>
                 <label for="rfc" class="col-12">RFC*
-                    <input type="text" class="form-control" name="rfc" id="rfc" value="{{$empresa->rfc ?? ''}}" required>
+                    <input type="text" class="form-control" name="rfc" id="rfc" value="{{$empresa?->rfc ?? ''}}" required>
+                </label>
+                <label for="regimen_fiscal" class="col-12">RÉGIMEN FISCAL (clave SAT, ej. 601)
+                    <input type="text" class="form-control" name="regimen_fiscal" id="regimen_fiscal"
+                           maxlength="3" placeholder="601" value="{{$empresa?->regimen_fiscal ?? ''}}">
+                    <small class="text-muted">Requerido para facturar. Ej: 601 = Rég. General, 612 = Personas físicas actividades empresariales.</small>
+                </label>
+                <label for="codigo_postal" class="col-12">CÓDIGO POSTAL (5 dígitos)
+                    <input type="text" class="form-control" name="codigo_postal" id="codigo_postal"
+                           maxlength="5" placeholder="00000" value="{{$empresa?->codigo_postal ?? ''}}">
+                    <small class="text-muted">Requerido para facturar.</small>
                 </label>
                 <label for="address" class="col-12">DIRECCIÓN*
-                    <input type="text" class="form-control" name="address" id="address" value="{{$empresa->address ?? ''}}" required>
+                    <input type="text" class="form-control" name="address" id="address" value="{{$empresa?->address ?? ''}}" required>
                 </label>
                 <label for="branch_id" class="col-12">Sucursal*
                     <select class="form-control" name="branch_id" id="branch_id" >
@@ -47,6 +57,13 @@
                     </select>
                 </label>
 
+                @if(Auth::User()->hasRole('root'))
+                <label for="vigencia" class="col-12 mt-2">VIGENCIA DE LICENCIA
+                    <input type="date" class="form-control" name="vigencia" id="vigencia" value="{{ $vigencia ?? '' }}">
+                    <small class="text-muted">Solo visible para root. Fecha límite de acceso al sistema.</small>
+                </label>
+                @endif
+
                 @if(Auth::User()->hasRole('root') || auth()->user()->hasPermissionThroughModule('empresa','punto_venta','auth'))
                 <div class="form-group text-right mt-2">
                     <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Guardar</button>
@@ -56,7 +73,7 @@
         </form>
     </div>
     
-    @if(Auth::User()->hasRole(['root']) || auth()->user()->hasPermissionThroughModule('empresa','punto_venta','auth'))
+    @if(Auth::User()->hasAnyRole(['root']) || auth()->user()->hasPermissionThroughModule('empresa','punto_venta','auth'))
     <div class="card-body">
         <hr>
             <h3 class="text-center text-bold">Importación</h3>

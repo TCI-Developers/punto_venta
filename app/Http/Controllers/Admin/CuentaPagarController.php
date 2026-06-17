@@ -11,8 +11,12 @@ class CuentaPagarController extends Controller
 {
     //index vista principal
     public function index($status = null)
-    {    
-        $branch_id = EmpresaDetail::first()->branch_id;
+    {
+        $empresa = EmpresaDetail::first();
+        $branch_id = $empresa->branch_id ?? null;
+        if(!$branch_id){
+            return redirect()->back()->with('error', 'Asigna una sucursal a los datos de empresa.');
+        }
         if(is_null($status)){
             // $cuentas = CuentaPagar::where('status', '!=', 0)->where('branch_id', $branch_id)->orderBy('fecha_vencimiento', 'desc')->get();
             $cuentas = CuentaPagar::where('status', '!=', 0)
@@ -37,8 +41,11 @@ class CuentaPagarController extends Controller
 
     //funcion para mostrar vista de pago
     public function show(string $id)
-    {   
+    {
         $cuenta = CuentaPagar::find($id);
+        if(!is_object($cuenta)){
+            return redirect()->route('cxp.index')->with('error', 'Cuenta no encontrada.');
+        }
         $total_detail = CuentaPagarDetail::where('cxp_id', $id)->sum('importe');
 
         $total_debe = $cuenta->total - ($total_detail ?? 0);
@@ -90,10 +97,11 @@ class CuentaPagarController extends Controller
     public function destroy($id){
         try {
             $cuenta_detail = CuentaPagarDetail::find($id);
-            $total_details = CuentaPagarDetail::where('cxp_id', $cuenta_detail->cxp_id)->sum('importe');
+            $cxp_id = $cuenta_detail->cxp_id;
             $cuenta_detail->delete();
 
-            $cuenta = CuentaPagar::find($cuenta_detail->cxp_id);
+            $total_details = CuentaPagarDetail::where('cxp_id', $cxp_id)->sum('importe');
+            $cuenta = CuentaPagar::find($cxp_id);
             $cuenta->status = ($cuenta->total - $total_details) <= 0 ? 2:1;
             $cuenta->save();
 

@@ -2,12 +2,6 @@
             const input = document.getElementById('searchInput');
             let currentIndex = -1;
 
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    alert('Se presionó Enter en el campo de búsqueda');
-                }
-            });
-
             document.addEventListener('keydown', function (e) {
                 const buttons = Array.from(document.querySelectorAll('.select-button'));
 
@@ -257,9 +251,10 @@
         });
 
         //funcion para modificar cantidad de productos registrados
-        function btnCantProduct(presentation_id){           
+        function btnCantProduct(presentation_id){ 
             $('#presentation_id').val(presentation_id);
             $('#modal_cant').show();
+            $('#update_cant_prod').focus();
         }
 
         //funcion para actualizar cantidad de producto
@@ -377,29 +372,50 @@
             return /^\d*\.?\d+$/.test(valor);  // Permite .5, 123.45, etc.
         }
 
-        //funcion para cerrar la venta
-        function cerrarVenta(show = true) {
-           $('#formSale').submit();
+        //funcion para cerrar la venta y redirigir al listado
+        function cerrarVenta(redirectUrl) {
+            window.location.href = redirectUrl;
         }
 
         //funcion para cerrar venta
         function submitSale() {
-            let amount_received = $('#amount_received').val();
-            let total_sale = $('#total_sale').val();  
+            let amount_received = parseFloat($('#amount_received').val());
+            let total_sale     = parseFloat($('#total_sale').val());
+            let change         = parseFloat($('#change').val());
+            let tipo           = $('#type_payment').val();
 
-            let total_ajustado = ajustarMonto(total_sale);
+            // El redondeo de centavos aplica solo en efectivo; tarjeta usa el total exacto
+            let total_threshold = tipo === 'tarjeta' ? total_sale : ajustarMonto(total_sale);
 
-            if (amount_received > 0 && amount_received >= total_ajustado) {
-                Livewire.dispatch('cobrar', {
-                    'monto': amount_received, 
-                    'total_venta': total_sale,
-                    'change': $('#change').val(),
+            if (amount_received > 0 && amount_received >= total_threshold) {
+                Swal.fire({
+                    icon: 'question',
+                    title: '¿Confirmar cobro?',
+                    html: `<b>Total:</b> $${number_format(total_sale)}<br>
+                           <b>Recibido:</b> $${number_format(amount_received)}<br>
+                           <b>Cambio:</b> $${number_format(change)}`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Cobrar',
+                    cancelButtonText: 'Cancelar',
+                    customClass: {
+                        confirmButton: 'btn btn-success',
+                        cancelButton: 'btn btn-secondary'
+                    },
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Livewire.dispatch('cobrar', {
+                            'monto': amount_received,
+                            'total_venta': total_sale,
+                            'change': change,
+                        });
+                    }
                 });
             } else {
                 Swal.fire(
-                    `La cantidad recibida es menor al total ajustado de la venta: ${total_ajustado.toFixed(2)}`,
-                    '',
-                    'info'
+                    tipo === 'tarjeta'
+                        ? `El monto no coincide con el total de la venta: $${total_sale.toFixed(2)}`
+                        : `La cantidad recibida es menor al total ajustado: $${total_threshold.toFixed(2)}`,
+                    '', 'info'
                 );
             }
         }
@@ -418,9 +434,27 @@
         }
 
         //funcion para mostrar ticket
-        window.addEventListener('showTicket', event => {  
+        window.addEventListener('showTicket', event => {
                 $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+event.detail[0].sale_id+'/true');
                 $('#modalTicket').show();
+        });
+
+        window.addEventListener('cobrarError', event => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al cobrar',
+                text: event.detail[0].message,
+                confirmButtonText: 'Aceptar'
+            });
+        });
+
+        window.addEventListener('sinExistencia', event => {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Sin existencia',
+                text: event.detail[0].message,
+                confirmButtonText: 'Aceptar'
+            });
         });
 
         document.addEventListener('keydown', function(e) {

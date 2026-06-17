@@ -7,7 +7,6 @@
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('components.use.link_scripts_glabal')
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="{{asset('js/users/index.js')}}"></script>
 </head>
 <body>
@@ -62,7 +61,7 @@
                             <td>{{$item->getTurno->turno ?? ''}}</td>
                             <td>
                                 @foreach($item->getBranchs ?? [] as $branch)
-                                    <span class="badge badge-info">{{$branch->getBranch->name}}</span><br>
+                                    <span class="badge badge-info">{{$branch->getBranch?->name ?? ''}}</span><br>
                                 @endforeach
                             </td>
                             <td>

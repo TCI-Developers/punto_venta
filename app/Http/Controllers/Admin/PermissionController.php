@@ -19,6 +19,14 @@ class PermissionController extends Controller
     // funcion para guardar el permiso
     public function store(Request $request)
     {
+        $request->validate([
+            'module' => 'required|string',
+            'action' => 'required|string',
+        ], [
+            'module.required' => 'El módulo es requerido.',
+            'action.required' => 'La acción es requerida.',
+        ]);
+
         $permission = Permission::where('module', $request->module)->where('action', $request->action)->first();
         if(is_object($permission)){
             return redirect()->back()->with('error', 'El permiso ya existe');
@@ -37,8 +45,19 @@ class PermissionController extends Controller
     // funcion para actualizar el permiso
     public function update(Request $request)
     {
-        try {
+        $request->validate([
+            'module' => 'required|string',
+            'action' => 'required|string',
+        ], [
+            'module.required' => 'El módulo es requerido.',
+            'action.required' => 'La acción es requerida.',
+        ]);
+
         $permission = Permission::find($request->id);
+        if(!is_object($permission)){
+            return redirect()->back()->with('error', 'Permiso no encontrado.');
+        }
+
         $permission->module = $request->module;
         $permission->submodule = $request->submodule;
         $permission->action = $request->action;
@@ -46,21 +65,17 @@ class PermissionController extends Controller
         $permission->save();
 
         return redirect()->back()->with('success', 'Permiso actualizado con exito');
-        } catch (\Throwable $th) {
-           return redirect()->back()->with('error', 'No se pudo completar la acción.');
-        }
     }
 
     // funcion para eliminar el permiso
     public function destroy(string $id)
     {
-        try {
-            
-            Permission::find($id)->delete();
-
-        return redirect()->back()->with('success', 'Permiso eliminado con exito');
-        } catch (\Throwable $th) {
-           return redirect()->back()->with('error', 'No se pudo completar la acción.');
+        $permission = Permission::find($id);
+        if(!is_object($permission)){
+            return redirect()->back()->with('error', 'Permiso no encontrado.');
         }
+
+        $permission->delete();
+        return redirect()->back()->with('success', 'Permiso eliminado con exito');
     }
 }

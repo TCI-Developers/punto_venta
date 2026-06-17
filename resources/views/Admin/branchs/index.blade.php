@@ -73,6 +73,7 @@
                                 @include('Admin.branchs._sucursal')
                             @endif
                         @empty
+                            <p class="text-center text-muted col-12 mt-3">No hay sucursales {{$status == 0 ? 'inhabilitadas' : 'registradas'}}.</p>
                         @endforelse
                     </div> <!--APP ROW 1-->
                 </div><!-- END MAIN -->

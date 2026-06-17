@@ -11,11 +11,10 @@ use Carbon\Carbon;
 class BranchController extends Controller
 {   
     // index
-    public function index($status = 1){  
+    public function index($status = 1){
         $user = Auth::User();
         $branchs = Branch::where('status', $status)->get();
-        $users = User::get(); //validar que no salgan roles que no deben ir
-        return view('Admin.branchs.index', ['branchs' => $branchs, 'users' => $users, 'status' => $status, 'user' => $user]);
+        return view('Admin.branchs.index', ['branchs' => $branchs, 'status' => $status, 'user' => $user]);
     }
 
     //funcion mostrar vista para crear sucursal nueva
@@ -26,27 +25,37 @@ class BranchController extends Controller
     }
 
     // guardar sucursal
-    public function store(Request $request, $branch_id = null){   
-        $validated = $request->validate(['name' => 'required', 'address' => 'required'], 
-        ['name' => 'El nombre es requerido.', 'address' => 'La dirección es requerida.']);
-       
+    public function store(Request $request, $branch_id = null){
+        $request->validate(
+            ['name' => 'required', 'address' => 'required'],
+            ['name.required' => 'El nombre es requerido.', 'address.required' => 'La dirección es requerida.']
+        );
+
         $message = 'guardada';
         $branch = new Branch();
         if(!is_null($branch_id)){
             $branch = Branch::find($branch_id);
+            if(!is_object($branch)){
+                return redirect()->back()->with('error', 'Sucursal no encontrada.');
+            }
             $message = 'actualizada';
+        } else {
+            $branch->user_id = Auth::User()->id;
         }
-        $branch->user_id = Auth::User()->id;
+
         $branch->name = $request->name;
         $branch->address = $request->address;
+        $branch->razon_social = $request->razon_social;
+        $branch->rfc = $request->rfc;
+        $branch->phone = $request->phone;
         $branch->save();
 
+        BranchUser::where('branch_id', $branch->id)->delete();
         if(isset($request->user_id) && count($request->user_id)){
-            BranchUser::where('branch_id', $branch->id)->delete();
-            for($i=0; $i < count($request->user_id); $i++) { 
+            foreach($request->user_id as $uid){
                 $branch_user = new BranchUser();
                 $branch_user->branch_id = $branch->id;
-                $branch_user->user_id = $request->user_id[$i];
+                $branch_user->user_id = $uid;
                 $branch_user->save();
             }
         }
@@ -135,6 +144,11 @@ class BranchController extends Controller
 
     //asignamos sucursal a usuario y redireccionamos a ventas
     public function setSucursalUser($branch_id){
+        $branch = Branch::find($branch_id);
+        if(!is_object($branch)){
+            return redirect()->back()->with('error', 'Sucursal no encontrada.');
+        }
+
         $user = Auth::User();
 
         if($user->branch_id !== null && $user->branch_id != $branch_id && !$user->hasAnyRole(['root', 'admin'])){

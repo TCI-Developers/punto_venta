@@ -15,6 +15,7 @@
         .level-INFO { color: green; }
         .level-ERROR { color: red; }
         .level-WARNING { color: orange; }
+        .level-UNKNOWN { color: #999; }
     </style>
 </head>
 <body>
@@ -24,7 +25,8 @@
      <div class="card">
         <div class="form-group card-header with-border text-center">
             <h2>Logs del sistema
-                <a href="{{route('clearLogs')}}" class="btn btn-secondary float-right" data-bs-toggle="tooltip" data-bs-placement="top" title="Limpiar logs"><i class="fa fa-trash"></i></a>
+                <a href="{{route('clearLogs')}}" class="btn btn-secondary float-right" data-bs-toggle="tooltip" data-bs-placement="top" title="Limpiar logs"
+                   onclick="return confirm('¿Estás seguro de que deseas limpiar todos los logs?')"><i class="fa fa-trash"></i></a>
             </h2>
         </div>
 
@@ -46,9 +48,9 @@
                         $mensaje = $matches[3] ?? $line;
                     @endphp
                     <tr>
-                        <td>{{ $fecha }}</td>
-                        <td class="level-{{ $nivel }}">{{ strtoupper($nivel) }}</td>
-                        <td style="width:10%;">{{ $mensaje }}</td>
+                        <td style="width:15%; white-space:nowrap;">{{ $fecha }}</td>
+                        <td style="width:10%;" class="level-{{ $nivel ?: 'UNKNOWN' }}">{{ strtoupper($nivel) ?: 'UNKNOWN' }}</td>
+                        <td style="width:75%; word-break:break-word;">{{ $mensaje }}</td>
                     </tr>
                 @empty
                     <tr>

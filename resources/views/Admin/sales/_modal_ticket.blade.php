@@ -5,7 +5,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="modalTicketLabel">Ticket</h5>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="cerrarVenta()"><i class="fa fa-times"></i> Cerrar</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="cerrarVenta('{{ route('sale.index') }}')"><i class="fa fa-times"></i> Cerrar</button>
       </div>
       <div class="modal-body col-12">
           <iframe src="" title="Tickets" style="width:100%; height:70vh;"></iframe>

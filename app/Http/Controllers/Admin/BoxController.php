@@ -18,12 +18,19 @@ class BoxController extends Controller
     
     //funcion para mostrar vista de cierre de turno
     public function turnOff()
-    {      
+    {
         $user_id = Auth::User()->id;
         $box = Box::where('user_id', $user_id)->where('status', 0)->orderBy('id', 'desc')->first();
-        $start_date = $box->start_date ?? null;
+        if(!is_object($box)){
+            if(!session()->has('ticket')){
+                return redirect()->route('sale.index')->with('error', 'No tienes un turno abierto.');
+            }
+            // Turno recién cerrado — solo mostrar vista con el ticket
+            return view('Admin.box.turn_off', ['start_amount_box' => null, 'ventas_cerradas' => [], 'status' => 0]);
+        }
+        $start_date = $box->start_date;
         $end_date = date('Y-m-d H:i:s');
-        $ventas = Sale::where('user_id', $user_id)->whereBetween('updated_at', [$start_date, $end_date])->where('status', '!=', 0)->get(); 
+        $ventas = Sale::where('user_id', $user_id)->whereBetween('updated_at', [$start_date, $end_date])->where('status', '!=', 0)->get();
         $ventas_cerradas = [];
         $status = 0; //no existen ventas
         if(count($ventas)){
@@ -40,26 +47,29 @@ class BoxController extends Controller
             }else{
                 $status = 2;
             }
-
-           
         }
-       
-        return view('Admin.box.turn_off', ['start_amount_box' => $box->start_amount_box ?? null, 'ventas_cerradas' => $ventas_cerradas, 'status' => $status]);
+
+        return view('Admin.box.turn_off', ['start_amount_box' => $box->start_amount_box, 'ventas_cerradas' => $ventas_cerradas, 'status' => $status]);
     }
 
     //funcion para guardar el monto incial de la caja
-    public function storeStarAmountBox(Request $request){ 
+    public function storeStarAmountBox(Request $request){
         $validatedData = $request->validate([
             'start_amount_box' => 'required'],['start_amount_box.required' => 'El monto inicial es requerido.']
         );
 
         $user = Auth::User();
+
+        // Evitar doble turno
+        if(Box::where('user_id', $user->id)->where('status', 0)->exists()){
+            return redirect()->route('sale.index')->with('info', 'Ya tienes un turno abierto.');
+        }
+
         $box = Box::where('status', '>', 0)->orderBy('end_date', 'desc')->first();
 
         if(is_object($box) && !isset($request->next) && $request->next != 'on'){
-            if((int)$request->start_amount_box != (int)$box->monto_dejado_caja){
-                Auth::logout($user);
-                return redirect()->route('sale.index')->with('error', 'El monto inicial no coincide con el último cierre.');
+            if(round((float)$request->start_amount_box, 2) != round((float)$box->monto_dejado_caja, 2)){
+                return redirect()->route('admin.startAmountBox')->with('monto', 'El monto inicial no coincide con el último cierre. Se esperaban $'.number_format($box->monto_dejado_caja, 2).'.');
             }
         }
 
@@ -81,18 +91,24 @@ class BoxController extends Controller
 
         $user_id = Auth::User()->id;
         $box = Box::where('user_id', $user_id)->where('status', 0)->orderBy('id', 'desc')->first();
+        if(!is_object($box)){
+            return redirect()->route('sale.index')->with('error', 'No tienes un turno abierto.');
+        }
         $start_date = $box->start_date;
         $end_date = date('Y-m-d H:i:s');
 
-        $total_efectivo = Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'efectivo')->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale'); 
-        $total_tarjeta = Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'tarjeta')->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale'); 
-        $devoluciones = Devolucion::whereBetween('updated_at', [$start_date, $end_date])->get();
+        $total_efectivo = Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'efectivo')->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale');
+        $total_tarjeta = Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'tarjeta')->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale');
+        $saleIds = Sale::where('user_id', $user_id)->pluck('id');
+        $devoluciones = Devolucion::whereIn('sale_id', $saleIds)->whereBetween('updated_at', [$start_date, $end_date])->get();
         $total_devolucion_efectivo = 0;
         $total_devolucion_tarjeta = 0;
 
         if(count($devoluciones))
         foreach($devoluciones as $item){
-            if($item->getSale->type_payment = 'efectivo'){
+            $sale = $item->getSale;
+            if(!is_object($sale)) continue;
+            if($sale->type_payment == 'efectivo'){
                 $total_devolucion_efectivo += $item->total_devolucion;
             }else{
                 $total_devolucion_tarjeta += $item->total_devolucion;
@@ -102,7 +118,7 @@ class BoxController extends Controller
         $tolerancia = 1; //margen de un peso para el efectivo
         $total_efect = ($box->start_amount_box + $total_efectivo) - $total_devolucion_efectivo; //total efectivo 
         $montos = $total_efect - $request->monto_efectivo; 
-        $val_tolerancia = $montos > $tolerancia;
+        $val_tolerancia = abs($montos) > $tolerancia;
         
        
 
@@ -139,7 +155,7 @@ class BoxController extends Controller
         $box->coin_1 = $request->coins['1'] ?? 0;
         $box->coin_50_cen = $request->coins['_50'] ?? 0;
 
-        $totales = ($total_tarjeta + $total_efectivo) - $total_devolucion_efectivo ?? 0; //sistema
+        $totales = ($total_tarjeta + $total_efectivo) - $total_devolucion_efectivo - $total_devolucion_tarjeta; //sistema
         $ingresado = $request->monto_tarjeta + ($request->monto_efectivo - $box->start_amount_box); //ingresdo empleado
 
         $box->status = (($totales - $ingresado) < 1) ? 1:2;
@@ -154,11 +170,14 @@ class BoxController extends Controller
 
     function statusBox($status = 1){
         if($status){
-            Auth::logout(Auth::User());
+            Auth::logout();
             return redirect()->route('login')->with('success', 'Cierre de caja con exito.');
         }
-        
+
         $box = Box::where('user_id', Auth::User()->id)->orderBy('id', 'desc')->first();
+        if(!is_object($box)){
+            return redirect()->route('sale.index')->with('error', 'No se encontró ningún turno.');
+        }
         $box->status = 0;
         $box->save();
 
@@ -181,19 +200,19 @@ class BoxController extends Controller
 
     //reglas de validacion
     public function rules($total_efectivo, $total_tarjeta, $efectivo_manual, $tarjeta_manual, $tolerancia){
-        if($tolerancia){
-            if($efectivo_manual == null || $efectivo_manual >= 0){
-                $arr[0] = ['monto_efectivo' => 'required|in:'.($total_efectivo).''];
-                $arr[1] = ['monto_efectivo' => 'El monto que ingresaste no concuerda con lo vendido en efectivo.'];
-            }
+        $arr = [[], []];
+
+        if($tolerancia && ($efectivo_manual == null || $efectivo_manual >= 0)){
+            $arr[0]['monto_efectivo'] = 'required|in:'.($total_efectivo);
+            $arr[1]['monto_efectivo'] = 'El monto que ingresaste no concuerda con lo vendido en efectivo.';
         }
 
         if($tarjeta_manual == null || $tarjeta_manual > 0){
-            $arr[0] = ['monto_tarjeta' => 'required|in:'.$total_tarjeta.''];
-            $arr[1] = ['monto_tarjeta' => 'El monto que ingresaste no concuerda con lo vendido con tarjeta.'];
+            $arr[0]['monto_tarjeta'] = 'required|in:'.$total_tarjeta;
+            $arr[1]['monto_tarjeta'] = 'El monto que ingresaste no concuerda con lo vendido con tarjeta.';
         }
 
-        return $arr ?? [];
+        return $arr;
     } 
 
     //funcion paa validar que el conteo de billetes y monedas concuerde con lo vendido

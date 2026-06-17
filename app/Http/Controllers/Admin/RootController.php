@@ -87,6 +87,9 @@ class RootController extends Controller
                 }
 
                 $rol = Role::where('name', 'root')->first();
+                if(!is_object($rol)){
+                    return redirect()->back()->with('error', 'El rol root no existe. Importa los roles primero.');
+                }
                 $role_user = UserRole::where('user_id', $user->id)->where('role_id', $rol->id)->first();
 
                 if(!is_object($role_user)){
@@ -309,7 +312,7 @@ class RootController extends Controller
         $logPath = storage_path('logs/laravel.log');
 
         if (!File::exists($logPath)) {
-            dd('No hay logs registrados aún.');
+            return view('logs', ['lines' => []]);
         }
 
         $rawLines = file($logPath, FILE_IGNORE_NEW_LINES);

@@ -129,7 +129,7 @@
                         </tr>
                         @empty
                         <tr><td colspan="4" class="table-warning text-center">Sin registros</td></tr>
-                        @endif
+                        @endforelse
                     </tbody>
                 </table>
             </div>

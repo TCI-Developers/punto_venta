@@ -45,11 +45,13 @@
                 <h2>Permisos</h2>
             </div>
             <div class="card-body table-responsive">
+                @if(auth()->user()->hasPermissionThroughModule('roles','punto_venta','create'))
                 <div class="form-group">
                     <button type="button" class="btn btn-success" onClick="btnShow()">
                         <i class="fa fa-plus"></i> &nbsp; Crear Permiso
                     </button>
                 </div>
+                @endif
 
                 <table class="table table-striped table-bordered datatable">
                     <thead>
@@ -71,12 +73,16 @@
                             <td>{{$item->action}}</td>
                             <td>{{$item->description}}</td>
                             <td>
+                                @if(auth()->user()->hasPermissionThroughModule('roles','punto_venta','update'))
                                 <button type="button" class="btn btn-warning btn-sm" onClick="btnEdit({{$item}})">
                                     <i class="fa fa-edit"></i>
                                 </button>
+                                @endif
+                                @if(auth()->user()->hasPermissionThroughModule('roles','punto_venta','destroy'))
                                 <a href="{{route('permission.destroy', $item->id)}}" class="btn btn-danger btn-sm">
                                     <i class="fa fa-trash"></i>
                                 </a>
+                                @endif
                             </td>
                         </tr>
                         @empty

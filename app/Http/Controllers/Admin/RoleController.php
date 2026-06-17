@@ -11,13 +11,12 @@ class RoleController extends Controller
 {
     //vista principal roles
     public function index($status)
-    {   
-        $user_auth = Auth::User()->hasRole('root');
-        if($user_auth){
-            $roles = Role::where('status', 1)->get();
-        }else{
-            $roles = Role::where('status', 1)->where('name', '!=', 'root')->get();
+    {
+        $query = Role::where('status', $status);
+        if(!Auth::User()->hasRole('root')){
+            $query->where('name', '!=', 'root');
         }
+        $roles = $query->get();
 
         return view('Admin.roles.index', ['roles' => $roles, 'status' => $status]);
     }
@@ -25,9 +24,9 @@ class RoleController extends Controller
     //funcion para guardar rol
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:50|unique:roles,name',
-        ],['name' => 'El nombre esta vacio o ya existe.']);
+        ], ['name' => 'El nombre esta vacio o ya existe.']);
 
         $rol = new Role();
         $rol->name = $request->name;
@@ -40,9 +39,9 @@ class RoleController extends Controller
     // funcioon para actualizar rol
     public function update(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:50|unique:roles,name',
-        ],['name' => 'El nombre esta vacio o ya existe.']);
+        $request->validate([
+            'name' => 'required|string|max:50|unique:roles,name,'.$request->id,
+        ], ['name' => 'El nombre esta vacio o ya existe.']);
 
         $rol = Role::find($request->id);
         if(is_object($rol)){

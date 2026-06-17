@@ -26,6 +26,9 @@ class SaleController extends Controller
         try {
             $user = Auth::User();
             $payment_method = PaymentMethod::where('pay_method', 'PUE')->first();
+            if(!is_object($payment_method)){
+                return redirect()->back()->with('error', 'No existe un método de pago configurado. Importa los métodos de pago desde Importación.');
+            }
             $sale = new Sale();
             $sale->user_id = $user->id;
             $sale->branch_id = $empresa->branch_id;
@@ -113,7 +116,6 @@ class SaleController extends Controller
             return redirect()->back()->with('error', 'Ocurrio un error.');
         }
 
-        $sale->user_id = Auth::User()->id;
         if($request->status == 'cobro'){
             $sale->status = 2;
             $message = 'realizada';
@@ -142,12 +144,12 @@ class SaleController extends Controller
     {
         try {
             $sale = Sale::find($id);
-            if($sale->getDetails){
+            if($sale->getDetails->count() > 0){
+                return redirect()->back()->with('info', 'Esta venta no puede ser eliminada, contiene productos.');
+            }else{
                 $sale->status = 0;
                 $sale->save();
                 return redirect()->back()->with('success', 'Venta eliminada con exito.');
-            }else{
-                return redirect()->back()->with('info', 'Esta venta no puede ser eliminada, contiene productos.');
             }
         } catch (\Throwable $th) {
             return redirect()->back()->with('error', 'No se puedo completar la acción.');
@@ -156,12 +158,12 @@ class SaleController extends Controller
 
     //funcion para guardar un movimiento de almacen
     public function storeDetail(Request $request){
-        $validated = $request->validate([ 
+        $validated = $request->validate([
             'presentation_id' => 'required',
             'cant' => 'required|numeric|min:1',
             'price' => 'required',
-        ], ['cant' => 'La salida debe de ser mayor a 0.']); 
-       
+        ], ['cant' => 'La salida debe de ser mayor a 0.']);
+
         $sale_detail = new SaleDetail();
         $sale_detail->part_to_product_id = $request->presentation_id;
         $sale_detail->sale_id = $request->sale_id;
@@ -173,20 +175,46 @@ class SaleController extends Controller
         $sale_detail->amount = $request->amount;
         $sale_detail->save();
 
+        // Reducir existencia del producto
+        $presentation = PartToProduct::find($request->presentation_id);
+        if(is_object($presentation)){
+            $product = Product::find($presentation->product_id);
+            if(is_object($product)){
+                $val = $presentation->cantidad_despiezado > 0
+                    ? $request->cant / $presentation->cantidad_despiezado
+                    : $request->cant;
+                $product->existence = $product->existence - $val;
+                $product->save();
+            }
+        }
+
         return redirect()->back()->with('success', 'Se agrego movimiento con exito.');
     }
 
     //funcion para actualizar un movimiento de almacen
     public function updateDetail(Request $request){
-        $validated = $request->validate([ 
+        $validated = $request->validate([
             'presentation_id' => 'required',
             'cant' => 'required|numeric|min:1',
             'price' => 'required',
-        ], ['cant' => 'La salida debe de ser mayor a 0.']); 
-       
+        ], ['cant' => 'La salida debe de ser mayor a 0.']);
+
         $sale_detail = SaleDetail::find($request->mov_sale_id);
         if(!is_object($sale_detail)){
             return redirect()->back()->with('error', 'Ocurrio un error.');
+        }
+
+        // Ajustar existencia: devolver la cantidad anterior y restar la nueva
+        $presentation = PartToProduct::find($request->presentation_id);
+        if(is_object($presentation)){
+            $product = Product::find($presentation->product_id);
+            if(is_object($product)){
+                $divisor = $presentation->cantidad_despiezado > 0 ? $presentation->cantidad_despiezado : 1;
+                $cantAnterior = $sale_detail->cant / $divisor;
+                $cantNueva    = $request->cant / $divisor;
+                $product->existence = $product->existence + $cantAnterior - $cantNueva;
+                $product->save();
+            }
         }
 
         $sale_detail->part_to_product_id = $request->presentation_id;
@@ -235,7 +263,6 @@ class SaleController extends Controller
         if(isset($db->status)){
             foreach ($db->data ?? [] as $value) {
                 $product = Product::find($value->id);
-                dd($value);
                 if(is_object($product)){
                     $product->precio = $value->precio;
                     $product->precio_mayoreo = $value->precio_mayoreo;

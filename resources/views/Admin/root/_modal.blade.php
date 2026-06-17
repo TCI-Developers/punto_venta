@@ -2,7 +2,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="modal_onfeLabel"><span id="title">Asignar</span> Turno y Roles</h5>
+        <h5 class="modal-title" id="modal_onfeLabel">Configuración Inicial</h5>
       </div>
       <form action="{{route('import.setConfDBLocal')}}" method="post">
       @csrf

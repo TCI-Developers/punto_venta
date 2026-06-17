@@ -64,9 +64,9 @@ Route::get('/compras/{status?}', 'Admin\CompraController@index')->name('compra.i
 Route::get('/compras-create', 'Admin\CompraController@create')->name('compra.create')->middleware('permission:compras,punto_venta,create');
 Route::post('/compras-store/{compra_id?}', 'Admin\CompraController@store')->name('compra.store')->middleware('permission:compras,punto_venta,create');
 Route::post('/compras-update/{compra_id?}', 'Admin\CompraController@store')->name('compra.store')->middleware('permission:compras,punto_venta,update');
-Route::post('/compras-store-close/{compra_id}', 'Admin\CompraController@storeRecibido')->name('compra.storeRecibido');
+Route::post('/compras-store-close/{compra_id}', 'Admin\CompraController@storeRecibido')->name('compra.storeRecibido')->middleware('permission:compras,punto_venta,update');
 Route::get('/compras-show/{compra_id?}', 'Admin\CompraController@create')->name('compra.show')->middleware('permission:compras,punto_venta,show');
-Route::get('/compras-status/{compra_id?}/{status}', 'Admin\CompraController@status')->name('compra.status'); //cambiar el status de la compra
+Route::get('/compras-status/{compra_id?}/{status}', 'Admin\CompraController@status')->name('compra.status')->middleware('permission:compras,punto_venta,update'); //cambiar el status de la compra
 Route::get('/detalle-compra-destroy/{detalle_id}', 'Admin\CompraController@destroy')->name('compra.destroy')->middleware('permission:compras,punto_venta,destroy'); //cambiar el status de la compra
 Route::get('/compra-pdf/{compra_id}', 'Admin\CompraController@pdf')->name('compra.pdf')->middleware('permission:compras,punto_venta,show');
 
@@ -78,20 +78,20 @@ Route::get('/cxp-destroy/{id}', 'Admin\CuentaPagarController@destroy')->name('cx
 
 //devoluciones ventas
 Route::get('/devoluciones/{status?}', 'Admin\DevolucionController@index')->name('devoluciones.index')->middleware('permission:devoluciones');
-Route::get('/devoluciones-corte/{starDate}/{endDate}', 'Admin\DevolucionController@indexDevCorte')->name('devoluciones.indexDevCorte'); //devoluciones por fechas de algun corte
+Route::get('/devoluciones-corte/{starDate}/{endDate}', 'Admin\DevolucionController@indexDevCorte')->name('devoluciones.indexDevCorte')->middleware('permission:devoluciones,punto_venta,show'); //devoluciones por fechas de algun corte
 Route::get('/devoluciones-create-sale', 'Admin\DevolucionController@showListadoVentas')->name('devoluciones.showListadoVentas')->middleware('permission:devoluciones,punto_venta,create'); //crear una devolucion de venta
 Route::get('/devoluciones-show-dev-sale/{devolucion_id}', 'Admin\DevolucionController@showDevSale')->name('devoluciones.showDevSale')->middleware('permission:devoluciones,punto_venta,[show|update]');
 Route::get('/devoluciones-delete-detail-dev/{devolution_id}/{detail_dev_id}', 'Admin\DevolucionController@deleteDetailDev')->name('devoluciones.deleteDetailDev')->middleware('permission:devoluciones,punto_venta,destroy'); //elimina un detalle de la venta en status 0
 Route::post('/devoluciones-store/{devolucion_id?}', 'Admin\DevolucionController@store')->name('devoluciones.store')->middleware('permission:devoluciones,punto_venta,create'); //funcion para guardar la devolucion de venta
-Route::get('/devoluciones-sale-create/{sale_id}', 'Admin\DevolucionController@createSaleToDevolucion')->name('devoluciones.createSaleToDevolucion'); // muestra vista de la devolucion de venta
+Route::get('/devoluciones-sale-create/{sale_id}', 'Admin\DevolucionController@createSaleToDevolucion')->name('devoluciones.createSaleToDevolucion')->middleware('permission:devoluciones,punto_venta,create'); // muestra vista de la devolucion de venta
 
 //devoluciones matriz
-Route::get('/devoluciones-compras', 'Admin\DevolucionController@indexCompras')->name('devoluciones.indexCompras'); //crear una devolucion de matriz
-Route::get('/devoluciones-create-matriz', 'Admin\DevolucionController@createMatriz')->name('devoluciones.createMatriz'); //crear una devolucion de matriz
-Route::post('/devoluciones-store-matriz/{compra_id?}', 'Admin\DevolucionController@storeMatriz')->name('devoluciones.storeMatriz'); //crear una devolucion de matriz
+Route::get('/devoluciones-compras', 'Admin\DevolucionController@indexCompras')->name('devoluciones.indexCompras')->middleware('permission:devoluciones'); //listado devoluciones a proveedor
+Route::get('/devoluciones-create-matriz', 'Admin\DevolucionController@createMatriz')->name('devoluciones.createMatriz')->middleware('permission:devoluciones,punto_venta,create'); //crear una devolucion de matriz
+Route::post('/devoluciones-store-matriz/{compra_id?}', 'Admin\DevolucionController@storeMatriz')->name('devoluciones.storeMatriz')->middleware('permission:devoluciones,punto_venta,create'); //crear una devolucion de matriz
 Route::get('/devoluciones-show-dev-matriz/{devolucion_id}', 'Admin\DevolucionController@showDevMatriz')->name('devoluciones.showDevMatriz')->middleware('permission:devoluciones,punto_venta,[show|update]');
 
-Route::get('/devoluciones-show/{id}', 'Admin\DevolucionController@showMatriz')->name('devoluciones.showMatriz'); //crear una devolucion de matriz
+Route::get('/devoluciones-show/{id}', 'Admin\DevolucionController@showMatriz')->name('devoluciones.showMatriz')->middleware('permission:devoluciones,punto_venta,[show|update]'); //detalle devolucion
 
 //turnos
 Route::get('/turnos/{status}', 'Admin\TurnoController@index')->name('turnos.index')->middleware('permission:turnos');
@@ -107,14 +107,14 @@ Route::post('/roles-update', 'Admin\RoleController@update')->name('roles.update'
 Route::get('/roles-destroy/{id}', 'Admin\RoleController@destroy')->name('roles.destroy')->middleware('permission:roles,punto_venta,destroy');
 Route::get('/roles-enable/{id}', 'Admin\RoleController@enable')->name('roles.enable')->middleware('permission:roles,punto_venta,destroy');
 // Nuevas rutas para gestión de permisos
-Route::get('/roles-permissions/{role}', 'Admin\RoleController@permissions')->name('roles.permissions');
+Route::get('/roles-permissions/{role}', 'Admin\RoleController@permissions')->name('roles.permissions')->middleware('permission:roles,punto_venta,[show|update]');
 Route::post('/roles-sync-permissions/{role}', 'Admin\RoleController@syncPermissions')->name('roles.permissions.sync')->middleware('permission:roles,punto_venta,auth');
 
 //permisos
-Route::get('/permissions', 'Admin\PermissionController@index')->name('permission.index');
-Route::post('/permissions-store', 'Admin\PermissionController@store')->name('permission.store');
-Route::post('/permissions-update', 'Admin\PermissionController@update')->name('permission.update');
-Route::get('/permissions-desctroy/{id}', 'Admin\PermissionController@destroy')->name('permission.destroy');
+Route::get('/permissions', 'Admin\PermissionController@index')->name('permission.index')->middleware('permission:roles');
+Route::post('/permissions-store', 'Admin\PermissionController@store')->name('permission.store')->middleware('permission:roles,punto_venta,create');
+Route::post('/permissions-update', 'Admin\PermissionController@update')->name('permission.update')->middleware('permission:roles,punto_venta,update');
+Route::get('/permissions-desctroy/{id}', 'Admin\PermissionController@destroy')->name('permission.destroy')->middleware('permission:roles,punto_venta,destroy');
 
 //usuarios
 Route::get('/users/{status?}', 'Admin\UserController@index')->name('users.index')->middleware('permission:usuarios');
@@ -129,6 +129,13 @@ Route::get('/ticket-sale/{sale_id}/{auto?}', 'Controller@ticket')->name('ticket.
 Route::get('/ticket-devolution/{devolution_id}/{auto?}', 'Controller@ticket')->name('ticket.devolution');
 Route::get('/ticket-devolution-matriz/{devolution_id}/{auto?}', 'Controller@ticket')->name('ticketMatriz.devolution');
 Route::get('/ticket-box/{user_id}/{auto?}', 'Controller@ticket')->name('ticket.box');
+
+//facturas
+Route::get('/facturas', 'Admin\FacturaController@index')->name('facturas.index')->middleware('permission:ventas');
+Route::get('/facturas-create/{sale_id?}', 'Admin\FacturaController@create')->name('facturas.create')->middleware('permission:ventas,punto_venta,create');
+Route::post('/facturas-store', 'Admin\FacturaController@store')->name('facturas.store')->middleware('permission:ventas,punto_venta,create');
+Route::get('/facturas-show/{id}', 'Admin\FacturaController@show')->name('facturas.show')->middleware('permission:ventas,punto_venta,show');
+Route::get('/facturas-cancel/{id}', 'Admin\FacturaController@cancel')->name('facturas.cancel')->middleware('permission:ventas,punto_venta,destroy');
 
 //rutas de reportes
 Route::get('/reports', 'Admin\ReportController@index')->name('report.index');

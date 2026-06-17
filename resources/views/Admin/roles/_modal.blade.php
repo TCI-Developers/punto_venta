@@ -13,7 +13,7 @@
                     <label for="name" class="col-lg-12 col-md-12 col-sm-12">Nombre* <br>
                         <input type="text" class="form-control inputModal" name="name" id="name" placeholder="Nombre" required>
                     </label>
-                    <label for="description" class="col-lg-12 col-md-12 col-sm-12">Descripción* <br>
+                    <label for="description" class="col-lg-12 col-md-12 col-sm-12">Descripción <br>
                         <textarea class="form-control inputModal" name="description" id="description" cols="5" placeholder="Descripción"></textarea>
                     </label>
                 </div>

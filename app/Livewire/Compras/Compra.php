@@ -33,13 +33,13 @@ class Compra extends Component
     public function render()
     {   
         $proveedores = Proveedor::where('status', 1)->orderBy('name', 'asc')->get();
-        $products = Product::get();
+        $products = Product::where('activo', 1)->get();
 
         if(!is_null($this->compra_id)){
             $this->compra = CompraModel::find($this->compra_id);
 
-            $status = $this->compra->status == 1 ? '':'disabled';
             if(is_object($this->compra)){
+                $status = $this->compra->status == 1 ? '':'disabled';
                 $this->product_saved = $this->compra->getDetalles;
                 return view('livewire.compras.create', ['proveedores' => $proveedores,
                             'products' => $products, 'status' => $status]);

@@ -15,29 +15,59 @@
                 <div class="card-body">
                     <h4 class="text-center mb-4">Ingresar Monto Inicial de la Caja</h4>
 
+                    @if($ultimoCierre)
+                    <div class="alert alert-info d-flex align-items-center gap-2 mb-4" role="alert">
+                        <i class="fa fa-info-circle fa-lg"></i>
+                        <div>
+                            El último turno cerrado por
+                            <strong>{{ $ultimoCierreUser->name ?? 'Desconocido' }}</strong>
+                            dejó <strong>${{ number_format($ultimoCierre->monto_dejado_caja, 2) }}</strong> en caja
+                            <small class="text-muted d-block">{{ \Carbon\Carbon::parse($ultimoCierre->end_date)->format('d/m/Y H:i') }}</small>
+                        </div>
+                    </div>
+                    @else
+                    <div class="alert alert-warning mb-4" role="alert">
+                        No hay cierres de caja previos. Es el primer turno del día.
+                    </div>
+                    @endif
+
                     @if(session('monto'))
-                    <div class="mb-4 font-medium text-sm text-red-600">
-                        {{session('monto')}}
-                        <div style="    display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: center; align-items: center;">
-                            <label for="next" class="mr-1">¿Deseas ingnorarlo?   SI</label>
-                            <input id="next" class="block mt-1" type="checkbox" name="next"/> {{$val ?? ''}}
+                    <div class="alert alert-danger mb-3">
+                        {{ session('monto') }}
+                        <div class="d-flex align-items-center gap-2 mt-2">
+                            <label for="next" class="mb-0">¿Ignorar diferencia y continuar?</label>
+                            <input id="next" type="checkbox" name="next" form="amountForm"/>
                         </div>
                     </div>
                     @endif
 
-                    <!-- Mensajes de error -->
+                    @if ($errors->any())
+                    <div class="alert alert-danger mb-3">
+                        {{ $errors->first() }}
+                    </div>
+                    @endif
+
                     <div id="error-message" class="alert alert-danger d-none" role="alert">
                         Por favor, ingrese un monto válido.
                     </div>
 
-                    <form id="amountForm" action="{{route('box.storeStarAmountBox')}}" method="POST">
+                    <form id="amountForm" action="{{ route('box.storeStarAmountBox') }}" method="POST">
                         @csrf
                         <div class="mb-3">
                             <label for="start_amount_box" class="form-label">Monto Inicial</label>
-                            <input type="number" step="0.01" id="start_amount_box" name="start_amount_box" class="form-control" required>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" min="0" id="start_amount_box"
+                                       name="start_amount_box" class="form-control"
+                                       placeholder="{{ $ultimoCierre ? number_format($ultimoCierre->monto_dejado_caja, 2) : '0.00' }}"
+                                       required>
+                            </div>
+                            @if($ultimoCierre)
+                            <small class="text-muted">Se esperan ${{ number_format($ultimoCierre->monto_dejado_caja, 2) }} según el último cierre.</small>
+                            @endif
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100">Guardar</button>
+                        <button type="submit" class="btn btn-primary w-100">Iniciar Turno</button>
                     </form>
                 </div>
             </div>

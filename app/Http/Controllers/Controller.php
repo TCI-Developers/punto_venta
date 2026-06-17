@@ -277,7 +277,7 @@ class Controller extends BaseController
     static function hasInternetConnection(): bool
     {
         try {
-            $connected = @fsockopen("www.google.com", 80);
+            $connected = @fsockopen("www.google.com", 80, $errno, $errstr, 2);
             if ($connected) {
                 fclose($connected);
                 return true;

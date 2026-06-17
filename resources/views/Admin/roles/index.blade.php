@@ -8,23 +8,20 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('components.use.link_scripts_glabal')
     <style>
-        .permission-module {
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        .permission-module-header {
-            background-color: #f8f9fa;
-            padding: 10px;
-            font-weight: bold;
-        }
-        .permission-items {
-            padding: 10px;
-        }
-        .permission-item {
-            margin-bottom: 5px;
-        }
+        .perm-card { border: 1px solid #dee2e6; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+        .perm-card-header { background: #f8f9fa; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #dee2e6; }
+        .perm-card-header .mod-title { font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+        .perm-card-body { padding: 10px 50px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .perm-item { display: flex; align-items: center; gap: 5px; }
+        .perm-item label { margin: 0; font-size: 0.875rem; cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .perm-help { cursor: pointer; color: #6c757d; font-size: 0.75rem; border: 1px solid #ced4da; border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; flex-shrink: 0; }
+        .perm-help:hover { background: #6c757d; color: #fff; border-color: #6c757d; }
+        .select-all-label { font-size: 0.8rem; color: #6c757d; display: flex; align-items: center; gap: 5px; cursor: pointer; margin-bottom: 0; }
+        .perm-help { position: relative; cursor: default; }
+        .perm-help::after { content: attr(data-tooltip); position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; font-size: 0.75rem; padding: 5px 8px; border-radius: 4px; white-space: normal; width: 200px; text-align: left; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 9999; line-height: 1.4; }
+        .perm-help:hover::after { opacity: 1; }
+        .perm-item-disabled { opacity: 0.4; cursor: not-allowed; }
+        .perm-item-disabled * { pointer-events: none; }
     </style>
     <script>
         //funcion para abrir modal crear
@@ -160,7 +157,7 @@
         
         <!-- Modal para permisos -->
         <div class="modal fade" id="permissionsModal" tabindex="-1" role="dialog" aria-labelledby="permissionsModalLabel">
-            <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h4 class="modal-title" id="permissionsModalLabel">Administrar Permisos</h4>

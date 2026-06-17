@@ -60,12 +60,13 @@ class DevolucionController extends Controller
                 $descuento = $request->descuentos[$key] / $request->total_products[$key];
                 $impuesto = $request->impuestos[$key] / $request->total_products[$key];
                 $subtotal = $request->precio_unit[$key] * $item;
-                
-                $product = Product::where('code_product', $request->code_product)->first();
+
+                $detalle = DetalleCompra::find($key);
+                $product = Product::find($detalle->producto_id);
                 $dev_matriz = new DevolucionMatriz();
                 $dev_matriz->driver = $driver->name;
                 $dev_matriz->compra_id = $compra_id;
-                $dev_matriz->product_id = $product->product_id;
+                $dev_matriz->product_id = $product->id;
                 $dev_matriz->branch_id = $empresa->branch_id;
                 $dev_matriz->cantidad = $item;
                 $dev_matriz->impuesto = $impuesto;
@@ -144,7 +145,7 @@ class DevolucionController extends Controller
         }
 
         $sale = Sale::find($devolution->sale_id);
-        if(!is_object($devolution)){
+        if(!is_object($sale)){
             return redirect()->back()->with('error', 'No se pudo completar la acción.');
         }
         $sale_details = $sale->getDetails;
@@ -159,14 +160,14 @@ class DevolucionController extends Controller
         $branch = EmpresaDetail::first();
         $drivers = Driver::where('status', 1)->get();
         $devolution = DevolucionMatriz::find($devolucion_id);
-        $detail_compra = DetalleCompra::where('compra_id', $devolution->getCompra->id)->where('producto_id', $devolution->product_id)->first();
-        $compra = Compra::find($devolution->compra_id);
-
-        if(!is_object($devolution) || !is_object($detail_compra)){
+        if(!is_object($devolution)){
             return redirect()->back()->with('error', 'Ocurrio algo inesperado en la devolución.');
         }
 
-        if(!is_object($devolution)){
+        $detail_compra = DetalleCompra::where('compra_id', $devolution->getCompra->id)->where('producto_id', $devolution->product_id)->first();
+        $compra = Compra::find($devolution->compra_id);
+
+        if(!is_object($detail_compra)){
             return redirect()->back()->with('error', 'No se pudo completar la acción.');
         }
 
@@ -189,7 +190,7 @@ class DevolucionController extends Controller
         }
 
         $cantidad = $devolution->cantidad;
-        $descuentos = $devolution->total_descuento;
+        $descuentos = $devolution->total_descuentos;
         $total_devolucion = $devolution->total_devolucion;
 
         if(count($sale_detail_dev->getCantSalesDetailDev)){
@@ -246,9 +247,11 @@ class DevolucionController extends Controller
             for ($i=0; $i < count($request->part_to_product_id) ; $i++) { 
                 $sale = Sale::find($request->sale_id);
 
+                $presentation = PartToProduct::find($request->part_to_product_id[$i]);
                 $sale_detail_dev = new SaleDetail();
                 $sale_detail_dev->sale_id = $request->sale_id;
                 $sale_detail_dev->part_to_product_id = $request->part_to_product_id[$i];
+                $sale_detail_dev->product_id = $presentation ? $presentation->product_id : 0;
                 $sale_detail_dev->amount = $request->subtotal[$i];
                 $sale_detail_dev->subtotal = $request->subtotal[$i];
                 $sale_detail_dev->iva = $request->iva[$i];
@@ -306,7 +309,9 @@ class DevolucionController extends Controller
     //funcion para sumar stock del producto y vigencia del producto
     function setStock($sale_detail_cant, $cant, $type){
         $presentation = PartToProduct::find($sale_detail_cant->part_to_product_id);
+        if(!is_object($presentation)) return;
         $product_existentes = Product::find($presentation->product_id);
+        if(!is_object($product_existentes)) return;
 
         if($type == 'suma'){
             // $presentation->stock = $presentation->stock + $cant;

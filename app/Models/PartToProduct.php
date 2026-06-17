@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Product;
+use App\Models\{Product, PresentationProduct};
 
 class PartToProduct extends Model
 {
@@ -29,6 +29,11 @@ class PartToProduct extends Model
     //obtenemos la promocion
     public function getPromotion(){
         return $this->hasOne('App\Models\Promotion', 'id', 'promotion_id');
+    }
+
+    //obtenemos el tipo de presentacion (caja, pieza, docena, etc.)
+    public function getPresentation(){
+        return $this->hasOne(PresentationProduct::class, 'id', 'presentation_product_id');
     }
 
     //obtenemos el producto

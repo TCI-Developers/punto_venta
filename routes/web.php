@@ -24,4 +24,4 @@ Route::middleware([
 });
 
 Route::post('/login-user', 'Admin\UserController@loginUser')->name('user.login')->middleware('web');
-Route::get('/makeMigration', 'Controller@makeMigration')->name('migration')->middleware('web');
+Route::get('/makeMigration', 'Controller@makeMigration')->name('migration')->middleware(['web', 'auth']);

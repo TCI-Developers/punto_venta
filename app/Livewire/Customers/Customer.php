@@ -19,10 +19,13 @@ class Customer extends Component
         if($this->search == ''){
             $customers = CustomerModel::where('status', $this->status)->paginate($this->paginate_cant);
         }else{
-            $customers = CustomerModel::where('status', $this->status)->where('name', 'LIKE', "%{$this->search}%")
-            ->orWhere('razon_social', 'LIKE', "%{$this->search}%")
-            ->orWhere('rfc', 'LIKE', "%{$this->search}%")
-            ->orWhere('postal_code', 'LIKE', "%{$this->search}%")
+            $customers = CustomerModel::where('status', $this->status)
+                ->where(function($q){
+                    $q->where('name', 'LIKE', "%{$this->search}%")
+                      ->orWhere('razon_social', 'LIKE', "%{$this->search}%")
+                      ->orWhere('rfc', 'LIKE', "%{$this->search}%")
+                      ->orWhere('postal_code', 'LIKE', "%{$this->search}%");
+                })
                 ->paginate($this->paginate_cant);
         }
 

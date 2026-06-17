@@ -97,7 +97,7 @@
                         </tr>
                         @empty
                         <tr><td colspan="7" class="table-warning text-center">Sin compras</td></tr>
-                        @endif
+                        @endforelse
                     </tbody>
                 </table>
             </div>

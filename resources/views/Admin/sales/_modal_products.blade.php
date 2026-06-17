@@ -7,7 +7,7 @@
       </div>
       <div class="modal-body col-12">
         <div class="mb-3">
-          <input type="text" id="searchInput" class="form-control" placeholder="Buscar producto" wire:model.live="search">
+          <input type="text" id="searchInput" class="form-control" placeholder="Buscar producto" wire:model.live="search" wire:keydown.enter.prevent>
         </div>
 
           <div class="table-responsive">

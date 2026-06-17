@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan *)",
+      "Bash(DB_CONNECTION=sqlite DB_DATABASE=database/nativephp.sqlite php artisan migrate --force)",
+      "Bash(sqlite3 /Volumes/KINGSTON/Proyectos/postci/database/nativephp.sqlite \".schema facturas\")",
+      "Bash(sqlite3 /Volumes/KINGSTON/Proyectos/postci/database/nativephp.sqlite \".schema factura_sales\")",
+      "Bash(php -l /Volumes/KINGSTON/Proyectos/postci/app/Http/Controllers/Admin/FacturaController.php)",
+      "Bash(php -l /Volumes/KINGSTON/Proyectos/postci/app/Models/Factura.php)",
+      "Bash(php -l /Volumes/KINGSTON/Proyectos/postci/app/Models/Sale.php)",
+      "Bash(php -l /Volumes/KINGSTON/Proyectos/postci/app/Models/EmpresaDetail.php)"
+    ]
+  }
+}

@@ -101,9 +101,25 @@
 
                 @if($sale->status <= 1)
                 <!-- Si existen movimientos y no se a cobrado -->
-                <button type="button" class="btn btn-warning float-right mr-2 
+                <button type="button" class="btn btn-warning float-right mr-2
                     {{count($sale->getDetails) && (float)$sale->amount_received === 0 || !count($sale->getDetails) && (float)$sale->amount_received === 0 ? '':'d-none'}}"
-                    onClick="cobrar()" id="btnCobro" wire:ignore>Cobrar</button> 
+                    onClick="cobrar()" id="btnCobro" wire:ignore>Cobrar</button>
+                @endif
+
+                @if($sale->status == 2 && auth()->user()->hasPermissionThroughModule('ventas','punto_venta','create'))
+                @php $yaFacturada = $sale->facturas()->where('status', 1)->exists(); @endphp
+                @if(!$yaFacturada)
+                <a href="{{ route('facturas.create', $sale->id) }}"
+                   class="btn btn-info float-right mr-2">
+                    <i class="fa fa-file-invoice"></i> Facturar
+                </a>
+                @else
+                @php $factura = $sale->facturas()->where('status', 1)->first(); @endphp
+                <a href="{{ route('facturas.show', $factura->id) }}"
+                   class="btn btn-outline-info float-right mr-2">
+                    <i class="fa fa-file-invoice"></i> Ver Factura
+                </a>
+                @endif
                 @endif
             </form>
         </div>

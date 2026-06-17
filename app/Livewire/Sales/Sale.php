@@ -66,14 +66,42 @@ class Sale extends Component
             $this->sales_detail = SaleDetail::where('sale_id', $this->id)->get();
             $this->sales_detail_dev = SaleDetail::where('sale_id', $this->id)->where('status', 0)->get();
             $devoluciones = Devolucion::where('sale_id', $this->id)->get();
-            return view('livewire.sales.show', ['sale' => $sale, 'devoluciones' => $devoluciones, 'products_' => Product::paginate(25)]);
+
+            $hasAuth = Auth::User()->hasPermissionThroughModule('ventas', 'punto_venta', 'auth')
+                       || Auth::User()->hasRole('root');
+
+            if($this->search != ''){
+                $query = PartToProduct::where(function($q){
+                    $q->whereHas('getProduct', function($sq){
+                        $sq->where('description', 'LIKE', "%{$this->search}%")
+                           ->orWhere('code_product', 'LIKE', "%{$this->search}%");
+                    })->orWhere('code_bar', 'LIKE', "%{$this->search}%");
+                });
+
+                if(!$hasAuth){
+                    $query->whereHas('getProduct', fn($q) => $q->where('existence', '>', 0));
+                }
+
+                $this->products = $query->limit(50)->get();
+            } else {
+                $this->products = collect();
+            }
+
+            return view('livewire.sales.show', ['sale' => $sale, 'devoluciones' => $devoluciones]);
         }
         $user = Auth::User();
         $empresa = EmpresaDetail::first();
         $this->products = Product::get();
 
+        // Limpiar ventas huérfanas: status=1, sin productos, creadas hace más de 2 horas
+        SaleModel::where('user_id', $user->id)
+            ->where('status', 1)
+            ->where('created_at', '<', now()->subHours(2))
+            ->whereDoesntHave('getDetails')
+            ->delete();
+
         if($this->search != ''){
-            if($user->hasRole(['root','admin'])){
+            if($user->hasAnyRole(['root','admin'])){
                 $sales = SaleModel::where('status', '!=', 0)->where('branch_id', $empresa->branch_id)
                    ->where(function($query) {
                     $query->where('folio', 'LIKE', "%{$this->search}%")
@@ -135,17 +163,30 @@ class Sale extends Component
     //funcion para obtener datos con scaner
     public function scaner_codigo($code_bar = null){
         $code = $code_bar ?? $this->scan_presentation_id;
-        $presentation = PartToProduct::where('code_bar', $code)->first();
-        // $presentation = PartToProduct::where('code_bar', $code)->where('stock', '>', 0)->first(); //old
+
+        // Busca primero por código de barras (scanner físico), luego por ID (modal manual)
+        $presentation = PartToProduct::where('code_bar', $code)->first()
+                     ?? PartToProduct::find($code);
 
         $this->scan_presentation_id = '';
-        if(is_object($presentation)){
-            $cantidad = $this->mayoreo_or_menudeo($presentation);
-            if($cantidad){
-                $this->venta_mayoreo_save($presentation, $cantidad);
-            }else{
-                $this->saveMenudeo($presentation);
-            }   
+        if(!is_object($presentation)) return;
+
+        // Verificar existencia del producto
+        $product = Product::find($presentation->product_id);
+        if(is_object($product) && $product->existence <= 0){
+            $hasAuth = Auth::User()->hasPermissionThroughModule('ventas', 'punto_venta', 'auth')
+                       || Auth::User()->hasRole('root');
+            if(!$hasAuth){
+                $this->dispatch('sinExistencia', ['message' => 'El producto "' . ($product->description ?? $code) . '" no tiene existencia y no tienes permiso para venderlo.']);
+                return;
+            }
+        }
+
+        $cantidad = $this->mayoreo_or_menudeo($presentation);
+        if($cantidad){
+            $this->venta_mayoreo_save($presentation, $cantidad);
+        }else{
+            $this->saveMenudeo($presentation);
         }
     }
 
@@ -433,8 +474,8 @@ class Sale extends Component
 
     // funcion para cambiar el stock del producto
     function setStock($presentation, $cant = 1, $type = 'menos'){
-        // $presentacionese_existentes = PartToProduct::where('product_id', $presentation->product_id)->get();
         $product_existentes = Product::find($presentation->product_id);
+        if(!is_object($product_existentes)) return;
 
         // if(count($presentacionese_existentes)){
         //     foreach($presentacionese_existentes as $item){
@@ -459,6 +500,7 @@ class Sale extends Component
                     $val = $presentation->cantidad_despiezado > 0 ? $cant/($presentation->cantidad_despiezado):$cant;
                     $product_existentes->existence = $product_existentes->existence - $val;
                 }
+                $product_existentes->existence = round($product_existentes->existence, 4);
                 $product_existentes->save();
         //     }
         // }
@@ -555,9 +597,23 @@ class Sale extends Component
     //funcion para guardar el monto recibido, total venta y el cambio
     function cobrar($monto, $total_venta, $change){
         $sale = SaleModel::find($this->id);
+
+        if(!$sale->getDetails()->count()){
+            $this->dispatch('cobrarError', ['message' => 'No puedes cobrar una venta sin productos.']);
+            return;
+        }
+
+        $real_total = $sale->getAmount($this->id);
+        $real_change = (float)$monto - $real_total;
+
+        if($real_change < 0){
+            $this->dispatch('cobrarError', ['message' => 'El monto recibido no cubre el total de la venta.']);
+            return;
+        }
+
         $sale->amount_received = $monto;
-        $sale->total_sale = $total_venta;
-        $sale->change = $change;
+        $sale->total_sale = $real_total;
+        $sale->change = $real_change;
         $sale->status = 2;
         $sale->save();
 
@@ -573,7 +629,7 @@ class Sale extends Component
     function hasInternetConnection(): bool
     {
         try {
-            $connected = @fsockopen("www.google.com", 80);
+            $connected = @fsockopen("www.google.com", 80, $errno, $errstr, 2);
             if ($connected) {
                 fclose($connected);
                 return true;

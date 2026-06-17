@@ -55,7 +55,7 @@
                     </tr>
                     @empty
                     <tr><td colspan="6" class="table-warning text-center">Sin cuentas</td></tr>
-                    @endif
+                    @endforelse
                 </tbody>
             </table>
         </div>

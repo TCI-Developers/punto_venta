@@ -33,11 +33,17 @@ class DevolucionIndexMatriz extends Component
             }
         }else{
             if($this->type == 'sale'){
-                $devoluciones = Devolucion::where('status', $this->status)->where('fecha_devolucion', 'LIKE', "%{$this->search}%")
-                                ->orWhere('code_product', 'LIKE', "%{$this->search}%")->paginate($this->paginate_cant);
+                $devoluciones = Devolucion::where('status', $this->status)->where('branch_id', $this->branch_id)
+                                ->where(function($q){
+                                    $q->where('fecha_devolucion', 'LIKE', "%{$this->search}%")
+                                      ->orWhere('code_product', 'LIKE', "%{$this->search}%");
+                                })->paginate($this->paginate_cant);
             }else{
-                $devoluciones = DevolucionMatriz::where('status', $this->status)->where('fecha_devolucion', 'LIKE', "%{$this->search}%")
-                                ->orWhere('code_product', 'LIKE', "%{$this->search}%")->paginate($this->paginate_cant);
+                $devoluciones = DevolucionMatriz::where('status', $this->status)->where('branch_id', $this->branch_id)
+                                ->where(function($q){
+                                    $q->where('fecha_devolucion', 'LIKE', "%{$this->search}%")
+                                      ->orWhere('code_product', 'LIKE', "%{$this->search}%");
+                                })->paginate($this->paginate_cant);
             }
         }
 

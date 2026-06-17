@@ -33,6 +33,7 @@
         //funcion para mostrar el ticket del usuario
         function ticket(){
             $('#modalTicket').show();
+            if(window.loadTicketBox) window.loadTicketBox();
         }
     </script>
 
@@ -47,6 +48,7 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
                     $('#modalTicket').show();
+                    if(window.loadTicketBox) window.loadTicketBox();
                 });
             </script>
         @endif

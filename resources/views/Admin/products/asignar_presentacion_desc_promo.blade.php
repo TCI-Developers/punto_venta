@@ -7,7 +7,7 @@
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('components.use.link_scripts_glabal')
-    <script src="{{asset('js/products/asignar_presentacion_desc_promo,js')}}"></script>
+    <script src="{{asset('js/products/asignar_presentacion_desc_promo.js')}}"></script>
 </head>
 <body>
     <main class="content">

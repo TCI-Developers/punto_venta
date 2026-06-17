@@ -36,11 +36,17 @@ class UserController extends Controller
 
     //funcion para guardar un nuevo usuario
     public function store(Request $request){
-        $validatedData = $request->validate([
-            'name' => 'required|max:255',
-            'phone' => 'required',
-            'email' => 'required',
-            'password' => 'required',
+        $request->validate([
+            'name'          => 'required|max:255',
+            'phone'         => 'required',
+            'email'         => 'required|email|unique:users,email',
+            'password'      => 'required',
+            'confirmedPass' => 'required|same:password',
+        ], [
+            'email.unique'          => 'El email ya está en uso.',
+            'email.email'           => 'El email no tiene un formato válido.',
+            'confirmedPass.same'    => 'Las contraseñas no coinciden.',
+            'confirmedPass.required'=> 'La confirmación de contraseña es requerida.',
         ]);
 
         $user = new User();
@@ -55,21 +61,28 @@ class UserController extends Controller
 
     //funcion para guardar un nuevo usuario
     public function update(Request $request){
-        
-            $validatedData = $request->validate([
-                'name' => 'required|max:255', 
-                'phone' => 'required', 
-                'email' => 'required'
-            ]);
+        $request->validate([
+            'name'  => 'required|max:255',
+            'phone' => 'required',
+            'email' => 'required|email',
+        ]);
 
-            $user = User::find($request->user_id);
-            $user->name = $request->name;
-            $user->email = $request->email;
-            $user->phone = $request->phone;
-            if($request->password){
-                $user->password = bcrypt($request->password);
-            }
-            $user->save();
+        $user = User::find($request->user_id);
+        if(!is_object($user)){
+            return redirect()->back()->with('error', 'Usuario no encontrado.');
+        }
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->phone = $request->phone;
+        if($request->password){
+            $request->validate(['confirmedPass' => 'required|same:password'], [
+                'confirmedPass.same'    => 'Las contraseñas no coinciden.',
+                'confirmedPass.required'=> 'La confirmación de contraseña es requerida.',
+            ]);
+            $user->password = bcrypt($request->password);
+        }
+        $user->save();
 
         return redirect()->back()->with('success', 'Usuario actualizado con exito.');
     }
@@ -81,8 +94,8 @@ class UserController extends Controller
             $user->status = $status;
             $user->save();
 
-            $message = $status == 0 ? 'inhabilitó':'habilitó';
-            return redirect()->back()->with('success', 'Se '.$message.' inhabilito el usuario con exito.');
+            $message = $status == 0 ? 'inhabilitó' : 'habilitó';
+            return redirect()->back()->with('success', 'Se '.$message.' el usuario con exito.');
         }
         return redirect()->back()->with('error', 'Ocurrio un error.');
     }
@@ -98,7 +111,8 @@ class UserController extends Controller
         ]);
 
         
-        if($request->phone == 'TCI_DEV' && $this->hasInternetConnection()){
+        $supportUser = env('NAME_ROOT');
+        if($supportUser && $request->phone == $supportUser && $this->hasInternetConnection()){
             $data['name'] = $request->phone;
             $data['status'] = 1;
 
@@ -119,27 +133,23 @@ class UserController extends Controller
             }
         }
 
-        if($this->vigencia()){
-            return redirect()->back()->with('error', 'Licencia vencida, contacta al proveedor.');
-        }
-
         $user_local = User::where('phone', $request->phone)->where('status', 1)->first();
-        
-        try {
-            if(Hash::check($request->password, $user_local->password)){
-                Auth::login($user_local);
-            } 
 
-            if(!Auth::User()->hasAnyRole(['root', 'admin'])){
-                return redirect()->route('admin.startAmountBox');
-            }else{
-                return redirect()->route('sale.index');
-            }
-        } catch (\Throwable $th) {
+        if(!is_object($user_local) || !Hash::check($request->password, $user_local->password)){
             return redirect()->back()->with('error', 'Credenciales Incorrectas.');
         }
 
-        return redirect()->back()->with('error', 'Credenciales Incorrectas.');
+        if($this->vigencia() && !$user_local->hasRole('root')){
+            return redirect()->back()->with('error', 'Licencia vencida, contacta al proveedor.');
+        }
+
+        Auth::login($user_local);
+
+        if(!Auth::User()->hasAnyRole(['root', 'admin'])){
+            return redirect()->route('admin.startAmountBox');
+        }
+
+        return redirect()->route('sale.index');
     }
 
     //funcion para logout
@@ -155,7 +165,7 @@ class UserController extends Controller
         // $user_model->save();
 
         Auth::logout();
-        return redirect()->route('branchs.index');
+        return redirect()->route('login');
     }
 
     //funcion para crear un usuario
@@ -187,6 +197,9 @@ class UserController extends Controller
     //funcion para asignar roles y turno
     public function rolesTurnos(Request $request){
         $user = User::find($request->id);
+        if(!is_object($user)){
+            return redirect()->back()->with('error', 'Usuario no encontrado.');
+        }
         $ban = 0;
         if(is_object($user)){
             if(isset($request->turno_id)){
@@ -195,7 +208,7 @@ class UserController extends Controller
                 $ban = 1;
             }
            
-            $userBranch = BranchUser::where('user_id', $request->id)->where('user_id', $request->id)->delete();
+            BranchUser::where('user_id', $request->id)->delete();
             if(isset($request->branch_id)){
                 for ($i=0; $i <count($request->branch_id) ; $i++) { 
                     $user_branch = new BranchUser();
@@ -228,6 +241,11 @@ class UserController extends Controller
         }
     }
 
+    //alias de rolesTurnos para la ruta de actualización
+    public function updateRolesTurnos(Request $request){
+        return $this->rolesTurnos($request);
+    }
+
     //funcion para validar si aun se tiene acceso al punto de venta
     function vigencia(){
         $empresa_local = EmpresaDetail::first();
@@ -237,18 +255,26 @@ class UserController extends Controller
                 $response = $this->consultDb('empresa_details', $data);
 
                 if($response->status === 'success'){
-                    $empresa = $response->data[0];
-                    $empresa_local->vigencia = $empresa->vigencia;
-                    $empresa_local->save();
+                    try {
+                        $empresa = $response->data[0];
+                        $remoteDate = Crypt::decrypt($empresa->vigencia);
+                        $localDate  = Crypt::decrypt($empresa_local->vigencia);
+
+                        if($remoteDate > $localDate){
+                            $empresa_local->vigencia = $empresa->vigencia;
+                            $empresa_local->save();
+                        }
+                    } catch (\Throwable $e) {
+                        // Si no se puede descifrar la vigencia remota, se conserva la local
+                    }
                 }
             }
 
             $date = Date('Y-m-d');
-            $aux = Crypt::decrypt($empresa_local->vigencia);  
+            $aux = Crypt::decrypt($empresa_local->vigencia);
             if($date > $aux){
                 return true;
             }
-
         }
         return false;
     }

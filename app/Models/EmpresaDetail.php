@@ -13,7 +13,10 @@ class EmpresaDetail extends Model
 
     protected $fillable = [
         'name',
+        'razon_social',
         'rfc',
+        'regimen_fiscal',
+        'codigo_postal',
         'address',
         'vigencia',
         'path_logo',
