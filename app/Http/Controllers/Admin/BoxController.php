@@ -220,6 +220,9 @@ class BoxController extends Controller
         $rules = [
             'tickets' => [
                 function ($attribute, $value, $fail) use ($total_efectivo, $total_tickets_coins, $tolerancia) {
+                    if ($total_efectivo == 0) {
+                        return; // Sin efectivo en caja, no se requiere conteo de billetes/monedas
+                    }
                     if ($total_tickets_coins == 0) {
                         $fail('Ingresa el conteo de billetes y monedas.');
                     }else if($tolerancia && $total_tickets_coins != ($total_efectivo)){

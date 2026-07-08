@@ -15,7 +15,20 @@
             </script>
         @endif
 
-     @if(session('info'))
+     @if(session('warning'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    title: 'Atención',
+                    text: {!! json_encode(session('warning')) !!},
+                    icon: 'warning',
+                    confirmButtonText: 'Entendido'
+                });
+            });
+        </script>
+    @endif
+
+    @if(session('info'))
   	    <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const description = {!! json_encode(session('info')) !!};

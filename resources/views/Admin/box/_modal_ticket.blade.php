@@ -6,8 +6,8 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="modalTicketLabel">Ticket</h5>
-        <a href="{{route('box.statusBox')}}" class="btn btn-secondary btn-sm"><i class="fa fa-arrow-left"></i> Regresar</a>
-        <a href="{{route('box.statusBox')}}" class="btn btn-primary btn-sm"><i class="fa fa-check"></i> Cerrar Turno</a>
+        <a href="{{route('admin.startAmountBox')}}" class="btn btn-secondary btn-sm"><i class="fa fa-plus"></i> Nuevo turno</a>
+        <a href="{{route('box.statusBox')}}" class="btn btn-primary btn-sm"><i class="fa fa-sign-out-alt"></i> Cerrar sesión</a>
       </div>
       <div class="modal-body col-12" style="position:relative; min-height:70vh;">
           <div id="ticketSpinner" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#fff; z-index:10;">

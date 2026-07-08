@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\{Branch, EmpresaDetail, Box, User};
 use Illuminate\Support\Facades\{Auth, Crypt};
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
@@ -25,10 +26,18 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'No perteneces a esta sucursal.');
         }
 
-        // Validación de doble turno: si ya tiene un turno abierto, mandarlo directo a ventas
-        $turnoAbierto = Box::where('user_id', Auth::User()->id)->where('status', 0)->exists();
-        if($turnoAbierto){
-            return redirect()->route('sale.index')->with('info', 'Ya tienes un turno abierto.');
+        // Validación de doble turno
+        $turnoAbierto = Box::where('user_id', Auth::User()->id)->where('status', 0)->first();
+        if ($turnoAbierto) {
+            $esDeHoy = Carbon::parse($turnoAbierto->start_date)->isToday();
+            if ($esDeHoy) {
+                return redirect()->route('sale.index')->with('info', 'Ya tienes un turno abierto.');
+            }
+            return redirect()->route('box.turnOff')->with('warning',
+                'Tienes un turno abierto desde ' .
+                Carbon::parse($turnoAbierto->start_date)->format('d/m/Y H:i') .
+                '. Ciérralo antes de continuar.'
+            );
         }
 
         // Obtener el último cierre para mostrar el monto de referencia

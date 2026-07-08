@@ -111,6 +111,18 @@
                 <i class="fa fa-arrow-right"></i>&nbsp;Siguiente</button>
           </div>
       </form>
+      <div id="loadingCierre" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:#fff;">
+          <div class="spinner-border text-light mb-3" style="width:3rem; height:3rem;" role="status"></div>
+          <p class="mb-0" style="font-size:1.1rem;">Procesando cierre de turno...</p>
+          <small class="text-white-50">Sincronizando información, por favor espera.</small>
+      </div>
+      <script>
+      document.querySelector('form[action="{{ route('box.store') }}"]').addEventListener('submit', function() {
+          document.getElementById('btnAddEdit').disabled = true;
+          var overlay = document.getElementById('loadingCierre');
+          overlay.style.display = 'flex';
+      });
+      </script>
       @else
       <div class="modal-body">
             <div class="row col-12">
@@ -123,5 +135,5 @@
       @endif
     </div>
   </div>
-  @include('Admin.box._modal_ticket')
 </div>
+@include('Admin.box._modal_ticket')

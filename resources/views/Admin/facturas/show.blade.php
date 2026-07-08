@@ -25,12 +25,18 @@
                     <span class="badge badge-{{ $factura->getStatusBadge() }} ml-2">
                         {{ $factura->getStatusLabel() }}
                     </span>
-                    @if($factura->status == 1 && auth()->user()->hasPermissionThroughModule('ventas','punto_venta','destroy'))
-                    <a href="{{ route('facturas.cancel', $factura->id) }}"
-                       class="btn btn-danger float-right btn-sm"
-                       onclick="return confirm('¿Cancelar esta factura? Esta acción no se puede deshacer.')">
+                    @if($factura->status == 1)
+                    <a href="{{ route('facturas.consultarEstado', $factura->id) }}"
+                       class="btn btn-outline-secondary float-right btn-sm mr-2"
+                       title="Verificar estado en el SAT">
+                        <i class="fa fa-sync"></i> Estado SAT
+                    </a>
+                    @if(auth()->user()->hasPermissionThroughModule('ventas','punto_venta','destroy'))
+                    <a href="{{ route('facturas.cancelForm', $factura->id) }}"
+                       class="btn btn-danger float-right btn-sm mr-1">
                         <i class="fa fa-ban"></i> Cancelar
                     </a>
+                    @endif
                     @endif
                 </h2>
             </div>
@@ -246,7 +252,7 @@
     @if($factura->xml)
     <script>
     function descargarXML() {
-        var xml   = @json($factura->xml);
+        var xml   = {!! json_encode($factura->xml) !!};
         var blob  = new Blob([xml], { type: 'application/xml' });
         var url   = URL.createObjectURL(blob);
         var a     = document.createElement('a');
