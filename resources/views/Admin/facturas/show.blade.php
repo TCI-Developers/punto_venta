@@ -25,13 +25,16 @@
                     <span class="badge badge-{{ $factura->getStatusBadge() }} ml-2">
                         {{ $factura->getStatusLabel() }}
                     </span>
+                    @if($factura->is_demo)
+                    <span class="badge badge-warning ml-1">Pre Timbrado</span>
+                    @endif
                     @if($factura->status == 1)
                     <a href="{{ route('facturas.consultarEstado', $factura->id) }}"
                        class="btn btn-outline-secondary float-right btn-sm mr-2"
                        title="Verificar estado en el SAT">
                         <i class="fa fa-sync"></i> Estado SAT
                     </a>
-                    @if(auth()->user()->hasPermissionThroughModule('ventas','punto_venta','destroy'))
+                    @if(auth()->user()->hasPermissionThroughModule('facturas','punto_venta','destroy'))
                     <a href="{{ route('facturas.cancelForm', $factura->id) }}"
                        class="btn btn-danger float-right btn-sm mr-1">
                         <i class="fa fa-ban"></i> Cancelar
@@ -91,6 +94,39 @@
                                         <td class="text-muted">Fecha:</td>
                                         <td>{{ $factura->created_at ? $factura->created_at->format('d/m/Y H:i') : '—' }}</td>
                                     </tr>
+                                    @if($factura->relacionado_uuid)
+                                    @php $facturaOrig = \App\Models\Factura::where('uuid', $factura->relacionado_uuid)->first(); @endphp
+                                    <tr>
+                                        <td class="text-muted" style="white-space:nowrap;">Sustituye a:</td>
+                                        <td>
+                                            @if($facturaOrig)
+                                                <a href="{{ route('facturas.show', $facturaOrig->id) }}" class="badge badge-warning" style="font-size:.8em;">
+                                                    <i class="fa fa-chain"></i> Factura #{{ $facturaOrig->id }}
+                                                </a>
+                                            @else
+                                                <span class="badge badge-secondary"><i class="fa fa-chain"></i> TipoRelacion 04</span>
+                                            @endif
+                                            <br><small class="text-monospace text-muted" style="font-size:.72em;">{{ $factura->relacionado_uuid }}</small>
+                                        </td>
+                                    </tr>
+                                    @endif
+
+                                    @if($factura->foliosust)
+                                    @php $facturaSust = \App\Models\Factura::where('uuid', $factura->foliosust)->first(); @endphp
+                                    <tr>
+                                        <td class="text-muted" style="white-space:nowrap;">Sustituida por:</td>
+                                        <td>
+                                            @if($facturaSust)
+                                                <a href="{{ route('facturas.show', $facturaSust->id) }}" class="badge badge-success" style="font-size:.8em;">
+                                                    <i class="fa fa-check-circle"></i> Factura #{{ $facturaSust->id }}
+                                                </a>
+                                            @else
+                                                <span class="badge badge-secondary"><i class="fa fa-check-circle"></i> Externa</span>
+                                            @endif
+                                            <br><small class="text-monospace text-muted" style="font-size:.72em;">{{ $factura->foliosust }}</small>
+                                        </td>
+                                    </tr>
+                                    @endif
                                 </table>
                             </div>
                         </div>

@@ -62,7 +62,7 @@
 
             //select tipo de pago
             $('#type_payment').on('change', function(){
-                if($(this).val() == 'tarjeta'){
+                if($(this).val() !== 'efectivo'){
                     $('.input_amounts').val('').attr('disabled', true);
                 }else{
                     $('.input_amounts').attr('disabled', false);
@@ -122,9 +122,9 @@
         function metodoPago(){
             let option = $('#payment_method_id').find('option:selected').data('name')
             if(option === 'PPD'){
-                $('#type_payment').val('tarjeta');
+                $('#type_payment').selectpicker('val', 'tarjeta_credito');
             }else{
-                $('#type_payment').val('efectivo');
+                $('#type_payment').selectpicker('val', 'efectivo');
             }
         }
 
@@ -331,7 +331,7 @@
             // if($('#payment_method_id option:selected').data('name') == 'PPD'){
             //     $('#amount_received').val($('#total_sale').val()).attr('readonly', true);
             // }            
-            if($('#type_payment').val() == 'tarjeta'){
+            if($('#type_payment').val() !== 'efectivo'){
                 $('#amount_received').val($('#total_sale').val()).attr('readonly', true);
             }            
             getChange($('#total_sale').val());
@@ -384,8 +384,8 @@
             let change         = parseFloat($('#change').val());
             let tipo           = $('#type_payment').val();
 
-            // El redondeo de centavos aplica solo en efectivo; tarjeta usa el total exacto
-            let total_threshold = tipo === 'tarjeta' ? total_sale : ajustarMonto(total_sale);
+            // El redondeo de centavos aplica solo en efectivo; cualquier otro tipo usa el total exacto
+            let total_threshold = tipo !== 'efectivo' ? total_sale : ajustarMonto(total_sale);
 
             if (amount_received > 0 && amount_received >= total_threshold) {
                 Swal.fire({
@@ -412,7 +412,7 @@
                 });
             } else {
                 Swal.fire(
-                    tipo === 'tarjeta'
+                    tipo !== 'efectivo'
                         ? `El monto no coincide con el total de la venta: $${total_sale.toFixed(2)}`
                         : `La cantidad recibida es menor al total ajustado: $${total_threshold.toFixed(2)}`,
                     '', 'info'
@@ -435,7 +435,12 @@
 
         //funcion para mostrar ticket
         window.addEventListener('showTicket', event => {
-                $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+event.detail[0].sale_id+'/true');
+                var saleId = event.detail[0].sale_id;
+                $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+saleId+'/true');
+                var btnFacturar = document.getElementById('btnFacturarVenta');
+                if (btnFacturar) {
+                    btnFacturar.href = btnFacturar.dataset.baseUrl + '/' + saleId;
+                }
                 $('#modalTicket').show();
         });
 

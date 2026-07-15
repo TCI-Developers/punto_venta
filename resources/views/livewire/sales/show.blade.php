@@ -37,10 +37,12 @@
                     </div>
                 </label>
                 <label for="type_payment" class="col-lg-2 col-md-2 col-sm-12">Tipo de Pago* <br>
-                    <select name="type_payment" id="type_payment" class="form-control selectpicker input_sale show-tick" 
-                            data-size="8" title="Metodo de pago" disabled>
-                            <option value="efectivo" {{$sale->type_payment == 'efectivo' ? 'selected':''}}>Efectivo</option>
-                            <option value="tarjeta" {{$sale->type_payment == 'tarjeta' ? 'selected':''}}>Tarjeta</option>
+                    <select name="type_payment" id="type_payment" class="form-control selectpicker input_sale show-tick"
+                            data-size="8" title="Tipo de pago" disabled>
+                            <option value="efectivo"        {{ $sale->type_payment == 'efectivo'        ? 'selected':'' }}>Efectivo</option>
+                            <option value="tarjeta_credito" {{ $sale->type_payment == 'tarjeta_credito' ? 'selected':'' }}>Tarjeta crédito</option>
+                            <option value="tarjeta_debito"  {{ $sale->type_payment == 'tarjeta_debito'  ? 'selected':'' }}>Tarjeta débito</option>
+                            <option value="transferencia"   {{ $sale->type_payment == 'transferencia'   ? 'selected':'' }}>Transferencia</option>
                     </select>
                 </label>
                 <label for="coin" class="col-lg-2 col-md-2 col-sm-12">Moneda* <br>

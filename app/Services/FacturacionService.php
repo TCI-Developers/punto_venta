@@ -27,7 +27,6 @@ class FacturacionService
         try {
             $response = Http::timeout(60)->post("{$this->baseUrl}/api/timbrado", [
                 'txt'          => base64_encode($xmlLayout),
-                'demo'         => $this->demo ? 'demo' : '',
                 'idFactura'    => $metadata['folio'] ?? ('FAC-' . $metadata['id']),
                 'record'       => $metadata['id'],
                 'tipo'         => $metadata['tipo'] ?? 'I',

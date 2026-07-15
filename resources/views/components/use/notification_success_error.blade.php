@@ -8,8 +8,7 @@
                         title: description,
                         position: 'center',
                         icon: icon,
-                        showConfirmButton: false,
-                        timer: 2000
+                        confirmButtonText: 'Aceptar'
                     });
                 });
             </script>
@@ -36,8 +35,7 @@
                     title: description,
                     position: 'center',
                     icon: 'info',
-                    showConfirmButton: false,
-                    timer: 2000
+                    confirmButtonText: 'Aceptar'
                 });
             });
         </script>

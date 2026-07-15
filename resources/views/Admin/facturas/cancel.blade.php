@@ -13,7 +13,7 @@
         @include('components.use.nav-slider')
         @include('components.use.notification_success_error')
 
-        <div class="card card-danger" style="max-width:640px; margin:0 auto;">
+        <div class="card card-danger">
             <div class="form-group card-header with-border text-center">
                 <h2>
                     <a href="{{ route('facturas.show', $factura->id) }}" class="btn btn-success float-left btn-sm"
@@ -49,14 +49,89 @@
                     </div>
 
                     {{-- Solo visible si motivo = 01 --}}
-                    <div class="form-group" id="bloquesFolioSust" style="display:none;">
-                        <label><strong>UUID de la factura sustituta*</strong>
-                            <input type="text" name="foliosust" id="foliosust" class="form-control"
-                                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                                   maxlength="36">
-                            <small class="text-muted">UUID de la nueva factura que reemplaza a esta (formato SAT).</small>
-                        </label>
-                        @error('foliosust') <span class="text-danger">{{ $message }}</span> @enderror
+                    <div id="bloquesFolioSust" style="display:none;">
+                        <input type="hidden" name="foliosust" id="foliosust" value="">
+
+                        {{-- Factura seleccionada --}}
+                        <div id="sustSeleccionadaWrap" style="display:none;" class="alert alert-success py-2 px-3 mb-2 d-flex align-items-center justify-content-between">
+                            <div>
+                                <i class="fa fa-check-circle"></i>
+                                <strong>Factura sustituta:</strong>
+                                <span id="sustSeleccionadaLabel"></span><br>
+                                <small class="text-monospace" id="sustUuidLabel" style="font-size:.78em;"></small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger ml-3" onclick="limpiarSustituta()">
+                                <i class="fa fa-times"></i> Quitar
+                            </button>
+                        </div>
+
+                        @error('foliosust') <div class="alert alert-danger py-1 px-3">{{ $message }}</div> @enderror
+
+                        <div id="tablaSustWrap">
+                            @if($sustitutasVinculadas->isNotEmpty())
+                            <p class="mb-1"><small class="text-success font-weight-bold"><i class="fa fa-link"></i> Ya vinculadas a esta factura</small></p>
+                            <div class="table-responsive mb-2" style="max-height:160px; overflow-y:auto;">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="thead-light" style="position:sticky;top:0;">
+                                        <tr><th>#</th><th>Receptor</th><th>Total</th><th>Fecha</th><th></th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($sustitutasVinculadas as $sv)
+                                        <tr class="fila-sust" style="cursor:pointer;"
+                                            data-uuid="{{ $sv->uuid }}"
+                                            data-label="#{{ $sv->id }} — {{ $sv->customer?->name ?? 'Público general' }} — ${{ number_format($sv->total,2) }}"
+                                            onclick="seleccionarSustituta(this)">
+                                            <td>{{ $sv->id }}</td>
+                                            <td>{{ $sv->customer?->name ?? 'Público general' }}</td>
+                                            <td>${{ number_format($sv->total, 2) }}</td>
+                                            <td style="font-size:.8em;white-space:nowrap;">{{ $sv->created_at?->format('d/m/Y H:i') }}</td>
+                                            <td><button type="button" class="btn btn-xs btn-success"><i class="fa fa-check"></i> Seleccionar</button></td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            @endif
+
+                            @if($sustitutasOtras->isNotEmpty())
+                            <p class="mb-1"><small class="text-muted font-weight-bold">Otras facturas timbradas</small></p>
+                            <div class="mb-2">
+                                <input type="text" class="form-control form-control-sm" placeholder="Buscar por #, receptor o UUID..."
+                                       oninput="filtrarSustituta(this.value)">
+                            </div>
+                            <div class="table-responsive" style="max-height:180px; overflow-y:auto;">
+                                <table class="table table-sm table-hover mb-0" id="tablaOtrasSust">
+                                    <thead class="thead-light" style="position:sticky;top:0;">
+                                        <tr><th>#</th><th>Receptor</th><th>Total</th><th>Fecha</th><th>UUID</th><th></th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($sustitutasOtras as $so)
+                                        <tr class="fila-sust fila-otras" style="cursor:pointer;"
+                                            data-uuid="{{ $so->uuid }}"
+                                            data-label="#{{ $so->id }} — {{ $so->customer?->name ?? 'Público general' }} — ${{ number_format($so->total,2) }}"
+                                            onclick="seleccionarSustituta(this)">
+                                            <td>{{ $so->id }}</td>
+                                            <td>{{ $so->customer?->name ?? 'Público general' }}</td>
+                                            <td>${{ number_format($so->total, 2) }}</td>
+                                            <td style="font-size:.8em;white-space:nowrap;">{{ $so->created_at?->format('d/m/Y H:i') }}</td>
+                                            <td style="font-size:.75em;color:#6c757d;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $so->uuid }}</td>
+                                            <td><button type="button" class="btn btn-xs btn-warning"><i class="fa fa-check"></i> Seleccionar</button></td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            @endif
+
+                            @if($sustitutasVinculadas->isEmpty() && $sustitutasOtras->isEmpty())
+                            <div class="alert alert-warning">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                No hay facturas timbradas disponibles. Primero crea la factura sustituta con
+                                <a href="{{ route('facturas.create') }}">Nueva Factura</a>
+                                activando <em>"Esta factura sustituye a otra"</em>.
+                            </div>
+                            @endif
+                        </div>
                     </div>
 
                     <div class="alert alert-info" id="infoMotivo" style="display:none;"></div>
@@ -77,7 +152,12 @@
 
     <script>
     var motivos = {
-        '01': 'Se emitió con errores y <strong>se va a emitir una factura sustituta</strong>. Necesitas proporcionar el UUID de la nueva factura. El SAT vincula ambas.',
+        '01': '<strong>Paso 1 completado:</strong> ya timbré la factura sustituta con el enlace a esta. ' +
+              'Ingresa abajo el UUID de esa nueva factura. ' +
+              '<br><span class="text-danger"><i class="fa fa-exclamation-triangle"></i> ' +
+              'Si aún no has creado la factura sustituta, cancela este proceso, ve a ' +
+              '<em>Nueva Factura</em>, activa <em>"Esta factura sustituye a otra"</em> e ingresa el UUID de esta factura, ' +
+              'tímbrala, y luego regresa aquí con su UUID.</span>',
         '02': 'Se emitió con errores pero <strong>no se emitirá una factura sustituta</strong>. Ejemplo: RFC del cliente incorrecto y el cliente ya no necesita la factura.',
         '03': '<strong>La venta/operación no se realizó</strong>. El cliente devolvió el producto o se canceló la operación antes de entregarse.',
         '04': 'La operación ya está incluida en una <strong>factura global (de ticket)</strong> y esta factura individual es redundante.',
@@ -85,7 +165,9 @@
 
     function toggleFolioSust(val) {
         document.getElementById('bloquesFolioSust').style.display = (val === '01') ? '' : 'none';
-        document.getElementById('btnConfirmar').disabled = (val === '');
+        if (val !== '01') limpiarSustituta();
+        var sinSust = val !== '01' || document.getElementById('foliosust').value !== '';
+        document.getElementById('btnConfirmar').disabled = (val === '') || (val === '01' && !document.getElementById('foliosust').value);
         var info = document.getElementById('infoMotivo');
         if (val && motivos[val]) {
             info.innerHTML = motivos[val];
@@ -93,6 +175,31 @@
         } else {
             info.style.display = 'none';
         }
+    }
+
+    function seleccionarSustituta(row) {
+        var uuid  = row.dataset.uuid;
+        var label = row.dataset.label;
+        document.getElementById('foliosust').value = uuid;
+        document.getElementById('sustSeleccionadaLabel').textContent = label;
+        document.getElementById('sustUuidLabel').textContent = uuid;
+        document.getElementById('sustSeleccionadaWrap').style.display = '';
+        document.getElementById('tablaSustWrap').style.display = 'none';
+        document.getElementById('btnConfirmar').disabled = false;
+    }
+
+    function limpiarSustituta() {
+        document.getElementById('foliosust').value = '';
+        document.getElementById('sustSeleccionadaWrap').style.display = 'none';
+        document.getElementById('tablaSustWrap').style.display = '';
+        document.getElementById('btnConfirmar').disabled = true;
+    }
+
+    function filtrarSustituta(q) {
+        q = q.toLowerCase();
+        document.querySelectorAll('#tablaOtrasSust .fila-otras').forEach(function(row) {
+            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
     }
     </script>
 </body>

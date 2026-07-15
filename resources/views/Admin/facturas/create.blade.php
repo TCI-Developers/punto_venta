@@ -11,6 +11,26 @@
         .tabla-ventas tbody tr { cursor: pointer; }
         .tabla-ventas tbody tr.seleccionada { background-color: #d4edda !important; }
         #resumen { background: #f8f9fa; border-radius: 4px; }
+
+        /* Toggle modo timbrado */
+        .modo-timbrado-toggle { display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none; margin:0; padding:8px 14px; border-radius:10px; border:1.5px solid #dee2e6; background:#fff; transition:all .25s; }
+        .modo-timbrado-toggle:hover { border-color:#adb5bd; }
+        .modo-timbrado-toggle input { display:none; }
+        .modo-track { position:relative; width:40px; height:22px; background:#28a745; border-radius:11px; transition:background .25s; flex-shrink:0; }
+        .modo-track::after { content:''; position:absolute; top:3px; left:3px; width:16px; height:16px; background:#fff; border-radius:50%; transition:transform .25s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+        .modo-timbrado-toggle input:checked ~ .modo-track { background:#f0ad4e; }
+        .modo-timbrado-toggle input:checked ~ .modo-track::after { transform:translateX(18px); }
+        .modo-label { display:flex; flex-direction:column; line-height:1.2; }
+        .modo-label #modoNombre { font-weight:600; font-size:.9rem; color:#155724; }
+        .modo-label #modoDesc { font-size:.75rem; color:#6c757d; }
+        .modo-timbrado-toggle.es-prueba { border-color:#f0ad4e; background:#fffbf0; }
+        .modo-timbrado-toggle.es-prueba #modoNombre { color:#856404; }
+
+        /* Botón sustituye */
+        .btn-sustituye { display:inline-flex; align-items:center; gap:6px; border:none; background:transparent; color:#6c757d; font-size:.82rem; cursor:pointer; padding:4px 8px; border-radius:6px; transition:all .2s; border:1px dashed #ced4da; }
+        .btn-sustituye:hover:not(:disabled) { background:#fff3cd; color:#856404; border-color:#f0ad4e; }
+        .btn-sustituye.activo { background:#fff3cd; color:#856404; border-color:#f0ad4e; border-style:solid; font-weight:600; }
+        .btn-sustituye:disabled { opacity:.4; cursor:not-allowed; }
     </style>
 </head>
 <body>
@@ -117,7 +137,19 @@
 
                     {{-- ── Datos de pago ───────────────────────────────────── --}}
                     <div class="card mb-3">
-                        <div class="card-header bg-light"><strong>Datos de pago</strong></div>
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <strong>Datos de pago</strong>
+                            <div class="d-flex flex-column align-items-end" style="gap:3px;">
+                                <button type="button" id="btnToggleRelacionado" class="btn-sustituye"
+                                        onclick="toggleRelacionado()">
+                                    <i class="fa fa-chain"></i>
+                                    <span id="lblSustituye">Esta factura sustituye a otra</span>
+                                </button>
+                                <small id="avisoDemoSust" style="display:none; color:#856404; font-size:.72rem;">
+                                    <i class="fa fa-lock"></i> No disponible en Pre Timbrado
+                                </small>
+                            </div>
+                        </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6">
@@ -141,6 +173,80 @@
                                     </label>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {{-- ── Factura sustituta (cancelación motivo 01) ──────────── --}}
+                    <div class="card mb-3" id="bloqueRelacionado" style="display:none;">
+                        <div class="card-header" style="background:#fff8e1; border-color:#f0ad4e;">
+                            <strong><i class="fa fa-chain"></i> Esta factura sustituye a otra</strong>
+                            <small class="text-muted ml-2">Selecciona la factura original que será cancelada con motivo 01</small>
+                        </div>
+                        <div class="card-body p-2">
+
+                            {{-- Factura seleccionada --}}
+                            <div id="facturaSeleccionadaWrap" style="display:none;" class="alert alert-warning py-2 px-3 mb-2 d-flex align-items-center justify-content-between">
+                                <div>
+                                    <strong>Factura seleccionada:</strong>
+                                    <span id="facturaSeleccionadaLabel"></span><br>
+                                    <small class="text-monospace" id="uuidSeleccionadoLabel"></small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger ml-3" onclick="limpiarFacturaRelacionada()">
+                                    <i class="fa fa-times"></i> Quitar
+                                </button>
+                            </div>
+
+                            <input type="hidden" name="relacionado_uuid" id="relacionado_uuid" value="{{ old('relacionado_uuid') }}">
+
+                            {{-- Buscador + tabla --}}
+                            <div id="tablaFacturasWrap">
+                                <div class="mb-2 px-1">
+                                    <input type="text" id="buscarFacturaOrig" class="form-control form-control-sm"
+                                           placeholder="Buscar por #, receptor o UUID..." oninput="filtrarFacturasOrig(this.value)">
+                                </div>
+                                @if($facturasTimbradas->isEmpty())
+                                    <p class="text-muted text-center py-3">No hay facturas timbradas disponibles.</p>
+                                @else
+                                <div class="table-responsive" style="max-height:220px; overflow-y:auto;">
+                                    <table class="table table-sm table-hover mb-0" id="tablaFacturasOrig">
+                                        <thead class="thead-light" style="position:sticky;top:0;">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Receptor</th>
+                                                <th>Total</th>
+                                                <th>Fecha</th>
+                                                <th>UUID</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($facturasTimbradas as $ft)
+                                            <tr class="fila-orig" style="cursor:pointer;"
+                                                data-uuid="{{ $ft->uuid }}"
+                                                data-label="#{{ $ft->id }} — {{ $ft->customer?->name ?? 'Público general' }} — ${{ number_format($ft->total,2) }}"
+                                                onclick="seleccionarFacturaRelacionada(this)">
+                                                <td>{{ $ft->id }}</td>
+                                                <td>{{ $ft->customer?->name ?? 'Público general' }}</td>
+                                                <td>${{ number_format($ft->total, 2) }}</td>
+                                                <td style="white-space:nowrap;font-size:.8em;">
+                                                    {{ $ft->created_at?->format('d/m/Y H:i') }}
+                                                </td>
+                                                <td style="font-size:.75em; color:#6c757d; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                                    {{ $ft->uuid }}
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-xs btn-warning">
+                                                        <i class="fa fa-check"></i> Seleccionar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @endif
+                            </div>
+
                         </div>
                     </div>
 
@@ -170,7 +276,14 @@
                                     </thead>
                                     <tbody>
                                         @foreach($ventas as $v)
-                                        <tr onclick="toggleVenta(this)" class="{{ in_array($v->id, (array) old('sale_ids', $sale_id ? [$sale_id] : [])) ? 'seleccionada' : '' }}">
+                                        @php
+                                            $fpMap = ['efectivo'=>'01','tarjeta_credito'=>'04','tarjeta_debito'=>'28','transferencia'=>'03'];
+                                            $fpSugerido = $v->paymentMethod?->pay_method === 'PPD' ? '99' : ($fpMap[$v->type_payment] ?? '01');
+                                        @endphp
+                                        <tr onclick="toggleVenta(this)"
+                                            data-forma-pago="{{ $fpSugerido }}"
+                                            data-metodo-pago="{{ $v->paymentMethod?->pay_method ?? 'PUE' }}"
+                                            class="{{ in_array($v->id, (array) old('sale_ids', $sale_id ? [$sale_id] : [])) ? 'seleccionada' : '' }}">
                                             <td onclick="event.stopPropagation()">
                                                 <input type="checkbox" name="sale_ids[]"
                                                        value="{{ $v->id }}"
@@ -207,11 +320,26 @@
                         </div>
                     </div>
 
-                    <div class="text-right">
-                        <a href="{{ route('facturas.index') }}" class="btn btn-secondary mr-2">Cancelar</a>
-                        <button type="submit" class="btn btn-primary" id="btnTimbrar">
-                            <i class="fa fa-file-invoice"></i> Timbrar Factura
-                        </button>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap mt-2" style="gap:12px;">
+                        <label class="modo-timbrado-toggle" for="preTimbrado" id="lblModoTimbrado">
+                            <input type="checkbox" id="preTimbrado" name="pre_timbrado" value="1"
+                                   {{ old('pre_timbrado') ? 'checked' : '' }}
+                                   onchange="actualizarModo(this.checked)">
+                            <span class="modo-track">
+                                <span class="modo-thumb"></span>
+                            </span>
+                            <span class="modo-label" id="textoModo">
+                                <i class="fa fa-check-circle text-success"></i>
+                                <span id="modoNombre">Producción</span>
+                                <small id="modoDesc">factura con validez fiscal</small>
+                            </span>
+                        </label>
+                        <div>
+                            <a href="{{ route('facturas.index') }}" class="btn btn-secondary mr-2">Cancelar</a>
+                            <button type="submit" class="btn btn-primary" id="btnTimbrar">
+                                <i class="fa fa-file-text-o"></i> Timbrar Factura
+                            </button>
+                        </div>
                     </div>
 
                 </form>
@@ -220,6 +348,72 @@
     </main>
 
     <script>
+    function toggleRelacionado() {
+        var bloque  = document.getElementById('bloqueRelacionado');
+        var btn     = document.getElementById('btnToggleRelacionado');
+        var lbl     = document.getElementById('lblSustituye');
+        var visible = bloque.style.display !== 'none';
+        bloque.style.display = visible ? 'none' : '';
+        btn.classList.toggle('activo', !visible);
+        lbl.textContent = !visible ? 'Quitar relación' : 'Esta factura sustituye a otra';
+        if (visible) limpiarFacturaRelacionada();
+    }
+
+    function seleccionarFacturaRelacionada(row) {
+        var uuid  = row.dataset.uuid;
+        var label = row.dataset.label;
+        document.getElementById('relacionado_uuid').value = uuid;
+        document.getElementById('facturaSeleccionadaLabel').textContent = label;
+        document.getElementById('uuidSeleccionadoLabel').textContent = uuid;
+        document.getElementById('facturaSeleccionadaWrap').style.display = '';
+        document.getElementById('tablaFacturasWrap').style.display = 'none';
+        document.querySelectorAll('.fila-orig').forEach(function(r) {
+            r.style.background = r === row ? '#fff3cd' : '';
+        });
+    }
+
+    function limpiarFacturaRelacionada() {
+        document.getElementById('relacionado_uuid').value = '';
+        document.getElementById('facturaSeleccionadaWrap').style.display = 'none';
+        document.getElementById('tablaFacturasWrap').style.display = '';
+        document.querySelectorAll('.fila-orig').forEach(function(r) { r.style.background = ''; });
+    }
+
+    function filtrarFacturasOrig(q) {
+        q = q.toLowerCase();
+        document.querySelectorAll('#tablaFacturasOrig .fila-orig').forEach(function(row) {
+            var texto = row.textContent.toLowerCase();
+            row.style.display = texto.includes(q) ? '' : 'none';
+        });
+    }
+
+    function actualizarModo(esPrueba) {
+        var wrap  = document.getElementById('lblModoTimbrado');
+        var icono = wrap.querySelector('.modo-label i');
+        document.getElementById('modoNombre').textContent = esPrueba ? 'Pre Timbrado' : 'Producción';
+        document.getElementById('modoDesc').textContent   = esPrueba ? 'modo prueba — sin valor fiscal' : 'factura con validez fiscal';
+        icono.className = esPrueba ? 'fa fa-flask text-warning' : 'fa fa-check-circle text-success';
+        wrap.classList.toggle('es-prueba', esPrueba);
+
+        // Bloquear sustitución en modo prueba
+        var btn      = document.getElementById('btnToggleRelacionado');
+        var bloque   = document.getElementById('bloqueRelacionado');
+        var avisoDemo = document.getElementById('avisoDemoSust');
+        if (esPrueba) {
+            btn.disabled = true;
+            btn.title    = 'No disponible en Pre Timbrado — los UUIDs de prueba no son válidos ante el SAT';
+            btn.classList.remove('activo');
+            bloque.style.display = 'none';
+            document.getElementById('lblSustituye').textContent = 'Esta factura sustituye a otra';
+            limpiarFacturaRelacionada();
+            if (avisoDemo) avisoDemo.style.display = '';
+        } else {
+            btn.disabled = false;
+            btn.title    = '';
+            if (avisoDemo) avisoDemo.style.display = 'none';
+        }
+    }
+
     function toggleReceptor(esPublico) {
         document.getElementById('bloqueCliente').style.display = esPublico ? 'none' : '';
         if (esPublico) {
@@ -250,6 +444,20 @@
         document.getElementById('resIva').textContent      = '$' + iva.toFixed(2);
         document.getElementById('resTotal').textContent    = '$' + total.toFixed(2);
         document.getElementById('resumen').style.display   = subtotal > 0 ? '' : 'none';
+        sugerirFormaPago();
+    }
+
+    function sugerirFormaPago() {
+        var seleccionadas = document.querySelectorAll('.chk-venta:checked');
+        if (seleccionadas.length !== 1) return; // solo sugerir cuando hay exactamente 1 venta
+        var row = seleccionadas[0].closest('tr');
+        var fp  = row.dataset.formaPago;
+        var mp  = row.dataset.metodoPago;
+        if (!fp) return;
+        var selFp = document.querySelector('select[name="forma_pago"]');
+        var selMp = document.querySelector('select[name="metodo_pago"]');
+        if (selFp) { selFp.value = fp; $(selFp).selectpicker('val', fp); }
+        if (selMp) { selMp.value = mp; $(selMp).selectpicker('val', mp); }
     }
 
     // Seleccionar todas
@@ -278,6 +486,19 @@
     actualizarResumen();
     // Inicializar estado del receptor
     toggleReceptor(document.getElementById('publiCoGeneral').checked);
+    // Inicializar bloque relacionado si hay old input
+    (function(){
+        var uuid = document.getElementById('relacionado_uuid').value;
+        if (!uuid) return;
+        document.getElementById('bloqueRelacionado').style.display = '';
+        document.getElementById('btnToggleRelacionado').classList.add('activo');
+        document.getElementById('lblSustituye').textContent = 'Quitar relación';
+        // Buscar la fila correspondiente y simular selección
+        var fila = document.querySelector('.fila-orig[data-uuid="' + uuid + '"]');
+        if (fila) seleccionarFacturaRelacionada(fila);
+    })();
+    // Inicializar modo timbrado
+    actualizarModo(document.getElementById('preTimbrado').checked);
     </script>
 </body>
 </html>

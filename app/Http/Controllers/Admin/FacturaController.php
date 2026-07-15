@@ -31,16 +31,25 @@ class FacturaController extends Controller
         $empresa   = EmpresaDetail::first();
         $customers = Customer::where('status', 1)->orderBy('name')->get();
 
-        $ventas = Sale::where('status', 2)
+        $ventas = Sale::with('paymentMethod')
+            ->where('status', 2)
             ->whereDoesntHave('facturas', fn ($q) => $q->where('status', 1))
             ->orderBy('id', 'desc')
             ->get();
 
+        $facturasTimbradas = Factura::with('customer')
+            ->where('status', 1)
+            ->where('is_demo', false)
+            ->whereNotNull('uuid')
+            ->orderBy('id', 'desc')
+            ->get();
+
         return view('Admin.facturas.create', [
-            'empresa'   => $empresa,
-            'customers' => $customers,
-            'ventas'    => $ventas,
-            'sale_id'   => $sale_id,
+            'empresa'           => $empresa,
+            'customers'         => $customers,
+            'ventas'            => $ventas,
+            'sale_id'           => $sale_id,
+            'facturasTimbradas' => $facturasTimbradas,
         ]);
     }
 
@@ -118,7 +127,7 @@ class FacturaController extends Controller
         $payload = [
             'emisor' => [
                 'rfc'            => $empresa->rfc,
-                'nombre'         => $empresa->razon_social ?? $empresa->name,
+                'nombre'         => $empresa->name ?? $empresa->razon_social,
                 'regimen_fiscal' => $empresa->regimen_fiscal,
                 'codigo_postal'  => $empresa->codigo_postal,
             ],
@@ -154,14 +163,19 @@ class FacturaController extends Controller
         $factura->uso_cfdi         = $uso_cfdi;
         $factura->moneda           = $sales->first()->coin ?? 'MXN';
         $factura->status           = 0;
+        $factura->is_demo          = $request->boolean('pre_timbrado');
+        $factura->relacionado_uuid = trim($request->input('relacionado_uuid', '')) ?: null;
         $factura->save();
 
         $factura->sales()->attach($request->sale_ids);
 
-        // Generar XML CFDI 4.0 y enviar al servicio
-        $xmlLayout = $this->buildCFDIXml($payload);
-        $servicio  = app(FacturacionService::class);
-        $response  = $servicio->timbrar($xmlLayout, [
+        // Generar layout Dinvbox y enviar al servicio
+        $payload['folio']           = $factura->id;
+        $payload['demo']            = $request->boolean('pre_timbrado');
+        $payload['relacionado_uuid'] = trim($request->input('relacionado_uuid', ''));
+        $layout   = $this->buildDinvboxLayout($payload);
+        $servicio = app(FacturacionService::class);
+        $response = $servicio->timbrar($layout, [
             'id'      => $factura->id,
             'folio'   => 'FAC-' . $factura->id,
             'tipo'    => 'I',
@@ -211,7 +225,29 @@ class FacturaController extends Controller
         if ((int) $factura->status !== 1) {
             return redirect()->route('facturas.show', $id)->with('error', 'Solo se pueden cancelar facturas timbradas.');
         }
-        return view('Admin.facturas.cancel', ['factura' => $factura]);
+
+        // Facturas candidatas para sustitutas: primero las que ya relacionan esta, luego el resto
+        $sustitutasVinculadas = Factura::with('customer')
+            ->where('status', 1)
+            ->where('is_demo', false)
+            ->where('id', '!=', $factura->id)
+            ->where('relacionado_uuid', $factura->uuid)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $sustitutasOtras = Factura::with('customer')
+            ->where('status', 1)
+            ->where('is_demo', false)
+            ->where('id', '!=', $factura->id)
+            ->where(fn($q) => $q->whereNull('relacionado_uuid')->orWhere('relacionado_uuid', '!=', $factura->uuid))
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return view('Admin.facturas.cancel', [
+            'factura'              => $factura,
+            'sustitutasVinculadas' => $sustitutasVinculadas,
+            'sustitutasOtras'      => $sustitutasOtras,
+        ]);
     }
 
     public function cancel(Request $request, $id)
@@ -241,7 +277,8 @@ class FacturaController extends Controller
         );
 
         if ($response['success'] ?? false) {
-            $factura->status = 2;
+            $factura->status    = 2;
+            $factura->foliosust = ($request->motivo === '01' && $request->foliosust) ? $request->foliosust : null;
             $factura->save();
             return redirect()->route('facturas.show', $factura->id)
                 ->with('success', 'Factura cancelada exitosamente.');
@@ -275,131 +312,139 @@ class FacturaController extends Controller
             ->with('error', 'Error al consultar: ' . ($response['error_message'] ?? 'Sin respuesta'));
     }
 
-    // ─── XML CFDI 4.0 ────────────────────────────────────────────────────────
+    // ─── Layout Dinvbox (INI) ─────────────────────────────────────────────────
 
-    private function buildCFDIXml(array $payload): string
+    private function buildDinvboxLayout(array $payload): string
     {
         $emisor    = $payload['emisor'];
         $receptor  = $payload['receptor'];
         $comp      = $payload['comprobante'];
         $conceptos = $payload['conceptos'];
+        $folio     = $payload['folio'] ?? '';
         $fecha     = now()->format('Y-m-d\TH:i:s');
 
         $subtotal = number_format((float) $comp['subtotal'], 2, '.', '');
         $total    = number_format((float) $comp['total'], 2, '.', '');
         $totalIva = number_format(collect($conceptos)->sum('iva'), 2, '.', '');
 
-        // Emisor
-        $emisorRfc    = $this->xe($emisor['rfc']);
-        $emisorNombre = $this->xe($emisor['nombre']);
-        $emisorReg    = $this->xe($emisor['regimen_fiscal']);
-        $emisorCP     = $this->xe($emisor['codigo_postal']);
+        $lines = [];
 
-        // Receptor
-        $receptorRfc    = $this->xe($receptor['rfc']);
-        $receptorNombre = $this->xe($receptor['nombre']);
-        $receptorReg    = $this->xe($receptor['regimen_fiscal']);
-        $receptorCP     = $this->xe($receptor['codigo_postal']);
-        $receptorUso    = $this->xe($receptor['uso_cfdi']);
+        $lines[] = '[ComprobanteFiscalDigital]';
+        $lines[] = 'Version=4.0';
+        $lines[] = 'Serie=A';
+        $lines[] = 'Folio=' . $folio;
+        $lines[] = 'Fecha=' . $fecha;
+        $lines[] = 'FormaPago=' . $comp['forma_pago'];
+        $lines[] = 'NoCertificado=';
+        $lines[] = 'CondicionesDePago=';
+        $lines[] = 'SubTotal=' . $subtotal;
+        $lines[] = 'Moneda=' . $comp['moneda'];
+        $lines[] = 'Total=' . $total;
+        $lines[] = 'Exportacion=01';
+        $lines[] = 'TipoDeComprobante=' . $comp['tipo_comprobante'];
+        $lines[] = 'MetodoPago=' . $comp['metodo_pago'];
+        $lines[] = 'LugarExpedicion=' . $emisor['codigo_postal'];
+        $lines[] = '';
 
-        // Conceptos
-        $conceptosXml = '';
+        if ($receptor['rfc'] === self::RFC_PUBLICO_GENERAL) {
+            $lines[] = '[InformacionGlobal]';
+            $lines[] = 'Periodicidad=04';
+            $lines[] = 'Meses=' . now()->format('m');
+            $lines[] = 'Año=' . now()->format('Y');
+            $lines[] = '';
+        }
+
+        $lines[] = '[DatosAdicionales]';
+        $lines[] = 'tipoDocumento=' . $comp['tipo_comprobante'];
+        $lines[] = 'demo=' . (($payload['demo'] ?? false) ? 'true' : 'false');
+        $lines[] = 'observaciones=';
+        $lines[] = 'plantillaPDF=clasic';
+        $lines[] = 'logotipo=';
+        $lines[] = '';
+
+        $lines[] = '[Emisor]';
+        $lines[] = 'Rfc=' . $emisor['rfc'];
+        $lines[] = 'Nombre=' . $emisor['nombre'];
+        $lines[] = 'RegimenFiscal=' . $emisor['regimen_fiscal'];
+        $lines[] = '';
+
+        $lines[] = '[Receptor]';
+        $lines[] = 'Rfc=' . $receptor['rfc'];
+        $lines[] = 'Nombre=' . $receptor['nombre'];
+        $lines[] = 'DomicilioFiscalReceptor=' . $receptor['codigo_postal'];
+        $lines[] = 'RegimenFiscalReceptor=' . $receptor['regimen_fiscal'];
+        $lines[] = 'UsoCFDI=' . $receptor['uso_cfdi'];
+        $lines[] = '';
+
+        // [CfdiRelacionados|] — solo cuando esta factura sustituye a otra (cancelación motivo 01)
+        $relacionadoUuid = $payload['relacionado_uuid'] ?? '';
+        if ($relacionadoUuid !== '') {
+            $lines[] = '[CfdiRelacionados|]';
+            $lines[] = 'TipoRelacion=04';
+            $lines[] = 'UUID=[' . $relacionadoUuid . ']';
+            $lines[] = '';
+        }
+
         foreach ($conceptos as $c) {
-            $objetoImp    = $c['iva'] > 0 ? '02' : '01';
-            $cBase        = number_format((float) $c['subtotal'], 2, '.', '');
-            $cIva         = number_format((float) $c['iva'], 2, '.', '');
-            $cValUnit     = number_format((float) $c['valor_unitario'], 2, '.', '');
-            $cCantidad    = number_format((float) $c['cantidad'], 6, '.', '');
-            $cDescripcion = $this->xe($c['descripcion']);
-            $cClaveProd   = $this->xe($c['clave_prod_serv']);
-            $cClaveUnidad = $this->xe($c['clave_unidad']);
+            $objetoImp = $c['iva'] > 0 ? '02' : '01';
+            $cBase     = number_format((float) $c['subtotal'], 2, '.', '');
+            $cIva      = number_format((float) $c['iva'], 2, '.', '');
+            $cValUnit  = number_format((float) $c['valor_unitario'], 2, '.', '');
+            $cCant     = rtrim(rtrim(number_format((float) $c['cantidad'], 6, '.', ''), '0'), '.');
 
-            $impXml = '';
+            $lines[] = '[Concepto|]';
+            $lines[] = 'ClaveProdServ=' . $c['clave_prod_serv'];
+            $lines[] = 'NoIdentificacion=';
+            $lines[] = 'Cantidad=' . $cCant;
+            $lines[] = 'ClaveUnidad=' . $c['clave_unidad'];
+            $lines[] = 'ObjetoImp=' . $objetoImp;
+            $lines[] = 'Unidad=PIEZA';
+            $lines[] = 'Descripcion=' . $c['descripcion'];
+            $lines[] = 'ValorUnitario=' . $cValUnit;
+            $lines[] = 'Importe=' . $cBase;
+
             if ($c['iva'] > 0) {
-                $impXml = <<<XML
-
-          <cfdi:Impuestos>
-            <cfdi:Traslados>
-              <cfdi:Traslado Base="{$cBase}" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="{$cIva}"/>
-            </cfdi:Traslados>
-          </cfdi:Impuestos>
-XML;
+                $lines[] = 'Impuestos.Traslados.Base=[' . $cBase . ']';
+                $lines[] = 'Impuestos.Traslados.Impuesto=[002]';
+                $lines[] = 'Impuestos.Traslados.TipoFactor=[Tasa]';
+                $lines[] = 'Impuestos.Traslados.TasaOCuota=[0.160000]';
+                $lines[] = 'Impuestos.Traslados.Importe=[' . $cIva . ']';
             }
 
-            $conceptosXml .= <<<XML
-
-        <cfdi:Concepto
-          ClaveProdServ="{$cClaveProd}"
-          Cantidad="{$cCantidad}"
-          ClaveUnidad="{$cClaveUnidad}"
-          Descripcion="{$cDescripcion}"
-          ValorUnitario="{$cValUnit}"
-          Importe="{$cBase}"
-          ObjetoImp="{$objetoImp}">{$impXml}
-        </cfdi:Concepto>
-XML;
+            $lines[] = '';
         }
 
-        // Bloque de impuestos globales (solo si hay IVA)
-        $impGlobalesXml = '';
         if ((float) $totalIva > 0) {
-            $impGlobalesXml = <<<XML
+            $bases    = [];
+            $imptos   = [];
+            $factores = [];
+            $tasas    = [];
+            $ivaTots  = [];
 
-      <cfdi:Impuestos TotalImpuestosTrasladados="{$totalIva}">
-        <cfdi:Traslados>
-          <cfdi:Traslado Base="{$subtotal}" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="{$totalIva}"/>
-        </cfdi:Traslados>
-      </cfdi:Impuestos>
-XML;
+            foreach ($conceptos as $c) {
+                if ($c['iva'] > 0) {
+                    $bases[]    = '[' . number_format((float) $c['subtotal'], 2, '.', '') . ']';
+                    $imptos[]   = '[002]';
+                    $factores[] = '[Tasa]';
+                    $tasas[]    = '[0.160000]';
+                    $ivaTots[]  = '[' . number_format((float) $c['iva'], 2, '.', '') . ']';
+                }
+            }
+
+            $lines[] = '[Traslados]';
+            $lines[] = 'TotalImpuestosTrasladados=' . $totalIva;
+            $lines[] = 'Base=' . implode('', $bases);
+            $lines[] = 'Impuesto=' . implode('', $imptos);
+            $lines[] = 'TasaOCuota=' . implode('', $tasas);
+            $lines[] = 'TipoFactor=' . implode('', $factores);
+            $lines[] = 'Importe=' . implode('', $ivaTots);
+            $lines[] = '';
         }
 
-        return <<<XML
-<?xml version="1.0" encoding="utf-8"?>
-<cfdi:Comprobante
-  xmlns:cfdi="http://www.sat.gob.mx/cfd/4"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd"
-  Version="4.0"
-  Fecha="{$fecha}"
-  FormaPago="{$comp['forma_pago']}"
-  NoCertificado=""
-  Sello=""
-  Certificado=""
-  SubTotal="{$subtotal}"
-  Descuento="0"
-  Moneda="{$comp['moneda']}"
-  Total="{$total}"
-  TipoDeComprobante="{$comp['tipo_comprobante']}"
-  Exportacion="01"
-  MetodoPago="{$comp['metodo_pago']}"
-  LugarExpedicion="{$emisorCP}">
-
-    <cfdi:Emisor
-      Rfc="{$emisorRfc}"
-      Nombre="{$emisorNombre}"
-      RegimenFiscal="{$emisorReg}"/>
-
-    <cfdi:Receptor
-      Rfc="{$receptorRfc}"
-      Nombre="{$receptorNombre}"
-      DomicilioFiscalReceptor="{$receptorCP}"
-      RegimenFiscalReceptor="{$receptorReg}"
-      UsoCFDI="{$receptorUso}"/>
-
-    <cfdi:Conceptos>{$conceptosXml}
-    </cfdi:Conceptos>{$impGlobalesXml}
-
-</cfdi:Comprobante>
-XML;
+        return implode("\n", $lines);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
-
-    /** Escapa caracteres especiales para XML attributes/text content. */
-    private function xe(string $value): string
-    {
-        return htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
-    }
 
     /** Convierte error_code en mensaje amigable para el cajero. */
     private function mensajeAmigable(array $response): string
@@ -439,11 +484,13 @@ XML;
                 $subtotal = round((float) $detail->subtotal, 2);
                 $iva      = round((float) $detail->iva, 2);
 
+                $cantidad = max(1, (int) $detail->getCantSalesDetail->sum('cant'));
+
                 $conceptos[] = [
                     'clave_prod_serv' => $claveProd,
-                    'cantidad'        => (float) $detail->cant,
+                    'cantidad'        => $cantidad,
                     'clave_unidad'    => $claveUnidad,
-                    'descripcion'     => $descripcion,
+                    'descripcion'     => preg_replace('/\s+/', ' ', trim($descripcion)),
                     'valor_unitario'  => round((float) $detail->unit_price, 2),
                     'subtotal'        => $subtotal,
                     'iva'             => $iva,

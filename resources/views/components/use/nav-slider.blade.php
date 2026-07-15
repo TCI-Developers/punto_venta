@@ -38,6 +38,12 @@
                 Ventas
             </a>
         </li>
+        <li class="nav-item"> <!-- Facturas -->
+            <a href="{{route('facturas.index')}}">
+              <i class="fa fa-file-text-o"></i>
+                Facturas
+            </a>
+        </li>
         @endif
         @if(auth()->user()->hasPermissionThroughModule('inventarios'))
         <li class="nav-item"> <!-- Productos -->
@@ -148,6 +154,12 @@
                 </a>
             </li>
         @endif
+
+        <li class="nav-item">
+            <a href="{{ route('manual.index') }}">
+                <i class="fa fa-book"></i> Manual
+            </a>
+        </li>
 
         @if(Auth::User()->hasRole('root') || Auth::User()->name == 'TCI_DEV')
             <li class="nav-header text-center">--- Opciones de Root ---</li>

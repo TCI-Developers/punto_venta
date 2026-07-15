@@ -8,7 +8,11 @@
       "Bash(php -l /Volumes/KINGSTON/Proyectos/postci/app/Http/Controllers/Admin/FacturaController.php)",
       "Bash(php -l /Volumes/KINGSTON/Proyectos/postci/app/Models/Factura.php)",
       "Bash(php -l /Volumes/KINGSTON/Proyectos/postci/app/Models/Sale.php)",
-      "Bash(php -l /Volumes/KINGSTON/Proyectos/postci/app/Models/EmpresaDetail.php)"
+      "Bash(php -l /Volumes/KINGSTON/Proyectos/postci/app/Models/EmpresaDetail.php)",
+      "Bash(curl -s \"https://www.google.com/search?q=Dinvbox+API+documentation\")",
+      "Skill(deep-research)",
+      "Skill(deep-research:*)",
+      "WebFetch(domain:developers.dinvbox.mx)"
     ]
   }
 }

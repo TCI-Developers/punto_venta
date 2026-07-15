@@ -41,10 +41,12 @@
                     </div>
                 </label>
                 <label for="type_payment" class="col-lg-2 col-md-2 col-sm-12">Tipo de Pago* <br>
-                    <select name="type_payment" id="type_payment" class="form-control selectpicker show-tick" 
-                            data-size="8" title="Metodo de pago">
-                            <option value="efectivo" selected disabled>Efectivo</option>
-                            <option value="tarjeta" disabled>Tarjeta</option>
+                    <select name="type_payment" id="type_payment" class="form-control selectpicker show-tick"
+                            data-size="8" title="Tipo de pago" required>
+                            <option value="efectivo" selected>Efectivo</option>
+                            <option value="tarjeta_credito">Tarjeta crédito</option>
+                            <option value="tarjeta_debito">Tarjeta débito</option>
+                            <option value="transferencia">Transferencia</option>
                     </select>
                 </label>
                 <label for="coin" class="col-lg-2 col-md-2 col-sm-12">Moneda* <br>

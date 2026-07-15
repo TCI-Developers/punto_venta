@@ -28,18 +28,46 @@
             </div>
             <div class="card-body">
 
-                {{-- Filtro por status --}}
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <select id="filtroStatus" class="form-control" onchange="filtrarStatus(this.value)">
-                            <option value="">Todos los estados</option>
-                            <option value="0">Pendiente</option>
-                            <option value="1">Timbrada</option>
-                            <option value="2">Cancelada</option>
-                            <option value="3">Error</option>
-                        </select>
+                {{-- Filtros --}}
+                <div class="filtros-facturas mb-4">
+                    <div class="filtros-row">
+                        <div class="filtro-select-wrap">
+                            <i class="fa fa-filter filtro-icon"></i>
+                            <select id="filtroStatus" class="filtro-select" onchange="aplicarFiltros()">
+                                <option value="">Todos los estados</option>
+                                <option value="0">Pendiente</option>
+                                <option value="1">Timbrada</option>
+                                <option value="2">Cancelada</option>
+                                <option value="3">Error</option>
+                            </select>
+                        </div>
+                        <div class="filtro-tabs" role="group">
+                            <button type="button" id="btnTodos" class="ftab ftab-active" onclick="setFiltroDemo('')">
+                                <i class="fa fa-list"></i> Todas
+                            </button>
+                            <button type="button" id="btnProduccion" class="ftab ftab-prod" onclick="setFiltroDemo('0')">
+                                <i class="fa fa-check-circle"></i> Producción
+                            </button>
+                            <button type="button" id="btnPrueba" class="ftab ftab-demo" onclick="setFiltroDemo('1')">
+                                <i class="fa fa-flask"></i> Pre Timbrado
+                            </button>
+                        </div>
                     </div>
                 </div>
+                <style>
+                .filtros-facturas { background: #f8f9fa; border-radius: 10px; padding: 14px 18px; border: 1px solid #e3e6ea; }
+                .filtros-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+                .filtro-select-wrap { position: relative; display: flex; align-items: center; }
+                .filtro-icon { position: absolute; left: 10px; color: #6c757d; font-size: 0.85rem; pointer-events: none; }
+                .filtro-select { appearance: none; padding: 7px 32px 7px 30px; border: 1.5px solid #ced4da; border-radius: 8px; font-size: 0.9rem; background: #fff; color: #495057; cursor: pointer; min-width: 190px; transition: border-color .2s; }
+                .filtro-select:focus { outline: none; border-color: #80bdff; box-shadow: 0 0 0 2px rgba(0,123,255,.15); }
+                .filtro-tabs { display: flex; gap: 6px; background: #e9ecef; border-radius: 10px; padding: 4px; }
+                .ftab { border: none; background: transparent; padding: 6px 14px; border-radius: 7px; font-size: 0.85rem; font-weight: 500; cursor: pointer; color: #6c757d; transition: all .2s; white-space: nowrap; }
+                .ftab:hover { background: rgba(255,255,255,.7); color: #343a40; }
+                .ftab-active { background: #fff !important; color: #0056b3 !important; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+                .ftab-prod.ftab-sel { background: #fff !important; color: #155724 !important; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+                .ftab-demo.ftab-sel { background: #fff !important; color: #856404 !important; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+                </style>
 
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover table-sm" id="tablaFacturas">
@@ -61,7 +89,7 @@
                         </thead>
                         <tbody>
                             @forelse($facturas as $f)
-                            <tr data-status="{{ $f->status }}">
+                            <tr data-status="{{ $f->status }}" data-demo="{{ $f->is_demo ? '1' : '0' }}">
                                 <td>{{ $f->id }}</td>
                                 <td style="font-size:0.8em;">
                                     {{ $f->folio_fiscal ? substr($f->folio_fiscal, 0, 8).'...' : '—' }}
@@ -83,6 +111,9 @@
                                     <span class="badge badge-{{ $f->getStatusBadge() }}">
                                         {{ $f->getStatusLabel() }}
                                     </span>
+                                    @if($f->is_demo)
+                                    <span class="badge badge-warning">Prueba</span>
+                                    @endif
                                 </td>
                                 <td style="white-space:nowrap;font-size:0.85em;">
                                     {{ $f->created_at ? $f->created_at->format('d/m/Y H:i') : '—' }}
@@ -93,9 +124,8 @@
                                         <i class="fa fa-eye"></i>
                                     </a>
                                     @if($f->status == 1 && auth()->user()->hasPermissionThroughModule('ventas','punto_venta','destroy'))
-                                    <a href="{{ route('facturas.cancel', $f->id) }}"
+                                    <a href="{{ route('facturas.cancelForm', $f->id) }}"
                                        class="btn btn-xs btn-danger"
-                                       onclick="return confirm('¿Cancelar esta factura? Esta acción no se puede deshacer.')"
                                        title="Cancelar factura">
                                         <i class="fa fa-ban"></i>
                                     </a>
@@ -115,9 +145,22 @@
     </main>
 
     <script>
-    function filtrarStatus(val) {
+    var filtroDemo = '';
+
+    function setFiltroDemo(val) {
+        filtroDemo = val;
+        document.getElementById('btnTodos').className      = val === ''  ? 'ftab ftab-active' : 'ftab';
+        document.getElementById('btnProduccion').className = val === '0' ? 'ftab ftab-prod ftab-sel' : 'ftab ftab-prod';
+        document.getElementById('btnPrueba').className     = val === '1' ? 'ftab ftab-demo ftab-sel' : 'ftab ftab-demo';
+        aplicarFiltros();
+    }
+
+    function aplicarFiltros() {
+        var status = document.getElementById('filtroStatus').value;
         document.querySelectorAll('#tablaFacturas tbody tr[data-status]').forEach(function(row) {
-            row.style.display = (val === '' || row.dataset.status === val) ? '' : 'none';
+            var matchStatus = status === '' || row.dataset.status === status;
+            var matchDemo   = filtroDemo === '' || row.dataset.demo === filtroDemo;
+            row.style.display = (matchStatus && matchDemo) ? '' : 'none';
         });
     }
     </script>

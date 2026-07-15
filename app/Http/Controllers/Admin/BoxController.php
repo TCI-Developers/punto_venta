@@ -98,7 +98,7 @@ class BoxController extends Controller
         $end_date = date('Y-m-d H:i:s');
 
         $total_efectivo = Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'efectivo')->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale');
-        $total_tarjeta = Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'tarjeta')->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale');
+        $total_tarjeta  = Sale::where('user_id', $user_id)->where('status', 2)->whereIn('type_payment', ['tarjeta', 'tarjeta_credito', 'tarjeta_debito', 'transferencia'])->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale');
         $saleIds = Sale::where('user_id', $user_id)->pluck('id');
         $devoluciones = Devolucion::whereIn('sale_id', $saleIds)->whereBetween('updated_at', [$start_date, $end_date])->get();
         $total_devolucion_efectivo = 0;

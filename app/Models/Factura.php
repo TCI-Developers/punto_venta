@@ -15,7 +15,7 @@ class Factura extends Model
         'tipo_comprobante', 'customer_id', 'branch_id', 'user_id',
         'subtotal', 'descuento', 'iva', 'total',
         'forma_pago', 'metodo_pago', 'uso_cfdi', 'moneda',
-        'status', 'xml', 'pdf_url', 'error_message', 'response_json',
+        'status', 'is_demo', 'relacionado_uuid', 'foliosust', 'xml', 'pdf_url', 'error_message', 'response_json',
     ];
 
     public function customer()

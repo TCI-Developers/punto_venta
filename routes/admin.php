@@ -131,13 +131,17 @@ Route::get('/ticket-devolution-matriz/{devolution_id}/{auto?}', 'Controller@tick
 Route::get('/ticket-box/{user_id}/{auto?}', 'Controller@ticket')->name('ticket.box');
 
 //facturas
-Route::get('/facturas', 'Admin\FacturaController@index')->name('facturas.index')->middleware('permission:ventas');
-Route::get('/facturas-create/{sale_id?}', 'Admin\FacturaController@create')->name('facturas.create')->middleware('permission:ventas,punto_venta,create');
-Route::post('/facturas-store', 'Admin\FacturaController@store')->name('facturas.store')->middleware('permission:ventas,punto_venta,create');
-Route::get('/facturas-show/{id}', 'Admin\FacturaController@show')->name('facturas.show')->middleware('permission:ventas,punto_venta,show');
-Route::get('/facturas-cancel-form/{id}', 'Admin\FacturaController@cancelForm')->name('facturas.cancelForm')->middleware('permission:ventas,punto_venta,destroy');
-Route::post('/facturas-cancel/{id}', 'Admin\FacturaController@cancel')->name('facturas.cancel')->middleware('permission:ventas,punto_venta,destroy');
-Route::get('/facturas-estado/{id}', 'Admin\FacturaController@consultarEstado')->name('facturas.consultarEstado')->middleware('permission:ventas,punto_venta,show');
+Route::get('/facturas', 'Admin\FacturaController@index')->name('facturas.index')->middleware('permission:facturas');
+Route::get('/facturas-create/{sale_id?}', 'Admin\FacturaController@create')->name('facturas.create')->middleware('permission:facturas,punto_venta,create');
+Route::post('/facturas-store', 'Admin\FacturaController@store')->name('facturas.store')->middleware('permission:facturas,punto_venta,create');
+Route::get('/facturas-show/{id}', 'Admin\FacturaController@show')->name('facturas.show')->middleware('permission:facturas,punto_venta,show');
+Route::get('/facturas-cancel-form/{id}', 'Admin\FacturaController@cancelForm')->name('facturas.cancelForm')->middleware('permission:facturas,punto_venta,destroy');
+Route::post('/facturas-cancel/{id}', 'Admin\FacturaController@cancel')->name('facturas.cancel')->middleware('permission:facturas,punto_venta,destroy');
+Route::get('/facturas-estado/{id}', 'Admin\FacturaController@consultarEstado')->name('facturas.consultarEstado')->middleware('permission:facturas,punto_venta,show');
+
+//manual de usuario
+Route::get('/manual', 'Admin\ManualController@index')->name('manual.index');
+Route::get('/manual/{modulo}', 'Admin\ManualController@show')->name('manual.show');
 
 //rutas de reportes
 Route::get('/reports', 'Admin\ReportController@index')->name('report.index');

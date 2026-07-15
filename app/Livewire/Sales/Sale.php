@@ -136,8 +136,8 @@ class Sale extends Component
         $total_efectivo = 0;
         $total_tarjeta = 0;
         foreach($sales as $item){
-            $total_efectivo += $item->type_payment == 'efectivo' ? $item->total_sale:0;
-            $total_tarjeta += $item->type_payment == 'tarjeta' ? $item->total_sale:0;
+            $total_efectivo += $item->type_payment == 'efectivo' ? $item->total_sale : 0;
+            $total_tarjeta  += $item->type_payment !== 'efectivo' ? $item->total_sale : 0;
         }
 
         return view('livewire.sales.sale',['sales' => $sales, 'total_efectivo' => $total_efectivo, 'total_tarjeta' => $total_tarjeta]);
