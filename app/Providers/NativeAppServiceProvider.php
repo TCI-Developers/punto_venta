@@ -14,6 +14,8 @@ class NativeAppServiceProvider implements ProvidesPhpIni
      */
     public function boot(): void
     {
+        Artisan::call('migrate', ['--force' => true]);
+
         Menu::create(
             Menu::make(
                 Menu::fullscreen()->label('Pantalla Completa'),
