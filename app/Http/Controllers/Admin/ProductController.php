@@ -166,8 +166,17 @@ class ProductController extends Controller
         ]);
 
         try {
-            Excel::import(new ProductsImport, $request->file('excel_file'));
-            return back()->with('success', 'Archivo procesado correctamente.');
+            $import = new ProductsImport();
+            Excel::import($import, $request->file('excel_file'));
+
+            $message = "Archivo procesado: {$import->matched} productos actualizados";
+            if ($import->skipped > 0) {
+                $message .= ", {$import->skipped} sin coincidencia en el catálogo (revisar log).";
+            } else {
+                $message .= '.';
+            }
+
+            return back()->with('success', $message);
         } catch (\Throwable $th) {
             return back()->with('error', 'Excel Dañado.');
         }

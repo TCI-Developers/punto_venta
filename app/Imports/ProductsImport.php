@@ -4,11 +4,15 @@ namespace App\Imports;
 
 use App\Models\{Product, PartToProduct, UnidadSat};
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\{ToModel, ToCollection};
-use Illuminate\Support\Facades\{Log};
+use Maatwebsite\Excel\Concerns\{ToModel, ToCollection, WithMultipleSheets};
+use Illuminate\Support\Facades\{DB, Log};
 
-class ProductsImport implements ToCollection
+class ProductsImport implements ToCollection, WithMultipleSheets
 {
+    public int $matched = 0;
+    public int $skipped = 0;
+    public array $skippedCodes = [];
+
     public function collection_old(Collection $rows)
     {   
         ini_set('memory_limit', '512M');
@@ -107,95 +111,128 @@ class ProductsImport implements ToCollection
         // }
     }
 
+    //solo procesamos la hoja de datos (índice 0); evita parsear hojas extra vacías del archivo
+    public function sheets(): array
+    {
+        return [0 => $this];
+    }
+
     public function collection(Collection $rows)
-    {   
+    {
         ini_set('memory_limit', '512M');
         set_time_limit(0);
 
-        $allProducts = Product::all()->keyBy('code_product');
-        $allUnits = UnidadSat::all()->keyBy('clave_unidad');
+        DB::transaction(function () use ($rows) {
+            $allProducts = Product::all()->keyBy('code_product');
+            $allUnits = UnidadSat::all()->keyBy('clave_unidad');
 
-        $partToProductToInsert = [];
-        foreach ($rows as $index => $row) {
-            if ($index <= 1) continue;
-            $code_product = $row[0];
-            $stock = $row[4] ?? 0;
-            $stockStr = (string) $stock;
-            if (strpos($stockStr, '.') !== false && substr_count($stockStr, '.') > 1) {
-                // si hay más de un punto, el primero es separador de miles
-                $stockStr = str_replace('.', '', $stockStr);
+            // índice de "código relacionado" (columna F) -> filas, construido una sola vez.
+            // Antes esto se recalculaba re-escaneando todas las filas por cada producto (O(n²)),
+            // lo que en catálogos grandes tardaba minutos en equipos más lentos.
+            $positionsByRelatedCode = [];
+            foreach ($rows as $index => $row) {
+                if ($index <= 1) continue;
+                $relatedCode = trim((string) ($row[5] ?? ''));
+                if ($relatedCode === '') continue;
+                if (!isset($positionsByRelatedCode[$relatedCode])) {
+                    $positionsByRelatedCode[$relatedCode] = [];
+                }
+                if (count($positionsByRelatedCode[$relatedCode]) < 100) {
+                    $positionsByRelatedCode[$relatedCode][] = $index;
+                }
             }
-            $stockStr = str_replace(',', '.', $stockStr);
 
-            $product = $allProducts->get($code_product);
-            if (!$product) continue;
-            if((float)$stockStr != $product->existence){
-                $product = Product::find($product->id);
-            }
+            $partToProductToInsert = [];
+            foreach ($rows as $index => $row) {
+                if ($index <= 1) continue;
+                $code_product = trim((string) $row[0]);
+                if ($code_product === '') continue;
 
-            $positions = $this->getPositions($rows, $code_product);
-            if (count($positions)) {
-                foreach ($positions as $item) {
-                    $code_bar = (string) $rows[$item][6];
-                    $code_bar = strtok($code_bar, '.');
-                    $equivalencia = $rows[$item][7];
+                $stock = $row[4] ?? 0;
+                $stockStr = (string) $stock;
+                if (strpos($stockStr, '.') !== false && substr_count($stockStr, '.') > 1) {
+                    // si hay más de un punto, el primero es separador de miles
+                    $stockStr = str_replace('.', '', $stockStr);
+                }
+                $stockStr = str_replace(',', '.', $stockStr);
+                $stockValue = (float) $stockStr;
 
-                    if (!$code_bar) continue;
+                $product = $allProducts->get($code_product);
+                if (!$product) {
+                    $this->skipped++;
+                    $this->skippedCodes[] = $code_product;
+                    continue;
+                }
+                $this->matched++;
 
+                $positions = $positionsByRelatedCode[$code_product] ?? [];
+                if (count($positions)) {
+                    foreach ($positions as $item) {
+                        $code_bar = (string) $rows[$item][6];
+                        $code_bar = strtok($code_bar, '.');
+                        $equivalencia = $rows[$item][7];
+
+                        if (!$code_bar) continue;
+
+                        $unit_sat = $allUnits->get($product->unit);
+                        if (!$unit_sat) continue;
+
+                        $cantidad_despiece = 0;
+                        if ($equivalencia > 1 || $equivalencia < 1) {
+                            $cantidad_despiece = $equivalencia < 1
+                                ? (1 / $equivalencia)
+                                : (100 / $equivalencia);
+                        }
+
+                        $partToProductToInsert[] = [
+                            'product_id'        => $product->id,
+                            'code_bar'          => $code_bar,
+                            'unidad_sat_id'     => $unit_sat->id,
+                            'price_mayoreo'     => $product->precio_mayoreo,
+                            'price'             => $cantidad_despiece > 0
+                                                    ? ($product->precio_despiece / $cantidad_despiece)
+                                                    : $product->precio,
+                            'cantidad_despiezado' => $cantidad_despiece > 0 ? $cantidad_despiece : 0,
+                            'created_at'        => now(),
+                            'updated_at'        => now(),
+                        ];
+                    }
+                } else {
                     $unit_sat = $allUnits->get($product->unit);
                     if (!$unit_sat) continue;
 
-                    $cantidad_despiece = 0;
-                    if ($equivalencia > 1 || $equivalencia < 1) {
-                        $cantidad_despiece = $equivalencia < 1 
-                            ? (1 / $equivalencia) 
-                            : (100 / $equivalencia);
-                    }
-
                     $partToProductToInsert[] = [
                         'product_id'        => $product->id,
-                        'code_bar'          => $code_bar,
+                        'code_bar'          => 'N/A',
                         'unidad_sat_id'     => $unit_sat->id,
                         'price_mayoreo'     => $product->precio_mayoreo,
-                        'price'             => $cantidad_despiece > 0 
-                                                ? ($product->precio_despiece / $cantidad_despiece) 
-                                                : $product->precio,
-                        'cantidad_despiezado' => $cantidad_despiece > 0 ? $cantidad_despiece : 0,
+                        'price'             => $product->precio,
+                        'cantidad_despiezado' => 0,
                         'created_at'        => now(),
                         'updated_at'        => now(),
                     ];
                 }
-            } else {
-                $unit_sat = $allUnits->get($product->unit);
-                if (!$unit_sat) continue;
 
-                $partToProductToInsert[] = [
-                    'product_id'        => $product->id,
-                    'code_bar'          => 'N/A',
-                    'unidad_sat_id'     => $unit_sat->id,
-                    'price_mayoreo'     => $product->precio_mayoreo,
-                    'price'             => $product->precio,
-                    'cantidad_despiezado' => 0,
-                    'created_at'        => now(),
-                    'updated_at'        => now(),
-                ];
+                // Actualizar existencia del producto
+                $product->existence = $stockValue >= 0.1 ? $stockValue : 0;
+                $product->save();
             }
 
-            // Actualizar existencia del producto
-            if($product->id == 8542){
-                // dd($stock);
+            // Guardar todos los PartToProduct en lote (con upsert)
+            foreach (array_chunk($partToProductToInsert, 500) as $batch) {
+                PartToProduct::upsert(
+                    $batch,
+                    ['code_bar', 'product_id'], // clave única
+                    ['unidad_sat_id','price_mayoreo','price','cantidad_despiezado','updated_at'] // columnas a actualizar
+                );
             }
-            $product->existence = $stock >= 0.1 ? (float)$stock : 0;
-            $product->save();
-        }
+        });
 
-        // Guardar todos los PartToProduct en lote (con upsert)
-        foreach (array_chunk($partToProductToInsert, 500) as $batch) {
-            PartToProduct::upsert(
-                $batch,
-                ['code_bar', 'product_id'], // clave única
-                ['unidad_sat_id','price_mayoreo','price','cantidad_despiezado','updated_at'] // columnas a actualizar
-            );
+        if ($this->skipped > 0) {
+            Log::warning("Import de productos: {$this->skipped} códigos sin coincidencia en catálogo local.", [
+                'codes' => array_slice($this->skippedCodes, 0, 200),
+                'total_skipped' => $this->skipped,
+            ]);
         }
     }
 
@@ -203,7 +240,7 @@ class ProductsImport implements ToCollection
     private function getPositions($rows, $code_product){
         $contador = 0;
         foreach($rows as $index => $item){
-            $code_product_match = $item[5];
+            $code_product_match = trim((string) $item[5]);
             if($code_product_match == $code_product){
                 $positions[] = $index;
                 $contador++;
