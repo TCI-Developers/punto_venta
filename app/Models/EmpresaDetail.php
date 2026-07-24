@@ -20,6 +20,7 @@ class EmpresaDetail extends Model
         'address',
         'vigencia',
         'path_logo',
+        'matriz_token',
     ];
     
     public function setEmpresa($detail) {

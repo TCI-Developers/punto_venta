@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{Role, UserRole, Customer};
-use Illuminate\Support\Facades\{Auth, Hash, Artisan, File, Http};
+use App\Models\{Role, UserRole, Customer, Brand, Product, Proveedor, User, BranchUser};
+use Illuminate\Support\Facades\{Auth, Hash, Artisan, File, Http, Log, DB};
 use Database\Seeders\DatabaseSeeder;
 
 class RootController extends Controller
@@ -21,7 +21,14 @@ class RootController extends Controller
         ini_set('max_execution_time', 600);
         ini_set('memory_limit', '1024M');
 
-        try {        
+        try {
+            // Productos tiene su propio flujo: a diferencia de las demas tablas, aqui si nos
+            // interesa actualizar el precio de lo que ya existe en DB Externa (Quick es la
+            // fuente real de precios), no solo insertar lo nuevo.
+            if($table == 'products'){
+                return $this->syncProductsToDbExterna();
+            }
+
             $data_exist = $this->existDataDb($table);
             $data = $this->getQuickBase($table);
 
@@ -37,8 +44,193 @@ class RootController extends Controller
 
             return redirect()->back()->with('success', 'Importación con exito.');
         } catch (\Throwable $th) {
+            Log::error("Error al importar {$table} de Quick a DB Externa: ".$th->getMessage());
             return redirect()->back()->with('error', 'La importación no se pudo completar.');
         }
+    }
+
+    //trae productos de Quick: a los que ya existen en DB Externa se les actualiza el precio,
+    //a los nuevos se les inserta. Comparacion por code_product como texto -- addNewDataDB()
+    //castea a (int), lo cual falla para codigos alfanumericos (el cast los vuelve todos 0 y
+    //hacen match entre si por accidente). Se deja addNewDataDB() intacto para no afectar a las
+    //demas tablas que la siguen usando.
+    private function syncProductsToDbExterna(){
+        ini_set('max_execution_time', 1200);
+
+        try {
+            $data_exist = $this->existDataDb('products');
+            $quickBaseProducts = $this->getQuickBase('products');
+
+            $existingCodes = [];
+            if(isset($data_exist->status) && $data_exist->status){
+                $dataExterna = $this->consultDb('products', '');
+                $existingCodes = array_column($dataExterna->data ?? [], 'code_product');
+            }
+
+            $newItems = [];
+            $updated = 0;
+            $failed = 0;
+
+            foreach($quickBaseProducts ?? [] as $item){
+                $code = $item->codigo_del_producto ?? null;
+                if(!$code){
+                    continue;
+                }
+
+                if(in_array((string)$code, $existingCodes, true)){
+                    try {
+                        $this->updateDb('products', [
+                            'precio' => $item->preciov_1 ?? 0,
+                            'precio_mayoreo' => $item->preciov_3 ?? 0,
+                            'precio_despiece' => $item->preciov_4 ?? 0,
+                        ], ['code_product' => $code]);
+                        $updated++;
+                    } catch (\Throwable $th) {
+                        $failed++;
+                    }
+                } else {
+                    $newItems[] = $item;
+                }
+            }
+
+            if(count($newItems)){
+                $data_db = $this->inputsDb('products', $newItems);
+                $this->saveDb('products', $data_db);
+            }
+
+            $message = "{$updated} precios actualizados, ".count($newItems)." productos nuevos.";
+            if($failed > 0){
+                $message .= " {$failed} fallaron al actualizar.";
+            }
+
+            return redirect()->back()->with('success', $message);
+        } catch (\Throwable $th) {
+            Log::error('Error al sincronizar productos de Quick a DB Externa: '.$th->getMessage());
+            return redirect()->back()->with('error', 'La importación no se pudo completar.');
+        }
+    }
+
+    //funcion para importar el catalogo completo (lineas/productos/proveedores/clientes) directo
+    //desde la Matriz, en un solo paso (reemplaza a Quick -> DB Externa -> Local para estas 4 tablas).
+    public function importCatalogoFromMatriz(){
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
+
+        $response = $this->matrizApi('get', 'catalogo');
+
+        if (!$response->successful()) {
+            return redirect()->back()->with('error', 'No se pudo conectar con la Matriz.');
+        }
+
+        $data = $response->json();
+
+        try {
+            DB::transaction(function () use ($data) {
+                // Lineas primero: productos referencia linea_id como brand_id, tiene que existir
+                // la marca antes de asignarsela a un producto (brand_id es FK obligatoria).
+                foreach ($data['lineas'] ?? [] as $l) {
+                    Brand::updateOrCreate(
+                        ['id' => $l['id']],
+                        [
+                            'name' => $l['codigo'],
+                            'description' => $l['descripcion'],
+                        ]
+                    );
+                }
+
+                foreach ($data['productos'] ?? [] as $p) {
+                    Product::updateOrCreate(
+                        ['code_product' => $p['code_product']],
+                        [
+                            'description' => $p['description'],
+                            'barcode' => $p['barcode'],
+                            'unit' => $p['unit'],
+                            'unit_description' => $p['unit_description'],
+                            'taxes' => $p['taxes'],
+                            'amount_taxes' => $p['amount_taxes'],
+                            'precio' => $p['precio'],
+                            'precio_mayoreo' => $p['precio_mayoreo'],
+                            'precio_despiece' => $p['precio_despiece'],
+                            'brand_id' => $p['linea_id'],
+                            'category_id' => $p['category_id'] ?? null,
+                            'activo' => true,
+                        ]
+                    );
+                }
+
+                // proveedores/clientes: se usa el id de Matriz para el match, no rfc/code_proveedor
+                // (son nullable localmente -- dos registros sin ese dato se pisarian entre si).
+                foreach ($data['proveedores'] ?? [] as $p) {
+                    Proveedor::updateOrCreate(
+                        ['id' => $p['id']],
+                        [
+                            'code_proveedor' => $p['code_proveedor'],
+                            'name' => $p['name'],
+                            'rfc' => $p['rfc'],
+                            'phone' => $p['phone'],
+                            'contacto' => $p['contacto'],
+                            'email' => $p['email'],
+                        ]
+                    );
+                }
+
+                foreach ($data['clientes'] ?? [] as $c) {
+                    Customer::updateOrCreate(
+                        ['id' => $c['id']],
+                        [
+                            'name' => $c['nombre'],
+                            'razon_social' => $c['razon_social'],
+                            'rfc' => $c['rfc'],
+                            'regimen_fiscal' => $c['regimen_fiscal'],
+                        ]
+                    );
+                }
+
+                // usuarios: Matriz solo gestiona la relacion usuario-sucursal, no crea usuarios.
+                // Si el usuario todavia no existe localmente (no ha venido de QuickBase), se
+                // omite -- crearlo aqui sin contraseña haria que el import de QB (insertar-solo)
+                // lo saltara despues y se quedara sin poder loguearse nunca.
+                // Las filas se marcan source='matriz' para poder revocarlas despues sin tocar
+                // accesos asignados a mano en las pantallas de Usuarios/Sucursales de POSTCI.
+                $emailsEnMatriz = [];
+                foreach ($data['usuarios'] ?? [] as $u) {
+                    $email = $u['email'] ?? null;
+                    if($email){
+                        $emailsEnMatriz[] = $email;
+                    }
+
+                    $user = User::where('email', $email)->first();
+                    if (!$user) {
+                        continue;
+                    }
+
+                    BranchUser::where('user_id', $user->id)->where('source', 'matriz')->delete();
+                    foreach ($u['sucursal_ids'] ?? [] as $branchId) {
+                        $branch_user = new BranchUser();
+                        $branch_user->user_id = $user->id;
+                        $branch_user->branch_id = $branchId;
+                        $branch_user->source = 'matriz';
+                        $branch_user->save();
+                    }
+                }
+
+                // revocacion: usuarios que en algun sync anterior tenian acceso via Matriz pero
+                // ya no vienen en el catalogo actual (les quitaron todas las sucursales alla)
+                // pierden ese acceso. No afecta accesos con source distinto de 'matriz'.
+                $userIdsConAccesoMatriz = BranchUser::where('source', 'matriz')->pluck('user_id')->unique();
+                foreach ($userIdsConAccesoMatriz as $userId) {
+                    $user = User::find($userId);
+                    if ($user && !in_array($user->email, $emailsEnMatriz, true)) {
+                        BranchUser::where('user_id', $userId)->where('source', 'matriz')->delete();
+                    }
+                }
+            });
+        } catch (\Throwable $th) {
+            Log::error('Error al importar catalogo desde Matriz: '.$th->getMessage());
+            return redirect()->back()->with('error', 'La importación no se pudo completar.');
+        }
+
+        return redirect()->back()->with('success', 'Catálogo sincronizado desde Matriz.');
     }
 
     //funcion para importar los registros de la db externa a la db local
@@ -59,12 +251,48 @@ class RootController extends Controller
             }
 
             $data = isset($data->status) ? $data->data:$data;
+            $created = 0;
+            $skipped = 0;
+
             foreach($data as $item){
-                $model::create((array)$item);
+                $attributes = (array)$item;
+
+                // DB Externa trae, para algunos productos viejos, brand_id=0 (invalido) junto con
+                // un linea_id que si tiene la referencia real de marca. Usamos linea_id como
+                // respaldo y validamos que la marca exista localmente antes de insertar, ya que
+                // brand_id tiene llave foranea obligatoria hacia brands.
+                if($table == 'products'){
+                    $brandId = (int)($attributes['brand_id'] ?? 0);
+                    if($brandId <= 0){
+                        $brandId = (int)($attributes['linea_id'] ?? 0);
+                    }
+
+                    if($brandId <= 0 || !Brand::find($brandId)){
+                        $skipped++;
+                        Log::warning("Producto omitido por marca invalida/inexistente.", ['item' => $attributes]);
+                        continue;
+                    }
+
+                    $attributes['brand_id'] = $brandId;
+                }
+
+                try {
+                    $model::create($attributes);
+                    $created++;
+                } catch (\Throwable $th) {
+                    $skipped++;
+                    Log::warning("No se pudo importar un registro de {$table}: ".$th->getMessage(), ['item' => $attributes]);
+                }
             }
 
-            return redirect()->back()->with('success', 'Importación con exito.');
+            $message = "{$created} registros importados.";
+            if($skipped > 0){
+                $message .= " {$skipped} omitidos (revisar log).";
+            }
+
+            return redirect()->back()->with('success', $message);
         } catch (\Throwable $th) {
+            Log::error("Error al importar {$table} de DB Externa a Local: ".$th->getMessage());
             return redirect()->back()->with('error', 'La importación no se pudo completar.');
         }
     }
@@ -106,12 +334,12 @@ class RootController extends Controller
                 $path_logo = public_path('img/logo_cliente.png');
                 $path_pdf = base_path('SumatraPDF.exe');
 
-                $response = Http::get(env('URL_LOGO'));
+                $response = Http::get(config('services.assets.url_logo'));
                 if ($response->successful()) {
                     File::put($path_logo, $response->body());
                 }
 
-                $response = Http::get(env('URL_PDF'));
+                $response = Http::get(config('services.assets.url_pdf'));
                 if ($response->successful()) {
                     File::put($path_pdf, $response->body());
                 }

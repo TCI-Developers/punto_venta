@@ -308,16 +308,16 @@
         }
 
         //funcion para abrir modal de productos
-        function modalProductos(type = 'show'){                     
+        function modalProductos(type = 'show'){
             if(type == 'show'){
-                $('#modal_products').show();
+                $('#modal_products').removeAttr('aria-hidden').show();
                 $('#searchInput').focus().val('');
                 $('#body_products').empty();
             }else{
-                $('#modal_products').hide();
+                $('#modal_products').attr('aria-hidden', 'true').hide();
                 $('#searchInput').val('');
                 $('#body_products').empty();
-            }   
+            }
         }
 
         //funcion boton de cobrar
@@ -465,12 +465,7 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'F2') {
                 e.preventDefault(); // evita el comportamiento por defecto de F2
-                const modal = document.getElementById('modal_products');
-                if (modal) {
-                    modal.style.display = 'block'; // muestra el modal
-                }
-                $('#searchInput').focus().val('');
-                $('#body_products').empty();
+                modalProductos('show');
             }
         });
 

@@ -34,13 +34,12 @@ Route::post('/products-store-presentation/{product_id}', 'Admin\ProductControlle
 Route::post('/presentation-store', 'Admin\ProductController@storePresentationProduct')->name('product.storePresentationProduct')->middleware('permission:inventarios,punto_venta,create');
 Route::post('/presentation-update', 'Admin\ProductController@updatePresentationProduct')->name('product.updatePresentationProduct')->middleware('permission:inventarios,punto_venta,update');
 
-Route::get('/products-show-upload-excel', 'Admin\ProductController@showUploadExcel')->name('product.showUploadExcel'); 
-Route::post('/products-upload-excel', 'Admin\ProductController@uploadExcel')->name('product.uploadExcel')->middleware('permission:inventarios,punto_venta,create'); 
+Route::post('/products-upload-excel', 'Admin\ProductController@uploadExcel')->name('product.uploadExcel')->middleware('permission:inventarios,punto_venta,create');
 
 //customers
 Route::get('/customers', 'Admin\CustomerController@index')->name('customer.index')->middleware('permission:clientes'); //vista principal clcientes
 Route::post('/customers-store', 'Admin\CustomerController@store')->name('customer.store')->middleware('permission:clientes,punto_venta,create'); //vista principal clcientes
-Route::post('/customers-update', 'Admin\CustomerController@store')->name('customer.store')->middleware('permission:clientes,punto_venta,update'); //vista principal clcientes
+Route::post('/customers-update', 'Admin\CustomerController@store')->name('customer.update')->middleware('permission:clientes,punto_venta,update'); //vista principal clcientes
 Route::get('/customers-destroy/{id}/{status}', 'Admin\CustomerController@destroy')->name('customer.destroy')->middleware('permission:clientes,punto_venta,destroy'); //vista principal clcientes
 
 //proveedores
@@ -48,7 +47,7 @@ Route::get('/poveedores/{status?}', 'Admin\ProveedorController@index')->name('pr
 Route::get('/poveedores-create', 'Admin\ProveedorController@create')->name('proveedor.create')->middleware('permission:proveedores,punto_venta,create');
 Route::post('/poveedores-store/{proveedor_id?}', 'Admin\ProveedorController@store')->name('proveedor.store')->middleware('permission:proveedores,punto_venta,create');
 Route::get('/poveedores-show/{proveedor_id?}', 'Admin\ProveedorController@create')->name('proveedor.show')->middleware('permission:proveedores,punto_venta,[show|update]');
-Route::post('/poveedores-update/{proveedor_id?}', 'Admin\ProveedorController@store')->name('proveedor.store')->middleware('permission:proveedores,punto_venta,update');
+Route::post('/poveedores-update/{proveedor_id?}', 'Admin\ProveedorController@store')->name('proveedor.update')->middleware('permission:proveedores,punto_venta,update');
 Route::get('/poveedores-enable/{proveedor_id}/{status}', 'Admin\ProveedorController@enable')->name('proveedor.enable')->middleware('permission:proveedores,punto_venta,create');
 
 //sales
@@ -63,7 +62,7 @@ Route::get('/sales-destroy/{id}', 'Admin\SaleController@destroy')->name('sale.de
 Route::get('/compras/{status?}', 'Admin\CompraController@index')->name('compra.index')->middleware('permission:compras');
 Route::get('/compras-create', 'Admin\CompraController@create')->name('compra.create')->middleware('permission:compras,punto_venta,create');
 Route::post('/compras-store/{compra_id?}', 'Admin\CompraController@store')->name('compra.store')->middleware('permission:compras,punto_venta,create');
-Route::post('/compras-update/{compra_id?}', 'Admin\CompraController@store')->name('compra.store')->middleware('permission:compras,punto_venta,update');
+Route::post('/compras-update/{compra_id?}', 'Admin\CompraController@store')->name('compra.update')->middleware('permission:compras,punto_venta,update');
 Route::post('/compras-store-close/{compra_id}', 'Admin\CompraController@storeRecibido')->name('compra.storeRecibido')->middleware('permission:compras,punto_venta,update');
 Route::get('/compras-show/{compra_id?}', 'Admin\CompraController@create')->name('compra.show')->middleware('permission:compras,punto_venta,show');
 Route::get('/compras-status/{compra_id?}/{status}', 'Admin\CompraController@status')->name('compra.status')->middleware('permission:compras,punto_venta,update'); //cambiar el status de la compra
@@ -75,6 +74,11 @@ Route::get('/cxp/{status?}', 'Admin\CuentaPagarController@index')->name('cxp.ind
 Route::get('/cxp-show/{id}', 'Admin\CuentaPagarController@show')->name('cxp.show')->middleware('permission:cuentas_por_pagar,punto_venta,show');
 Route::post('/cxp-store/{id}', 'Admin\CuentaPagarController@store')->name('cxp.store')->middleware('permission:cuentas_por_pagar,punto_venta,create');
 Route::get('/cxp-destroy/{id}', 'Admin\CuentaPagarController@destroy')->name('cxp.destroy')->middleware('permission:cuentas_por_pagar,punto_venta,destroy');
+
+//gastos de caja
+Route::get('/gastos', 'Admin\GastoController@index')->name('gasto.index')->middleware('permission:gastos');
+Route::post('/gastos-store', 'Admin\GastoController@store')->name('gasto.store')->middleware('permission:gastos,punto_venta,create');
+Route::get('/gastos-destroy/{id}', 'Admin\GastoController@destroy')->name('gasto.destroy')->middleware('permission:gastos,punto_venta,destroy');
 
 //devoluciones ventas
 Route::get('/devoluciones/{status?}', 'Admin\DevolucionController@index')->name('devoluciones.index')->middleware('permission:devoluciones');
@@ -129,6 +133,7 @@ Route::get('/ticket-sale/{sale_id}/{auto?}', 'Controller@ticket')->name('ticket.
 Route::get('/ticket-devolution/{devolution_id}/{auto?}', 'Controller@ticket')->name('ticket.devolution');
 Route::get('/ticket-devolution-matriz/{devolution_id}/{auto?}', 'Controller@ticket')->name('ticketMatriz.devolution');
 Route::get('/ticket-box/{user_id}/{auto?}', 'Controller@ticket')->name('ticket.box');
+Route::get('/ticket-gasto/{gasto_id}/{auto?}', 'Controller@ticket')->name('ticket.gasto');
 
 //facturas
 Route::get('/facturas', 'Admin\FacturaController@index')->name('facturas.index')->middleware('permission:facturas');

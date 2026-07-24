@@ -8,7 +8,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('components.use.link_scripts_glabal')
 
-    <script src="{{asset('js/sales/create.js')}}"></script>
+    <script src="{{asset('js/sales/create.js')}}?v={{ filemtime(public_path('js/sales/create.js')) }}"></script>
     <style>
         .table-dev{
             background-color: #00000050 !important;

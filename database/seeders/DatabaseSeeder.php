@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'listado_cierre_caja',    'description' => 'Acceso a listado de cierres de caja',  'status' => 1],
             ['name' => 'turnos',    'description' => 'Acceso a turnos',  'status' => 1],
             ['name' => 'facturas',  'description' => 'Acceso a facturación CFDI', 'status' => 1],
+            ['name' => 'gastos',    'description' => 'Registro de gastos de caja',  'status' => 1],
         ];
 
         $actions = ['create', 'show', 'update', 'destroy', 'auth']; //acciones de permisos
@@ -56,6 +57,11 @@ class DatabaseSeeder extends Seeder
 
         // facturas no usa update ni auth (CFDI es inmutable)
         Permission::where('module', 'facturas')
+            ->whereIn('action', ['update', 'auth'])
+            ->delete();
+
+        // gastos no usa update ni auth (solo se crean, consultan o eliminan)
+        Permission::where('module', 'gastos')
             ->whereIn('action', ['update', 'auth'])
             ->delete();
 

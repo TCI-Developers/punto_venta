@@ -288,10 +288,10 @@ class Show extends Component
 
                 $this->total_sale -= $item->descuentos; 
 
-                //unidades sat
-                if(isset($data['presentation_aux']->unit) && isset($data['presentation_aux']->unit_description)){ 
-                    $data['unidad_sat'][$index] = $data['presentation_aux']->unit.' - '.$data['presentation_aux']->unit_description;
-                }
+                //unidades sat -- siempre se asigna (con fallback) para no dejar el indice sin
+                //llave cuando el producto viene con unit/unit_description vacios (ej. catalogo
+                //sincronizado desde Matriz, que trae muchos productos con ese dato en blanco)
+                $data['unidad_sat'][$index] = ($data['presentation_aux']->unit ?? '').' - '.($data['presentation_aux']->unit_description ?? '');
             }
         }
 

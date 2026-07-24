@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{Branch, EmpresaDetail, Box, User};
+use App\Models\{Branch, EmpresaDetail, Box, User, BranchUser};
 use Illuminate\Support\Facades\{Auth, Crypt};
 use Carbon\Carbon;
 
@@ -13,12 +13,23 @@ class AdminController extends Controller
     //funcion para ingresar el monto inicial de la caja
     public function startAmountBox(){
         $empresa = EmpresaDetail::first();
-        $ban = true;
-        foreach(Auth::User()->getBranchs ?? [] as $item){
-            if($item->branch_id === $empresa->branch_id){
-                $ban = false;
-                break;
+
+        $tieneAcceso = function() use ($empresa){
+            foreach(BranchUser::where('user_id', Auth::User()->id)->get() as $item){
+                if($item->branch_id === $empresa->branch_id){
+                    return true;
+                }
             }
+            return false;
+        };
+
+        $ban = !$tieneAcceso();
+
+        // si no tiene acceso local, revisamos en el momento si Matriz ya se lo dio, en vez de
+        // esperar a que alguien corra la sincronizacion completa del catalogo.
+        if($ban){
+            $this->syncUserBranchFromMatriz(Auth::User());
+            $ban = !$tieneAcceso();
         }
 
         if($ban){
@@ -61,7 +72,11 @@ class AdminController extends Controller
             try { $vigencia = Crypt::decrypt($empresa->vigencia); } catch(\Throwable $e) {}
         }
 
-        return view('Admin.empresa.show', ['empresa' => $empresa, 'branchs' => $branchs, 'vigencia' => $vigencia]);
+        // el token nunca se manda de vuelta al HTML (evita exponer el secreto en el codigo fuente
+        // de la pagina); solo le decimos a la vista si ya hay uno guardado o no.
+        $hasMatrizToken = $empresa && !empty($empresa->matriz_token);
+
+        return view('Admin.empresa.show', ['empresa' => $empresa, 'branchs' => $branchs, 'vigencia' => $vigencia, 'hasMatrizToken' => $hasMatrizToken]);
     }
 
     //funcion para actualizar los datos de la empresa
@@ -96,6 +111,10 @@ class AdminController extends Controller
 
             if(Auth::User()->hasRole('root') && $request->filled('vigencia')){
                 $empresa->vigencia = Crypt::encrypt($request->vigencia);
+            }
+
+            if(Auth::User()->hasRole('root') && $request->filled('matriz_token')){
+                $empresa->matriz_token = Crypt::encrypt(trim($request->matriz_token));
             }
 
             $empresa->save();

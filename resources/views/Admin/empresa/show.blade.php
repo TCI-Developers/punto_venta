@@ -62,6 +62,18 @@
                     <input type="date" class="form-control" name="vigencia" id="vigencia" value="{{ $vigencia ?? '' }}">
                     <small class="text-muted">Solo visible para root. Fecha límite de acceso al sistema.</small>
                 </label>
+
+                <label for="matriz_token" class="col-12 mt-2">TOKEN DE MATRIZ (sucursal)
+                    <input type="password" class="form-control" name="matriz_token" id="matriz_token" placeholder="{{ $hasMatrizToken ? '•••••••• (configurado, deja en blanco para no cambiarlo)' : 'Pegar token de la sucursal' }}" autocomplete="off">
+                    <small class="text-muted">
+                        Solo visible para root.
+                        @if($hasMatrizToken)
+                            Ya hay un token guardado — se usa este en vez del que esté en el <code>.env</code>. Escribe uno nuevo aquí solo si necesitas reemplazarlo (por ejemplo, si se invalidó).
+                        @else
+                            Si se deja vacío, se sigue usando el token del <code>.env</code>.
+                        @endif
+                    </small>
+                </label>
                 @endif
 
                 @if(Auth::User()->hasRole('root') || auth()->user()->hasPermissionThroughModule('empresa','punto_venta','auth'))

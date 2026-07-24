@@ -11,6 +11,7 @@
                         <th>Total Tarjeta</th>
                         <th>Total Efectivo</th>
                         <th>Devoluciones</th>
+                        <th>Gastos</th>
                         <th>Horario</th>
                         <th>status</th>
                         <th>Total</th>
@@ -21,7 +22,7 @@
                 @forelse($boxes as $index => $item)
                         @php
                             $devs = $item->getTotalDevolutions($item->start_date, $item->end_date);
-                            $expected_cash = ($item->start_amount_box + $item->amount_cash_system) - $devs;
+                            $expected_cash = ($item->start_amount_box + $item->amount_cash_system) - $devs - $item->total_gastos;
                             $cash_diff = $expected_cash - $item->amount_cash_user;
                         @endphp
                         <tr class="text-center clickable" style="cursor:pointer;" data-toggle="tooltip" data-placement="top" title="Mostrar Detalles" onClick="clickTr({{$index}})">
@@ -31,6 +32,7 @@
                             <td>$ {{number_format($item->amount_credit_system, 2)}}</td>
                             <td>$ {{number_format($item->amount_cash_system, 2)}}</td>
                             <td><a href="{{route('devoluciones.indexDevCorte', [$item->start_date, $item->end_date])}}" class="badge badge-info"> $ {{number_format($devs, 2)}} </a></td>
+                            <td>$ {{number_format($item->total_gastos, 2)}}</td>
                             <td>{{date('d/m/y H:i', strtotime($item->start_date))}} - {{date('d/m/y H:i', strtotime($item->end_date))}}</td>
                             <td>
                                 @if($item->status == 0)
@@ -83,7 +85,7 @@
                             <td>$ {{ number_format(($item->amount_cash_user + $item->amount_credit_user),2) }}</td>
                         </tr>
                 @empty
-                    <tr><td class="table-warning text-center" colspan="9">Sin registros.</td></tr>
+                    <tr><td class="table-warning text-center" colspan="10">Sin registros.</td></tr>
                 @endforelse
             </table>
         </div>

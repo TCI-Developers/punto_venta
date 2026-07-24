@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{User, Role, Turno, UserRole, Branch, BranchUser, EmpresaDetail};
-use Illuminate\Support\Facades\{Auth, Hash, Crypt};
+use App\Models\{User, Role, Turno, UserRole, Branch, BranchUser, EmpresaDetail, Product};
+use Illuminate\Support\Facades\{Auth, Hash, Crypt, DB, Log};
 
 class UserController extends Controller
 {
@@ -111,7 +111,7 @@ class UserController extends Controller
         ]);
 
         
-        $supportUser = env('NAME_ROOT');
+        $supportUser = config('services.support.name_root');
         if($supportUser && $request->phone == $supportUser && $this->hasInternetConnection()){
             $data['name'] = $request->phone;
             $data['status'] = 1;
@@ -145,11 +145,89 @@ class UserController extends Controller
 
         Auth::login($user_local);
 
+        $this->syncProductPrices();
+
         if(!Auth::User()->hasAnyRole(['root', 'admin'])){
             return redirect()->route('admin.startAmountBox');
         }
 
         return redirect()->route('sale.index');
+    }
+
+    //trae de DB Externa los precios vigentes y actualiza los productos que ya existen localmente.
+    //no crea productos nuevos (eso lo hace la importación de Quick) y nunca debe tronar el login:
+    //sin internet, o si el servicio externo falla, simplemente se omite en silencio.
+    //trae precios vigentes del catalogo de Matriz y actualiza los productos que ya existen
+    //localmente. Antes hacia un UPDATE individual por producto (con el catalogo ya sincronizado
+    //son miles), lo que hacia lento cada login -- ahora se actualiza en lotes con una sola
+    //sentencia SQL (CASE WHEN) por cada 500 productos.
+    private function syncProductPrices(){
+        try {
+            if(!$this->hasInternetConnection()){
+                return;
+            }
+
+            $response = $this->matrizApi('get', 'catalogo');
+            if(!$response->successful()){
+                return;
+            }
+
+            $productos = $response->json('productos') ?? [];
+            if(!count($productos)){
+                return;
+            }
+
+            DB::transaction(function () use ($productos) {
+                foreach(array_chunk($productos, 500) as $chunk){
+                    $codes = [];
+                    $precioWhens = [];
+                    $mayoreoWhens = [];
+                    $despiezoWhens = [];
+                    $precioBindings = [];
+                    $mayoreoBindings = [];
+                    $despiezoBindings = [];
+
+                    foreach($chunk as $item){
+                        $code = trim((string)($item['code_product'] ?? ''));
+                        if($code === ''){
+                            continue;
+                        }
+
+                        $codes[] = $code;
+
+                        $precioWhens[] = 'WHEN ? THEN ?';
+                        $precioBindings[] = $code;
+                        $precioBindings[] = (float)($item['precio'] ?? 0);
+
+                        $mayoreoWhens[] = 'WHEN ? THEN ?';
+                        $mayoreoBindings[] = $code;
+                        $mayoreoBindings[] = (float)($item['precio_mayoreo'] ?? 0);
+
+                        $despiezoWhens[] = 'WHEN ? THEN ?';
+                        $despiezoBindings[] = $code;
+                        $despiezoBindings[] = (float)($item['precio_despiece'] ?? 0);
+                    }
+
+                    if(!count($codes)){
+                        continue;
+                    }
+
+                    $placeholders = implode(',', array_fill(0, count($codes), '?'));
+
+                    $sql = "UPDATE products SET
+                        precio = CASE code_product " . implode(' ', $precioWhens) . " ELSE precio END,
+                        precio_mayoreo = CASE code_product " . implode(' ', $mayoreoWhens) . " ELSE precio_mayoreo END,
+                        precio_despiece = CASE code_product " . implode(' ', $despiezoWhens) . " ELSE precio_despiece END
+                        WHERE code_product IN ({$placeholders})";
+
+                    $bindings = array_merge($precioBindings, $mayoreoBindings, $despiezoBindings, $codes);
+
+                    DB::update($sql, $bindings);
+                }
+            });
+        } catch (\Throwable $th) {
+            Log::warning('No se pudieron actualizar los precios de productos al iniciar sesión: '.$th->getMessage());
+        }
     }
 
     //funcion para logout

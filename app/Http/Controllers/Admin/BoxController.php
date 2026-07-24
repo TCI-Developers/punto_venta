@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth};
-use App\Models\{Sale, Box, Devolucion, Compra};
+use App\Models\{Sale, Box, Devolucion, Compra, CuentaPagar, Gasto};
 use Carbon\Carbon;
 
 class BoxController extends Controller
@@ -26,7 +26,7 @@ class BoxController extends Controller
                 return redirect()->route('sale.index')->with('error', 'No tienes un turno abierto.');
             }
             // Turno recién cerrado — solo mostrar vista con el ticket
-            return view('Admin.box.turn_off', ['start_amount_box' => null, 'ventas_cerradas' => [], 'status' => 0]);
+            return view('Admin.box.turn_off', ['start_amount_box' => null, 'ventas_cerradas' => [], 'status' => 0, 'total_gastos' => 0]);
         }
         $start_date = $box->start_date;
         $end_date = date('Y-m-d H:i:s');
@@ -49,7 +49,9 @@ class BoxController extends Controller
             }
         }
 
-        return view('Admin.box.turn_off', ['start_amount_box' => $box->start_amount_box, 'ventas_cerradas' => $ventas_cerradas, 'status' => $status]);
+        $total_gastos = Gasto::where('box_id', $box->id)->where('status', 1)->sum('monto');
+
+        return view('Admin.box.turn_off', ['start_amount_box' => $box->start_amount_box, 'ventas_cerradas' => $ventas_cerradas, 'status' => $status, 'total_gastos' => $total_gastos]);
     }
 
     //funcion para guardar el monto incial de la caja
@@ -115,9 +117,11 @@ class BoxController extends Controller
             }
         }
         
+        $total_gastos = Gasto::where('box_id', $box->id)->where('status', 1)->sum('monto');
+
         $tolerancia = 1; //margen de un peso para el efectivo
-        $total_efect = ($box->start_amount_box + $total_efectivo) - $total_devolucion_efectivo; //total efectivo 
-        $montos = $total_efect - $request->monto_efectivo; 
+        $total_efect = ($box->start_amount_box + $total_efectivo) - $total_devolucion_efectivo - $total_gastos; //total efectivo
+        $montos = $total_efect - $request->monto_efectivo;
         $val_tolerancia = abs($montos) > $tolerancia;
         
        
@@ -136,6 +140,7 @@ class BoxController extends Controller
         $box->amount_cash_system = round($total_efectivo, 2);
         $box->total_system = round(($total_tarjeta + $total_efectivo), 2);
         $box->monto_dejado_caja = round($request->monto_dejado_caja, 2);
+        $box->total_gastos = round($total_gastos, 2);
 
         $box->amount_credit_user = round($request->monto_tarjeta,2);
         $box->amount_cash_user = round($request->monto_efectivo,2);
@@ -155,7 +160,7 @@ class BoxController extends Controller
         $box->coin_1 = $request->coins['1'] ?? 0;
         $box->coin_50_cen = $request->coins['_50'] ?? 0;
 
-        $totales = ($total_tarjeta + $total_efectivo) - $total_devolucion_efectivo - $total_devolucion_tarjeta; //sistema
+        $totales = ($total_tarjeta + $total_efectivo) - $total_devolucion_efectivo - $total_devolucion_tarjeta - $total_gastos; //sistema
         $ingresado = $request->monto_tarjeta + ($request->monto_efectivo - $box->start_amount_box); //ingresdo empleado
 
         $box->status = (($totales - $ingresado) < 1) ? 1:2;
@@ -164,6 +169,8 @@ class BoxController extends Controller
         $this->getSalesDbExt();
         $this->getDevolutionDBExt();
         $this->getComprasDbExt();
+        $this->getCuentasPagarDbExt();
+        $this->getGastosDbExt();
 
         return redirect()->back()->with('ticket', 'ok');
     }
@@ -236,15 +243,27 @@ class BoxController extends Controller
     }
 
     //funcion para consultar ultima venta y almacenar ventas pendientes
+    //ventana de 8 dias (igual que devoluciones/compras) para que un cierre de turno sin
+    //internet se recupere solo la proxima vez que si haya conexion, sin duplicar nada
+    //(getSales ya verifica contra la Matriz antes de subir cada una).
     function getSalesDbExt(){
-        $date = date('Y-m-d');
-        $sales = Sale::where('date', $date)->where('user_id', Auth::User()->id)->where('status', 2)->get();
+        if(!$this->hasInternetConnection()){
+            return;
+        }
+
+        $date = Carbon::now()->format('Y-m-d');
+        $start_date = Carbon::now()->subDays(8)->format('Y-m-d');
+        $sales = Sale::whereBetween('date', [$start_date, $date])->where('user_id', Auth::User()->id)->where('status', 2)->get();
         $ctrl = new \App\Http\Controllers\Controller();
         $ctrl->getSales($sales);
     }
 
     // funcion para consultar las devoluciones de 7 dias atras para almacenar lo pendiente
     function getDevolutionDBExt(){
+        if(!$this->hasInternetConnection()){
+            return;
+        }
+
         $date = Carbon::now()->format('Y-m-d');
         $start_date = Carbon::now()->subDays(8)->format('Y-m-d');
 
@@ -255,11 +274,45 @@ class BoxController extends Controller
 
     //funcion para consultar ultima venta y almacenar ventas pendientes
     function getComprasDbExt(){
+        if(!$this->hasInternetConnection()){
+            return;
+        }
+
         $date = Carbon::now()->format('Y-m-d');
         $start_date = Carbon::now()->subDays(8)->format('Y-m-d');
         $compras = Compra::whereBetween('created_at', [$start_date.'00:00:00', $date.'23:59:59'])->get();
         $ctrl = new \App\Http\Controllers\Controller();
         $ctrl->getCompras($compras);
+    }
+
+    //funcion para reenviar cuentas por pagar modificadas en los ultimos 8 dias (creadas o con
+    //pagos/eliminaciones registrados), por si algun cambio no se sincronizo por falta de
+    //internet en su momento. Se usa updated_at, no created_at, para agarrar cambios de status
+    //en cuentas mas viejas que 8 dias.
+    function getCuentasPagarDbExt(){
+        if(!$this->hasInternetConnection()){
+            return;
+        }
+
+        $date = Carbon::now()->format('Y-m-d');
+        $start_date = Carbon::now()->subDays(8)->format('Y-m-d');
+        $cuentas = CuentaPagar::whereBetween('updated_at', [$start_date.'00:00:00', $date.'23:59:59'])->get();
+        $ctrl = new \App\Http\Controllers\Controller();
+        $ctrl->getCuentasPagar($cuentas);
+    }
+
+    //funcion para reenviar gastos modificados en los ultimos 8 dias, por si algun cambio no se
+    //sincronizo por falta de internet en su momento (mismo patron que getCuentasPagarDbExt).
+    function getGastosDbExt(){
+        if(!$this->hasInternetConnection()){
+            return;
+        }
+
+        $date = Carbon::now()->format('Y-m-d');
+        $start_date = Carbon::now()->subDays(8)->format('Y-m-d');
+        $gastos = Gasto::whereBetween('updated_at', [$start_date.'00:00:00', $date.'23:59:59'])->get();
+        $ctrl = new \App\Http\Controllers\Controller();
+        $ctrl->getGastos($gastos);
     }
 
 }

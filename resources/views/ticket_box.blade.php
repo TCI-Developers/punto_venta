@@ -7,6 +7,14 @@
 </head>
 <body>
     <body>
+    @php
+        $devoluciones_turno = $box->getTotalDevolutions($box->start_date, $box->end_date);
+        $total_ingresos = $box->start_amount_box + $box->amount_cash_system;
+        $total_egresos = $devoluciones_turno + $box->total_gastos;
+        $total_en_caja = $total_ingresos - $total_egresos;
+        $retiro_caja = $box->amount_cash_user - $box->monto_dejado_caja;
+        $diferencia = $total_en_caja - $box->amount_cash_user;
+    @endphp
     <div class="ticket-container">
         <!-- Encabezado -->
         <div class="header">
@@ -20,7 +28,8 @@
 
         <!-- Titulo Cierre de Turno -->
         <div class="info-venta" style="text-align: center; margin: 10px 0;">
-            <strong>CIERRE DE TURNO</strong>
+            <strong>CIERRE DE TURNO</strong><br>
+            Corte # {{$box->id}}
         </div>
 
         <!-- Info Vendedor -->
@@ -28,6 +37,35 @@
             <div><strong>Vendedor:</strong> {{$user->name}}</div>
             <div><strong>Turno:</strong> {{$user->getTurno->turno ?? ''}}</div>
             <div><strong>Fecha/Hora Cierre:</strong> {{$user->getTurno->entrada ?? ''}} - {{$user->getTurno->salida ?? ''}}</div>
+        </div>
+
+        <!-- Ingresos -->
+        <div class="info-venta">
+            <div class="text-center"><strong>** INGRESOS **</strong></div>
+            <div>Caja inicial: $ {{number_format($box->start_amount_box, 2)}}</div>
+            <div>Ventas en efectivo: $ {{number_format($box->amount_cash_system, 2)}}</div>
+            <div><strong>Total de ingresos: $ {{number_format($total_ingresos, 2)}}</strong></div>
+        </div>
+
+        <!-- Egresos -->
+        <div class="info-venta">
+            <div class="text-center"><strong>** EGRESOS **</strong></div>
+            <div>Devoluciones: $ {{number_format($devoluciones_turno, 2)}}</div>
+            <div>Gastos (varios): $ {{number_format($box->total_gastos, 2)}}</div>
+            <div><strong>Total de egresos: $ {{number_format($total_egresos, 2)}}</strong></div>
+        </div>
+
+        <div class="info-venta text-center total">
+            TOTAL EN CAJA: $ {{number_format($total_en_caja, 2)}}
+        </div>
+
+        <!-- Folios de documentos del turno (referencia interna, no folio fiscal) -->
+        <div class="info-venta">
+            <div class="text-center"><strong>** FOLIOS DE DOCUMENTOS **</strong></div>
+            <div>Folio ticket inicial: {{$folio_venta_inicial ? 'R-'.$folio_venta_inicial : 'N/A'}}</div>
+            <div>Folio ticket final: {{$folio_venta_final ? 'R-'.$folio_venta_final : 'N/A'}}</div>
+            <div>Folio factura inicial: {{$folio_factura_inicial ? 'FAC-'.$folio_factura_inicial : 'Sin facturas'}}</div>
+            <div>Folio factura final: {{$folio_factura_final ? 'FAC-'.$folio_factura_final : 'Sin facturas'}}</div>
         </div>
 
         <!-- Denominación de Billetes -->
@@ -48,16 +86,17 @@
             <div class="denominacion-item"><span>{{$box->coin_50_cen > 0 ? $box->coin_50_cen.' x $.50':''}}</span> </div>
         </div>
 
-        <!-- Resumen de Ventas -->
+        <!-- Resumen Arqueo de Caja -->
         <div class="resumen-turno" style="border-top: 1px solid #000; margin-top: 5px; padding-top: 5px;">
-            <div><strong>Total en Efectivo:</strong> $ {{number_format($box->amount_cash_user, 2)}}</div>
-            <div><strong>Total con Tarjeta:</strong> $ {{number_format($box->amount_credit_user, 2)}}</div>
-            <div><strong>Ventas Totales:</strong> {{$number_ventas}}</div>
-        </div>
-
-        <!-- Resumen Final -->
-        <div style="margin-top: 10px;">
-            <div><strong>Total Ingresos:</strong> $ {{number_format($box->amount_cash_user + $box->amount_credit_user, 2)}} (Efectivo + Tarjeta)</div>
+            <div class="text-center"><strong>** ARQUEO DE CAJA **</strong></div>
+            <div><strong>Efectivo contado:</strong> $ {{number_format($box->amount_cash_user, 2)}}</div>
+            <div><strong>Tarjeta contada:</strong> $ {{number_format($box->amount_credit_user, 2)}}</div>
+            <div><strong>Fondo (caja inicial):</strong> $ {{number_format($box->start_amount_box, 2)}}</div>
+            <div><strong>Total arqueo:</strong> $ {{number_format($box->amount_cash_user + $box->amount_credit_user, 2)}}</div>
+            <div><strong>Retiro de caja:</strong> $ {{number_format($retiro_caja, 2)}}</div>
+            <div><strong>Se deja en caja:</strong> $ {{number_format($box->monto_dejado_caja, 2)}}</div>
+            <div><strong>Diferencia:</strong> {{$diferencia < 0 ? '+':($diferencia > 0 ? '-':'')}} $ {{number_format(abs($diferencia), 2)}}</div>
+            <div><strong>Clientes atendidos:</strong> {{$number_ventas}}</div>
         </div>
 
         <!-- Pie -->

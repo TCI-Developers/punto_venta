@@ -13,6 +13,12 @@
         <input type="hidden" name="id">
           <div class="modal-body">
                 <div class="row">
+                      @if(($total_gastos ?? 0) > 0)
+                      <p class="col-lg-12 col-md-12 col-sm-12 text-center">
+                          <span class="badge badge-warning">Gastos registrados en este turno: $ {{number_format($total_gastos, 2)}}</span>
+                          <br><small class="text-muted">Este monto ya se descontó del efectivo esperado en caja.</small>
+                      </p>
+                      @endif
                       <p class="col-lg-12 col-md-12 col-sm-12 text-xs text-center">Por favor, siga los siguientes pasos para proceder con el cierre del turno:</p>
                       <p class="col-lg-12 col-md-12 col-sm-12 text-xs text-center">Total de Dinero en Caja: Ingrese el monto total de dinero en efectivo que hay en la caja.</p>
                       <p class="col-lg-12 col-md-12 col-sm-12 text-xs text-center">Cantidad de Billetes y Monedas: <br> Para cada denominación de billetes y monedas, ingrese la cantidad de cada uno que hay en la caja. <br>

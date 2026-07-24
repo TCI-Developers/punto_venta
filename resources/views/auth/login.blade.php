@@ -18,7 +18,7 @@
             </div>
         @endif
 
-        <form action="{{ route('user.login') }}" method="post">
+        <form id="loginForm" action="{{ route('user.login') }}" method="post">
         {{--<form method="POST" action="{{ route('login') }}">--}}
             @csrf
 
@@ -39,4 +39,20 @@
             </div>
         </form>
     </x-authentication-card>
+
+    <div id="loadingLogin" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:#fff;">
+        <div style="width:3rem; height:3rem; border:0.35rem solid rgba(255,255,255,0.35); border-top-color:#fff; border-radius:50%; animation:loadingLoginSpin 0.75s linear infinite; margin-bottom:1rem;"></div>
+        <p style="margin:0; font-size:1.1rem;">Iniciando sesión...</p>
+        <small style="color:rgba(255,255,255,0.7);">Sincronizando información, por favor espera.</small>
+    </div>
+    <style>
+    @keyframes loadingLoginSpin { to { transform: rotate(360deg); } }
+    </style>
+    <script>
+    document.getElementById('loginForm').addEventListener('submit', function() {
+        var btn = this.querySelector('button[type="submit"]');
+        if (btn) { btn.disabled = true; }
+        document.getElementById('loadingLogin').style.display = 'flex';
+    });
+    </script>
 </x-guest-layout>

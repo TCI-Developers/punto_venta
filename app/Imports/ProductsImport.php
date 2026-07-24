@@ -177,8 +177,10 @@ class ProductsImport implements ToCollection, WithMultipleSheets
                         $unit_sat = $allUnits->get($product->unit);
                         if (!$unit_sat) continue;
 
+                        // equivalencia == 0 no es un factor de conversion valido (causaria division
+                        // entre cero); se trata igual que "sin despiece", igual que equivalencia == 1.
                         $cantidad_despiece = 0;
-                        if ($equivalencia > 1 || $equivalencia < 1) {
+                        if ($equivalencia > 0 && $equivalencia != 1) {
                             $cantidad_despiece = $equivalencia < 1
                                 ? (1 / $equivalencia)
                                 : (100 / $equivalencia);

@@ -75,13 +75,22 @@
     </div>
 </div>
 
+<div id="loadingAmount" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:#fff;">
+    <div class="spinner-border text-light mb-3" style="width:3rem; height:3rem;" role="status"></div>
+    <p class="mb-0" style="font-size:1.1rem;">Iniciando turno...</p>
+    <small class="text-white-50">Sincronizando información, por favor espera.</small>
+</div>
+
 <script>
     document.getElementById("amountForm").addEventListener("submit", function(event) {
         var amount = document.getElementById("start_amount_box").value;
         if (amount === "" || isNaN(amount) || amount < 0) {
             event.preventDefault();
             document.getElementById("error-message").classList.remove("d-none");
+            return;
         }
+        this.querySelector('button[type="submit"]').disabled = true;
+        document.getElementById("loadingAmount").style.display = 'flex';
     });
 </script>
 

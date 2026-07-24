@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Support\Facades\{DB,Auth, Http, Storage, Log, Artisan};
-use App\Models\{Product, Brand, Sale, PaymentMethod, UnidadSat, Driver, Proveedor, EmpresaDetail, User, Box, Devolucion, DevolucionMatriz};
+use Illuminate\Support\Facades\{DB,Auth, Http, Storage, Log, Artisan, Crypt};
+use App\Models\{Product, Brand, Sale, PaymentMethod, UnidadSat, Driver, Proveedor, EmpresaDetail, User, Box, Devolucion, DevolucionMatriz, BranchUser, Gasto, Factura};
 use Barryvdh\DomPDF\Facade\PDF;
 
 class Controller extends BaseController
@@ -40,13 +40,13 @@ class Controller extends BaseController
         $query = $this->validacionTabla($table_name_db, $data)['query'];
         $clist = $this->validacionTabla($table_name_db, $data)['clist'];
 
-        $userToken = env('USER_TOKEN');
+        $userToken = config('services.quickbase.user_token');
         $sortOrder = [["fieldId" => 3,"order" => "ASC"],];
 
         $url = "https://api.quickbase.com/v1/records/query";
-     
+
         $headers = [
-            "QB-Realm-Hostname: ".env('DOMINIO').".quickbase.com",
+            "QB-Realm-Hostname: ".config('services.quickbase.dominio').".quickbase.com",
             "User-Agent: {User-Agent}",
             "Authorization: QB-USER-TOKEN $userToken",
             "Content-Type: application/json"
@@ -310,6 +310,78 @@ class Controller extends BaseController
         }
     }
 
+    //funcion para consumir la API de Matriz (reemplaza al bridge db_externa para sync de
+    //ventas/devoluciones/compras/cuentas por pagar/catalogo). El bridge db_externa() se deja
+    //intacto como fallback hasta validar que todo funcione con Matriz.
+    protected function matrizApi(string $method, string $endpoint, array $params = []): \Illuminate\Http\Client\Response
+    {
+        return Http::withToken($this->getMatrizToken())
+            ->acceptJson()
+            ->timeout(15)
+            ->{$method}(config('services.matriz.url') . '/api/pos/' . $endpoint, $params);
+    }
+
+    //el token se puede guardar cifrado en empresa_details (editable desde la pantalla de
+    //Empresa, sin tocar archivos) para poder rotarlo si se invalida sin necesitar acceso al
+    //.env de esa PC. Si no hay uno guardado ahi, cae al de config/.env como antes.
+    protected function getMatrizToken(): ?string
+    {
+        $empresa = EmpresaDetail::first();
+
+        if ($empresa && !empty($empresa->matriz_token)) {
+            try {
+                return Crypt::decrypt($empresa->matriz_token);
+            } catch (\Throwable $th) {
+                Log::error('No se pudo desencriptar el token de Matriz guardado en empresa_details: '.$th->getMessage());
+            }
+        }
+
+        return config('services.matriz.token');
+    }
+
+    //busca a UN usuario especifico en el catalogo de Matriz y actualiza solo su branch_user
+    //local. Se usa cuando localmente no tiene acceso a la sucursal, para revisar en el momento
+    //si Matriz ya le dio acceso, sin esperar a que alguien corra la sincronizacion completa del
+    //catalogo. Devuelve true si encontro al usuario en Matriz (independiente de que sucursales
+    //le hayan asignado), false si no se pudo consultar o no existe alla.
+    public function syncUserBranchFromMatriz($user){
+        try {
+            if(!$this->hasInternetConnection()){
+                return false;
+            }
+
+            $response = $this->matrizApi('get', 'catalogo');
+            if(!$response->successful()){
+                return false;
+            }
+
+            $usuarios = $response->json('usuarios') ?? [];
+            $match = collect($usuarios)->firstWhere('email', $user->email);
+
+            // se borra el acceso via 'matriz' de este usuario en ambos casos: si ya no aparece
+            // en el catalogo (se lo quitaron alla) se revoca; si aparece, se reemplaza por lo
+            // vigente. Nunca toca filas con source distinto (asignadas a mano en POSTCI).
+            BranchUser::where('user_id', $user->id)->where('source', 'matriz')->delete();
+
+            if(!$match){
+                return false;
+            }
+
+            foreach($match['sucursal_ids'] ?? [] as $branchId){
+                $branch_user = new BranchUser();
+                $branch_user->user_id = $user->id;
+                $branch_user->branch_id = $branchId;
+                $branch_user->source = 'matriz';
+                $branch_user->save();
+            }
+
+            return true;
+        } catch (\Throwable $th) {
+            Log::warning('No se pudo sincronizar el usuario contra Matriz: '.$th->getMessage());
+            return false;
+        }
+    }
+
     //funcion para guardar en DB Externa
     public function saveDb($table, $data){
         $data = [
@@ -393,12 +465,31 @@ class Controller extends BaseController
             $compra = $devolucion->getCompra;
             $lines = 31;
             $pdf = Pdf::loadView('ticket_devolution_matriz', ['devolucion' => $devolucion, 'compra' => $compra, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
+        }else if(request()->is('ticket-gasto/'.$id) || request()->is('ticket-gasto/'.$id."/".$auto)){
+            $dir = 'tickets_gasto';
+            $gasto = Gasto::find($id);
+            $lines = 20;
+            $pdf = Pdf::loadView('ticket_gasto', ['gasto' => $gasto, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
         }else{
             $dir = 'tickets_box';
             $user = User::find($id);
             $box = Box::where('user_id', $user->id)->orderBy('id', 'desc')->first();
             $number_ventas = Sale::where('user_id', $user->id)->whereBetween('updated_at', [$box->start_date, $box->end_date])->count();
-            $pdf = Pdf::loadView('ticket_box', ['user' => $user, 'empresa' => $empresa, 'box' => $box, 'number_ventas' => $number_ventas, 'logoBase64' => $logoBase64]);
+
+            // rango de folios internos (id con prefijo) del turno -- no es un folio fiscal
+            // secuencial real, solo referencia de que rango de ventas/facturas cayo en el turno.
+            $folio_venta_inicial = Sale::where('user_id', $user->id)->whereBetween('updated_at', [$box->start_date, $box->end_date])->min('id');
+            $folio_venta_final = Sale::where('user_id', $user->id)->whereBetween('updated_at', [$box->start_date, $box->end_date])->max('id');
+            $folio_factura_inicial = Factura::where('user_id', $user->id)->where('status', 1)->whereBetween('created_at', [$box->start_date, $box->end_date])->min('id');
+            $folio_factura_final = Factura::where('user_id', $user->id)->where('status', 1)->whereBetween('created_at', [$box->start_date, $box->end_date])->max('id');
+
+            $lines = 55; // el ticket ahora incluye ingresos/egresos/folios/arqueo, ya no cabe en el alto fijo original
+
+            $pdf = Pdf::loadView('ticket_box', [
+                'user' => $user, 'empresa' => $empresa, 'box' => $box, 'number_ventas' => $number_ventas, 'logoBase64' => $logoBase64,
+                'folio_venta_inicial' => $folio_venta_inicial, 'folio_venta_final' => $folio_venta_final,
+                'folio_factura_inicial' => $folio_factura_inicial, 'folio_factura_final' => $folio_factura_final,
+            ]);
         }
 
         
@@ -435,168 +526,259 @@ class Controller extends BaseController
         }
     }
 
+    //arma el payload de una venta para Matriz (reusado por saveSaleDBExt y el lote de getSales)
+    private function buildSalePayload($sale){
+        return [
+            'sale_id' => $sale->id,
+            'date' => $sale->created_at->toDateTimeString(), // fecha+hora real, $sale->date solo trae la fecha
+            'folio' => $sale->folio, //cambia a no unico
+            'user' => $sale->getUser->name, //cambia a string
+            'branch_id' => $sale->branch_id,
+            'uuid' => $sale->uuid,
+            'payment_method_id' => $sale->payment_method_id,
+            'type_payment' => $sale->type_payment,
+            'amount_received' => $sale->amount_received,
+            'change_' => $sale->change,
+            'sat_document_type' => $sale->sat_document_type,
+            'total_sale' => $sale->total_sale,
+            'coin' => $sale->coin,
+            'status' => $sale->status,
+            'customer' => $sale->getClient->name, //cambia a string
+            'created_at' => $sale->created_at->format('d-m-Y H:i:s'),
+            'updated_at' => $sale->updated_at->format('d-m-Y H:i:s'),
+            'details_json' => json_encode($sale->getDetails->toArray()),
+            'detail_cant_json' => json_encode($sale->getDetailsCant->toArray()),
+        ];
+    }
+
     //funcion para guardar venta en db externa
     public function saveSaleDBExt($sale){
-        $data_db[0]['sale_id'] = $sale->id;
-        $data_db[0]['date'] = $sale->date;
-        $data_db[0]['folio'] = $sale->folio; //cambia a no unico
-        $data_db[0]['user'] = $sale->getUser->name; //cambia a string
-        $data_db[0]['branch_id'] = $sale->branch_id;
-        $data_db[0]['uuid'] = $sale->uuid;
-        $data_db[0]['payment_method_id'] = $sale->payment_method_id;
-        $data_db[0]['type_payment'] = $sale->type_payment;
-        $data_db[0]['amount_received'] = $sale->amount_received;
-        $data_db[0]['change_'] = $sale->change;
-        $data_db[0]['sat_document_type'] = $sale->sat_document_type;
-        $data_db[0]['total_sale'] = $sale->total_sale;
-        $data_db[0]['coin'] = $sale->coin;
-        $data_db[0]['status'] = $sale->status;
-        $data_db[0]['customer'] = $sale->getClient->name; //cambia a string
-        $data_db[0]['created_at'] = $sale->created_at->format('d-m-Y H:i:s');
-        $data_db[0]['updated_at'] = $sale->updated_at->format('d-m-Y H:i:s');
-        $data_db[0]['details_json'] = json_encode($sale->getDetails->toArray());
-        $data_db[0]['detail_cant_json'] = json_encode($sale->getDetailsCant->toArray());
-
         try {
-            $this->saveDb('sales', $data_db);
+            $this->matrizApi('post', 'sales', ['sales' => [$this->buildSalePayload($sale)]]);
             Log::info('Venta guardada');
         } catch (\Throwable $th) {
             Log::error('Error al guardar la venta', ['error' => $th->getMessage()]);
         }
     }
 
+    //arma el payload de una devolucion para Matriz
+    private function buildDevolutionPayload($devolution){
+        return [
+            'devolucion_id' => $devolution->id,
+            'sale_id' => $devolution->sale_id,
+            'branch_id' => $devolution->branch_id,
+            'user' => $devolution->getUser->name,
+            'cantidad' => $devolution->cantidad,
+            'description' => $devolution->description,
+            'fecha_devolucion' => $devolution->fecha_devolucion,
+            'total_descuentos' => $devolution->total_descuentos,
+            'total_devolucion' => $devolution->total_devolucion,
+            'status' => 1,
+            'created_at' => $devolution->created_at,
+            'updated_at' => $devolution->updated_at,
+            'details_json' => json_encode($devolution->getSale->getDetailsDev),
+            'details_cant_json' => json_encode($devolution->getSale->getDetailsCantDev),
+        ];
+    }
+
     //funcion para guardar devolucion en db externa
     public function saveDevolutionDBExt($devolution, $update){
-        $data_db[0]['devolucion_id'] = $devolution->id;
-        $data_db[0]['sale_id'] = $devolution->sale_id;
-        $data_db[0]['branch_id'] = $devolution->branch_id;
-        $data_db[0]['user'] = $devolution->getUser->name;
-        $data_db[0]['cantidad'] = $devolution->cantidad;
-        $data_db[0]['description'] = $devolution->description;
-        $data_db[0]['fecha_devolucion'] = $devolution->fecha_devolucion;
-        $data_db[0]['total_descuentos'] = $devolution->total_descuentos;
-        $data_db[0]['total_devolucion'] = $devolution->total_devolucion;
-        $data_db[0]['status'] = 1;
-        $data_db[0]['created_at'] = $devolution->created_at;
-        $data_db[0]['updated_at'] = $devolution->updated_at;
-        
-        $data_db[0]['details_json'] = json_encode($devolution->getSale->getDetailsDev);
-        $data_db[0]['details_cant_json'] = json_encode($devolution->getSale->getDetailsCantDev);
-
         try {
-            if($update){
-                $data_db = $data_db[0];
-                $where['devolucion_id'] = $devolution->id;
-                $this->updateDb('devoluciones', $data_db, $where);
-                Log::info('Devolución actualizada');
-            }else{
-                $this->saveDb('devoluciones', $data_db);
-                Log::info('Devolución guardada');
-            }
+            $this->matrizApi('post', 'devoluciones', ['devoluciones' => [$this->buildDevolutionPayload($devolution)]]);
+            Log::info($update ? 'Devolución actualizada' : 'Devolución guardada');
         } catch (\Throwable $th) {
             Log::error('Error al guardar la devolución', ['error' => $th->getMessage()]);
         }
     }
 
+    //arma el payload de una compra para Matriz
+    private function buildCompraPayload($compra){
+        return [
+            'compra_id' => $compra->id,
+            'folio' => $compra->folio,
+            'branch_id' => $compra->branch_id,
+            'proveedor_id' => $compra->proveedor_id,
+            'user' => $compra->getUser->name ?? $compra->user,
+            'programacion_entrega' => $compra->programacion_entrega,
+            'fecha_recibido' => $compra->fecha_recibido,
+            'plazo' => $compra->plazo,
+            'fecha_vencimiento' => $compra->fecha_vencimiento,
+            'moneda' => $compra->moneda,
+            'tipo' => $compra->tipo,
+            'importe' => $compra->importe ?? 0,
+            'impuesto_productos' => $compra->impuesto_productos ?? 0,
+            'descuentos' => $compra->descuentos ?? 0,
+            'subtotal' => $compra->subtotal ?? 0,
+            'total' => $compra->total ?? 0,
+            'observaciones' => $compra->observaciones,
+            'status' => $compra->status ?? 1,
+            'created_at' => $compra->created_at,
+            'updated_at' => $compra->updated_at,
+            'details_json' => json_encode($compra->getDetalles->toArray()),
+            'details_cant_json' => json_encode($compra->getDetallesEntra->toArray()),
+        ];
+    }
+
     //funcion para guardar venta en db externa
     public function saveCompraDBExt($compra, $update){
-     
-        $data_db[0]['compra_id'] = $compra->id;
-        $data_db[0]['folio'] = $compra->folio;
-        $data_db[0]['branch_id'] = $compra->branch_id;
-        $data_db[0]['proveedor_id'] = $compra->proveedor_id;
-        $data_db[0]['user'] =  $compra->getUser->name ?? $compra->user;
-        $data_db[0]['programacion_entrega'] = $compra->programacion_entrega;
-        $data_db[0]['fecha_recibido'] = $compra->fecha_recibido;
-        $data_db[0]['plazo'] = $compra->plazo;
-        $data_db[0]['fecha_vencimiento'] = $compra->fecha_vencimiento;
-        $data_db[0]['moneda'] = $compra->moneda;
-        $data_db[0]['tipo'] = $compra->tipo;
-        $data_db[0]['importe'] = $compra->importe ?? 0;
-        $data_db[0]['impuesto_productos'] = $compra->impuesto_productos ?? 0;
-        $data_db[0]['descuentos'] = $compra->descuentos ?? 0;
-        $data_db[0]['subtotal'] = $compra->subtotal ?? 0;
-        $data_db[0]['total'] = $compra->total ?? 0;
-        $data_db[0]['observaciones'] = $compra->observaciones;
-        $data_db[0]['status'] = $compra->status ?? 1;
-        $data_db[0]['created_at'] = $compra->created_at;
-        $data_db[0]['updated_at'] = $compra->updated_at;
-  
-        $data_db[0]['details_json'] = json_encode($compra->getDetalles->toArray());
-        $data_db[0]['details_cant_json'] = json_encode($compra->getDetallesEntra->toArray());
-
         try {
-            if($update){
-                $data_db = $data_db[0];
-                $where['compra_id'] = $compra->id;
-                $this->updateDb('compras', $data_db, $where);
-                Log::info('Compra actualizada');
-            }else{
-                $this->saveDb('compras', $data_db);
-                Log::info('Compra guardada');
-            }
+            $this->matrizApi('post', 'compras', ['compras' => [$this->buildCompraPayload($compra)]]);
+            Log::info($update ? 'Compra actualizada' : 'Compra guardada');
         } catch (\Throwable $th) {
             Log::error('Error al guardar la compra', ['error' => $th->getMessage()]);
         }
     }
 
+    //arma el payload de una cuenta por pagar para Matriz. $compra/$detalle_compra son opcionales
+    //-- si no se pasan (ej. al re-sincronizar despues de registrar un pago, cuando solo se tiene
+    //el $cxp a la mano), se resuelven por relacion.
+    private function buildCXPPayload($cxp, $compra = null, $detalle_compra = null){
+        $compra = $compra ?? $cxp->getCompra;
+        $detalle_compra = $detalle_compra ?? ($compra ? $compra->getDetalles : collect());
+
+        return [
+            'compra_id' => $cxp->id,
+            'branch_id' => $cxp->branch_id,
+            'date' => date('Y-m-d', strtotime($cxp->created_at)),
+            'fecha_vencimiento' => $cxp->fecha_vencimiento,
+            'subtotal' => $cxp->subtotal,
+            'impuestos' => $cxp->impuestos,
+            'total' => $cxp->total,
+            'status' => $cxp->status == 2 ? 0 : 1, // POSTCI: 1=activa,2=pagada -> Matriz: 1=pendiente,0=pagada
+            'compra_json' => json_encode($compra ? $compra->toArray() : []),
+            'compra_details_json' => json_encode($detalle_compra->toArray()),
+        ];
+    }
+
     //funcion para guardar cuenta por pagar a db externa
-    public function saveCXPDBExt($cxp, $compra, $detalle_compra){
-        $data_db[0]['compra_id'] = $cxp->id;
-        $data_db[0]['branch_id'] = $cxp->branch_id;
-        $data_db[0]['date'] = date('Y-m-d', strtotime($cxp->created_at));
-        $data_db[0]['fecha_vencimiento'] = $cxp->fecha_vencimiento;
-        $data_db[0]['subtotal'] = $cxp->subtotal;
-        $data_db[0]['impuestos'] = $cxp->impuestos;
-        $data_db[0]['total'] = $cxp->total;
-        $data_db[0]['status'] = 1;
-        $data_db[0]['compra_json'] = json_encode($compra->toArray());
-        $data_db[0]['compra_details_json'] = json_encode($detalle_compra->toArray());
+    public function saveCXPDBExt($cxp, $compra = null, $detalle_compra = null){
+        if((int)$cxp->status === 0){
+            return; // eliminado logico local, no se sincroniza con Matriz
+        }
 
         try {
-            $this->saveDb('cuentas_pagar', $data_db);
+            $this->matrizApi('post', 'cuentas-pagar', ['cuentas' => [$this->buildCXPPayload($cxp, $compra, $detalle_compra)]]);
             Log::info('Cuanta por pagar guardada');
         } catch (\Throwable $th) {
             Log::error('Error al guardar la cuenta por pagar', ['error' => $th->getMessage()]);
         }
     }
 
-    //funcion para consultar ultima venta y almacenar ventas pendientes
+    //funcion para sincronizar en un solo lote las ventas de los ultimos dias. Antes hacia un
+    //GET /check + POST individual por cada una -- con un backlog grande (ej. 22 compras) esto
+    //podia tardar minutos. El endpoint ya es idempotente e informa cuantas inserto/salto
+    //({"inserted":X,"skipped":Y}), asi que se manda todo en una sola llamada.
     public function getSales($sales){
-        foreach($sales ?? [] as $item){
-            $data['sale_id'] = $item->id;
-            $response = $this->consultDb('sales', $data);
-           
-            if($response->status != 'success'){
-                $ctrl = new \App\Http\Controllers\Controller();
-                $ctrl->saveSaleDBExt($item);
-            }
+        if(!count($sales ?? [])){
+            return;
+        }
+
+        $batch = array_map(fn($item) => $this->buildSalePayload($item), $sales instanceof \Illuminate\Support\Collection ? $sales->all() : $sales);
+
+        try {
+            $response = $this->matrizApi('post', 'sales', ['sales' => $batch]);
+            Log::info(count($batch).' ventas sincronizadas en lote', ['response' => $response->json()]);
+        } catch (\Throwable $th) {
+            Log::error('Error al sincronizar ventas en lote', ['error' => $th->getMessage()]);
         }
     }
 
-    //funcion para consultar las devoluciones de 7 dias atras y almacenar ventas pendientes
+    //funcion para sincronizar en un solo lote las devoluciones de los ultimos dias
     public function getDevoluciones($devoluciones){
-        foreach($devoluciones ?? [] as $item){
-            $data['devolucion_id'] = $item->id;
-            $response = $this->consultDb('devoluciones', $data);
-           
-            if($response->status != 'success'){
-                $ctrl = new \App\Http\Controllers\Controller();
-                $ctrl->saveDevolutionDBExt($item, false);
-            }
+        if(!count($devoluciones ?? [])){
+            return;
+        }
+
+        $batch = array_map(fn($item) => $this->buildDevolutionPayload($item), $devoluciones instanceof \Illuminate\Support\Collection ? $devoluciones->all() : $devoluciones);
+
+        try {
+            $response = $this->matrizApi('post', 'devoluciones', ['devoluciones' => $batch]);
+            Log::info(count($batch).' devoluciones sincronizadas en lote', ['response' => $response->json()]);
+        } catch (\Throwable $th) {
+            Log::error('Error al sincronizar devoluciones en lote', ['error' => $th->getMessage()]);
         }
     }
 
-    //funcion para consultar las compras de 7 dias atras y almacenar compras pendientes
+    //funcion para sincronizar en un solo lote las compras de los ultimos dias
     public function getCompras($compras){
-        foreach($compras ?? [] as $item){
-            $data['compra_id'] = $item->id;
-            $response = $this->consultDb('compras', $data);
-           
-            if($response->status != 'success'){
-                $ctrl = new \App\Http\Controllers\Controller();
-                $ctrl->saveCompraDBExt($item, false);
+        if(!count($compras ?? [])){
+            return;
+        }
+
+        $batch = array_map(fn($item) => $this->buildCompraPayload($item), $compras instanceof \Illuminate\Support\Collection ? $compras->all() : $compras);
+
+        try {
+            $response = $this->matrizApi('post', 'compras', ['compras' => $batch]);
+            Log::info(count($batch).' compras sincronizadas en lote', ['response' => $response->json()]);
+        } catch (\Throwable $th) {
+            Log::error('Error al sincronizar compras en lote', ['error' => $th->getMessage()]);
+        }
+    }
+
+    //arma el payload de un gasto de caja para Matriz
+    private function buildGastoPayload($gasto){
+        return [
+            'gasto_id' => $gasto->id,
+            'box_id' => $gasto->box_id,
+            'branch_id' => $gasto->branch_id,
+            'user' => $gasto->getUser->name ?? null,
+            'concepto' => $gasto->concepto,
+            'monto' => $gasto->monto,
+            'description' => $gasto->description,
+            'status' => $gasto->status,
+            'created_at' => $gasto->created_at,
+            'updated_at' => $gasto->updated_at,
+        ];
+    }
+
+    //funcion para guardar gasto en db externa
+    public function saveGastoDBExt($gasto){
+        try {
+            $this->matrizApi('post', 'gastos', ['gastos' => [$this->buildGastoPayload($gasto)]]);
+            Log::info('Gasto guardado');
+        } catch (\Throwable $th) {
+            Log::error('Error al guardar el gasto', ['error' => $th->getMessage()]);
+        }
+    }
+
+    //funcion para sincronizar en un solo lote los gastos modificados recientemente. Igual que
+    //cuentas-pagar, no hay endpoint /check en Matriz, pero el POST es idempotente por gasto_id.
+    public function getGastos($gastos){
+        if(!count($gastos ?? [])){
+            return;
+        }
+
+        $batch = array_map(fn($item) => $this->buildGastoPayload($item), $gastos instanceof \Illuminate\Support\Collection ? $gastos->all() : $gastos);
+
+        try {
+            $response = $this->matrizApi('post', 'gastos', ['gastos' => $batch]);
+            Log::info(count($batch).' gastos sincronizados en lote', ['response' => $response->json()]);
+        } catch (\Throwable $th) {
+            Log::error('Error al sincronizar gastos en lote', ['error' => $th->getMessage()]);
+        }
+    }
+
+    //funcion para sincronizar en un solo lote las cuentas por pagar modificadas recientemente.
+    //A diferencia de sales/devoluciones/compras, cuentas-pagar no tiene endpoint /check en
+    //Matriz -- pero el POST ya es idempotente por compra_id, asi que reenviar no duplica nada.
+    public function getCuentasPagar($cuentas){
+        $batch = [];
+        foreach($cuentas ?? [] as $item){
+            if((int)$item->status === 0){
+                continue; // eliminado logico local, no se sincroniza
             }
+            $batch[] = $this->buildCXPPayload($item);
+        }
+
+        if(!count($batch)){
+            return;
+        }
+
+        try {
+            $response = $this->matrizApi('post', 'cuentas-pagar', ['cuentas' => $batch]);
+            Log::info(count($batch).' cuentas por pagar sincronizadas en lote', ['response' => $response->json()]);
+        } catch (\Throwable $th) {
+            Log::error('Error al sincronizar cuentas por pagar en lote', ['error' => $th->getMessage()]);
         }
     }
 

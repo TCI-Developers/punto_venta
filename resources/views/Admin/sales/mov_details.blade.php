@@ -45,7 +45,7 @@
 
             @foreach($item->getCantSalesDetail as $value)
             @php
-                $impuestos += $item->iva != 0 ? $item->iva:$item->ieps;
+                $impuestos = $item->iva != 0 ? $item->iva:$item->ieps;
                 $total_sale_ += (($item->unit_price * $value->cant) - ($value->total_descuento)) + $impuestos;
                 $total_desc_ += $value->total_descuento ?? 0;
             @endphp

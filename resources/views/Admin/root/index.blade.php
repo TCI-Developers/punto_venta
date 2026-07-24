@@ -23,12 +23,6 @@
                     <a href="{{ route('import.data', 'users') }}" class="btn btn-info"><i class="fa fa-download"></i> Usuarios</a>
                 </label>
                 <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
-                    <a href="{{ route('import.data', 'brands') }}" class="btn btn-info"><i class="fa fa-download"></i> Marcas</a>
-                </label>
-                <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
-                    <a href="{{ route('import.data', 'products') }}" class="btn btn-info"><i class="fa fa-download"></i> Productos</a>
-                </label>
-                <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
                     <a href="{{ route('import.data', 'empresa_details')}}" class="btn btn-info"><i class="fa fa-download"></i> Datos empresa</a>
                 </label>
                 <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
@@ -39,9 +33,6 @@
                 </label>
                 <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
                     <a href="{{ route('import.data', 'unidades_sat') }}" class="btn btn-info"><i class="fa fa-download"></i> Unidades SAT</a>
-                </label>
-                <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
-                    <a href="{{ route('import.data', 'proveedores') }}" class="btn btn-info"><i class="fa fa-download"></i> Proveedores</a>
                 </label>
                 <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
                     <a href="{{ route('import.data', 'branchs') }}" class="btn btn-info"><i class="fa fa-download"></i> Sucursales</a>
@@ -55,7 +46,33 @@
         </div>
 
         @include('Admin.root.importacion_DBExt_DBLocal')
+
+        <br>
+        <div class="form-group card-header with-border text-center">
+            <h2>Importación Matriz &rarr; DB Local</h2>
+        </div>
+
+        <div class="card-body">
+            <div class="row">
+                <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
+                    <a id="btnSyncMatriz" href="{{ route('import.catalogoMatriz') }}" class="btn btn-success"><i class="fa fa-download"></i> Sincronizar catálogo desde Matriz</a>
+                </label>
+            </div>
+        </div>
     </div>
-   </main>   
+
+    <div id="loadingSyncMatriz" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:#fff;">
+        <div class="spinner-border text-light mb-3" style="width:3rem; height:3rem;" role="status"></div>
+        <p class="mb-0" style="font-size:1.1rem;">Sincronizando catálogo desde Matriz...</p>
+        <small class="text-white-50">Esto puede tardar unos minutos, por favor espera.</small>
+    </div>
+    <script>
+    document.getElementById('btnSyncMatriz').addEventListener('click', function() {
+        this.classList.add('disabled');
+        this.style.pointerEvents = 'none';
+        document.getElementById('loadingSyncMatriz').style.display = 'flex';
+    });
+    </script>
+   </main>
 </body>
 </html>

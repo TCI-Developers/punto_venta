@@ -31,4 +31,24 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'quickbase' => [
+        'user_token' => env('USER_TOKEN'),
+        'dominio' => env('DOMINIO'),
+    ],
+
+    'support' => [
+        'name_root' => env('NAME_ROOT'),
+    ],
+
+    'assets' => [
+        'url_logo' => env('URL_LOGO'),
+        'url_pdf' => env('URL_PDF'),
+        'url_download' => env('URL_DOWNLOAD'),
+    ],
+
+    'matriz' => [
+        'url' => env('MATRIZ_URL'),
+        'token' => env('MATRIZ_TOKEN'),
+    ],
+
 ];

@@ -64,9 +64,9 @@
                         @forelse($sale_details as $item)
                             @foreach($item->getCantSalesDetail as $value)
                             @php
+                                $impuestos = $item->iva != 0 ? $item->iva:$item->ieps;
                                 $total_sale_ += (($item->unit_price * $value->cant) - ($value->descuento*$value->cant)) + $impuestos;
                                 $total_desc_ += ($value->descuento*$value->cant);
-                                $impuestos += $item->iva != 0 ? $item->iva:$item->ieps;
                             @endphp
 
                             <tr class="text-center" id="tr-{{$value->id}}">
@@ -128,7 +128,7 @@
                             @forelse($sale_details_dev as $item)
                                 @foreach($item->getCantSalesDetailDev as $value)
                                 @php
-                                    $impuestos += $item->iva != 0 ? $item->iva:$item->ieps;
+                                    $impuestos = $item->iva != 0 ? $item->iva:$item->ieps;
                                     $total_sale_ += (($item->unit_price * $value->cant) - ($value->descuento*$value->cant)) + $impuestos;
                                     $total_desc_ += ($value->descuento*$value->cant);
                                 @endphp

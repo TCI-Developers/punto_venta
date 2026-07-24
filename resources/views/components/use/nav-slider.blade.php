@@ -85,6 +85,14 @@
             </a>
         </li>
         @endif
+         @if(auth()->user()->hasPermissionThroughModule('gastos'))
+        <li class="nav-item"> <!--Gastos de caja -->
+            <a href="{{route('gasto.index')}}">
+                <i class="fa fa-money"></i>
+                Gastos
+            </a>
+        </li>
+        @endif
          @if(auth()->user()->hasPermissionThroughModule('devoluciones'))
         <li class="nav-item"> <!--Devoluciones -->
             <a href="{{route('devoluciones.index')}}">

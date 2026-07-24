@@ -355,18 +355,18 @@ class DevolucionController extends Controller
     //funcion para 
     function postQuickBase($table_id, $cantidad, $request, $product, $branch_id){
         $url = "https://api.quickbase.com/v1/records";
-        $userToken = env('USER_TOKEN');
-        
+        $userToken = config('services.quickbase.user_token');
+
         $fields = [52 => ["value" => true], //checkbox de sucursal
-                    53 => ["value" => 11225], //record_id producto  
+                    53 => ["value" => 11225], //record_id producto
                     57 => ["value" => $branch_id], //record_id de sucursal
                     8 => ["value" => $request->description], //descripcion de la devolucion
                     22 => ["value" => $request->driver_id], //record_id del chofer
                     10 => ["value" => $cantidad] // cantidad que se esta devolviendo
                 ];
-     
+
         $headers = [
-            "QB-Realm-Hostname: ".env('DOMINIO').".quickbase.com",
+            "QB-Realm-Hostname: ".config('services.quickbase.dominio').".quickbase.com",
             "User-Agent: {User-Agent}",
             "Authorization: QB-USER-TOKEN $userToken",
             "Content-Type: application/json"

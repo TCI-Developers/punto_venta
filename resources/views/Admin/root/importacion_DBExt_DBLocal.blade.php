@@ -38,9 +38,9 @@
                 <button type="submit" class="btn btn-danger"><i class="fa fa-refresh"></i> Restaurar TCI POS</button>
             </form>
         </label>
-        @if(env('URL_DOWNLOAD'))
+        @if(config('services.assets.url_download'))
         <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
-            <a href="{{env('URL_DOWNLOAD')}}" class="btn btn-success"><i class="fa fa-download"></i> Descargar POS TCI</a>
+            <a href="{{config('services.assets.url_download')}}" class="btn btn-success"><i class="fa fa-download"></i> Descargar POS TCI</a>
         </label>
         @endif
     </div>

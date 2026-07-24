@@ -8,6 +8,7 @@ use App\Models\{Product, PresentationProduct, UnidadSat, Box, Promotion, PartToP
 use Illuminate\Support\Facades\{DB,Auth};
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ProductsImport;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ProductController extends Controller
 {
@@ -166,8 +167,12 @@ class ProductController extends Controller
         ]);
 
         try {
+            // Algunos exports del cliente traen extensión .xls pero contenido real .xlsx (u otro
+            // formato); detectamos el formato real del archivo en vez de confiar en la extensión.
+            $readerType = IOFactory::identify($request->file('excel_file')->getRealPath());
+
             $import = new ProductsImport();
-            Excel::import($import, $request->file('excel_file'));
+            Excel::import($import, $request->file('excel_file'), null, $readerType);
 
             $message = "Archivo procesado: {$import->matched} productos actualizados";
             if ($import->skipped > 0) {

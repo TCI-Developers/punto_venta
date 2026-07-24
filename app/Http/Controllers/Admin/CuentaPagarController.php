@@ -86,6 +86,10 @@ class CuentaPagarController extends Controller
             $cuenta->save();
             $cuenta_pagar->save();
 
+            if($this->hasInternetConnection()){
+                $this->saveCXPDBExt($cuenta_pagar);
+            }
+
             return redirect()->back()->with('success', 'La acción se completo con exito.');
         } catch (\Throwable $th) {
             return redirect()->back()->with('error', 'La acción no se pudo completar.');
@@ -105,6 +109,9 @@ class CuentaPagarController extends Controller
             $cuenta->status = ($cuenta->total - $total_details) <= 0 ? 2:1;
             $cuenta->save();
 
+            if($this->hasInternetConnection()){
+                $this->saveCXPDBExt($cuenta);
+            }
 
             return redirect()->back()->with('success', 'La acción se completo con exito.');
         } catch (\Throwable $th) {
