@@ -324,32 +324,40 @@ class UserController extends Controller
         return $this->rolesTurnos($request);
     }
 
-    //funcion para validar si aun se tiene acceso al punto de venta
+    //funcion para validar si aun se tiene acceso al punto de venta. Antes consultaba el puente
+    //legado (tciconsultoria.com), pero nada escribia una vigencia nueva ahi -- se reemplazo por
+    //la Matriz, que ya trae el token por sucursal y de verdad puede actualizarse de forma remota.
     function vigencia(){
         $empresa_local = EmpresaDetail::first();
         if(is_object($empresa_local)){
             if($this->hasInternetConnection()){
-                $data['id'] = 1;
-                $response = $this->consultDb('empresa_details', $data);
+                try {
+                    $response = $this->matrizApi('get', 'vigencia');
+                    $remoteVigencia = $response->successful() ? $response->json('vigencia') : null;
 
-                if($response->status === 'success'){
-                    try {
-                        $empresa = $response->data[0];
-                        $remoteDate = Crypt::decrypt($empresa->vigencia);
-                        $localDate  = Crypt::decrypt($empresa_local->vigencia);
+                    if($remoteVigencia){
+                        $localDate = Crypt::decrypt($empresa_local->vigencia);
 
-                        if($remoteDate > $localDate){
-                            $empresa_local->vigencia = $empresa->vigencia;
+                        if($remoteVigencia > $localDate){
+                            $empresa_local->vigencia = Crypt::encrypt($remoteVigencia);
                             $empresa_local->save();
                         }
-                    } catch (\Throwable $e) {
-                        // Si no se puede descifrar la vigencia remota, se conserva la local
                     }
+                } catch (\Throwable $e) {
+                    // Si no se pudo consultar la Matriz o descifrar la vigencia local, se conserva la local
                 }
             }
 
             $date = Date('Y-m-d');
-            $aux = Crypt::decrypt($empresa_local->vigencia);
+            try {
+                $aux = Crypt::decrypt($empresa_local->vigencia);
+            } catch (\Throwable $e) {
+                // vigencia guardada sin cifrar o corrupta (ej. instalacion nueva importada de
+                // QuickBase antes de este fix) -- no debe tronar el login, se deja pasar y se
+                // registra para corregirla luego desde la pantalla de Empresa.
+                Log::warning('No se pudo descifrar vigencia local en empresa_details, se omite el bloqueo de acceso: '.$e->getMessage());
+                return false;
+            }
             if($date > $aux){
                 return true;
             }

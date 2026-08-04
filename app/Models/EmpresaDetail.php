@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\SaleDetail;
+use Illuminate\Support\Facades\Crypt;
 
 class EmpresaDetail extends Model
 {
@@ -33,7 +34,10 @@ class EmpresaDetail extends Model
                 $empresa->name = $item->nombre;
                 $empresa->rfc = $item->rfc;
                 $empresa->address = $item->direccion;
-                $empresa->vigencia = $item->vigencia;
+                // se cifra igual que en AdminController::empresaUpdate() -- la columna siempre
+                // debe contener el valor cifrado, nunca texto plano, o UserController::vigencia()
+                // truena al intentar descifrarla en el siguiente login.
+                $empresa->vigencia = Crypt::encrypt($item->vigencia ?? '');
                 $empresa->path_logo = $item->path_logo;
                 $empresa->save();
             }
