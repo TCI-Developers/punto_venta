@@ -10,6 +10,7 @@
     "require": {
         "php": "^8.1",
         "barryvdh/laravel-dompdf": "^3.1",
+        "cweagans/composer-patches": "^2.0",
         "guzzlehttp/guzzle": "^7.2",
         "iio/libmergepdf": "^4.0",
         "laravel/framework": "^10.10",
@@ -63,6 +64,11 @@
     "extra": {
         "laravel": {
             "dont-discover": []
+        },
+        "patches": {
+            "nativephp/laravel": {
+                "Los eventos de AutoUpdater truenan con ArgumentCountError cuando Electron omite un campo opcional (ej. stagingPercentage/minimumSystemVersion ausentes) al reenviarlos a Laravel, porque el constructor no tiene valores por defecto. Ver https://github.com/NativePHP/laravel/issues": "patches/nativephp-laravel-autoupdater-events-defaults.patch"
+            }
         }
     },
     "config": {
@@ -71,7 +77,8 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "cweagans/composer-patches": true
         }
     },
     "minimum-stability": "stable",

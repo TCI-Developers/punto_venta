@@ -1,0 +1,79 @@
+--- a/src/Events/AutoUpdater/UpdateAvailable.php	2026-08-17 10:55:54
++++ b/src/Events/AutoUpdater/UpdateAvailable.php	2026-08-17 10:53:29
+@@ -16,10 +16,10 @@
+         public string $version,
+         public array $files,
+         public string $releaseDate,
+-        public ?string $releaseName,
+-        public string|array|null $releaseNotes,
+-        public ?int $stagingPercentage,
+-        public ?string $minimumSystemVersion,
++        public ?string $releaseName = null,
++        public string|array|null $releaseNotes = null,
++        public ?int $stagingPercentage = null,
++        public ?string $minimumSystemVersion = null,
+     ) {}
+ 
+     public function broadcastOn()
+--- a/src/Events/AutoUpdater/UpdateDownloaded.php	2026-08-17 10:55:54
++++ b/src/Events/AutoUpdater/UpdateDownloaded.php	2026-08-17 10:53:36
+@@ -17,10 +17,10 @@
+         public string $version,
+         public array $files,
+         public string $releaseDate,
+-        public ?string $releaseName,
+-        public string|array|null $releaseNotes,
+-        public ?int $stagingPercentage,
+-        public ?string $minimumSystemVersion
++        public ?string $releaseName = null,
++        public string|array|null $releaseNotes = null,
++        public ?int $stagingPercentage = null,
++        public ?string $minimumSystemVersion = null
+     ) {}
+ 
+     public function broadcastOn()
+--- a/src/Events/AutoUpdater/UpdateNotAvailable.php	2026-08-17 10:55:54
++++ b/src/Events/AutoUpdater/UpdateNotAvailable.php	2026-08-17 10:53:42
+@@ -16,10 +16,10 @@
+         public string $version,
+         public array $files,
+         public string $releaseDate,
+-        public ?string $releaseName,
+-        public string|array|null $releaseNotes,
+-        public ?int $stagingPercentage,
+-        public ?string $minimumSystemVersion,
++        public ?string $releaseName = null,
++        public string|array|null $releaseNotes = null,
++        public ?int $stagingPercentage = null,
++        public ?string $minimumSystemVersion = null,
+     ) {}
+ 
+     public function broadcastOn()
+--- a/src/Events/AutoUpdater/UpdateCancelled.php	2026-08-17 10:55:54
++++ b/src/Events/AutoUpdater/UpdateCancelled.php	2026-08-17 10:53:49
+@@ -16,10 +16,10 @@
+         public string $version,
+         public array $files,
+         public string $releaseDate,
+-        public ?string $releaseName,
+-        public string|array|null $releaseNotes,
+-        public ?int $stagingPercentage,
+-        public ?string $minimumSystemVersion,
++        public ?string $releaseName = null,
++        public string|array|null $releaseNotes = null,
++        public ?int $stagingPercentage = null,
++        public ?string $minimumSystemVersion = null,
+     ) {}
+ 
+     public function broadcastOn()
+--- a/src/Events/AutoUpdater/Error.php	2026-08-17 10:55:54
++++ b/src/Events/AutoUpdater/Error.php	2026-08-17 10:54:06
+@@ -15,7 +15,7 @@
+     public function __construct(
+         public string $name,
+         public string $message,
+-        public ?string $stack,
++        public ?string $stack = null,
+     ) {}
+ 
+     public function broadcastOn()
