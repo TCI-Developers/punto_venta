@@ -15,11 +15,17 @@ class AppUpdateController extends Controller
     {
         $status = Cache::get('nativephp_update_status', ['state' => 'none']);
 
-        // si quedo guardado "lista para instalar" de una version que YA es la que esta
-        // corriendo ahorita, es que se aplico y la app ya reinicio -- pero nadie limpio el
-        // cache, y el banner se queda ofreciendo reinstalar algo que ya esta instalado (y
-        // Electron correctamente rechaza con "No valid update available"). Se autolimpia aqui.
-        if (($status['state'] ?? null) === 'ready' && ($status['version'] ?? null) === config('nativephp.version')) {
+        // si quedo guardado "lista para instalar" (o "disponible"/"descargando") de una
+        // version que YA se alcanzo o se supero (no solo si es exactamente igual -- alguien
+        // pudo saltarse una version, ej. estaba en 1.0.5 y el cache seguia diciendo 1.0.5
+        // porque este mismo fix no existia todavia en ese build), es que ya se aplico y la
+        // app reinicio, pero nadie limpio el cache -- el banner se queda ofreciendo reinstalar
+        // algo que ya esta instalado (y Electron correctamente rechaza con "No valid update
+        // available"). Se autolimpia aqui con version_compare en vez de igualdad estricta.
+        $cachedVersion = $status['version'] ?? null;
+        if (in_array($status['state'] ?? null, ['available', 'downloading', 'ready'], true)
+            && $cachedVersion
+            && version_compare($cachedVersion, config('nativephp.version'), '<=')) {
             Cache::forget('nativephp_update_status');
             $status = ['state' => 'none'];
         }
