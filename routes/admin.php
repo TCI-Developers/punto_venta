@@ -6,6 +6,11 @@ Route::get('/import-data', 'Admin\RootController@index')->name('root.index'); //
 Route::get('/', 'Admin\BranchController@index')->name('admin.index'); //vista principal
 Route::get('/start-amount-box', 'Admin\AdminController@startAmountBox')->name('admin.startAmountBox'); //vista principal
 
+//actualizacion de la app (auto-updater de NativePHP) -- disponible para cualquier usuario autenticado
+Route::get('/update-status', 'Admin\AppUpdateController@status')->name('update.status');
+Route::post('/update-check', 'Admin\AppUpdateController@check')->name('update.check');
+Route::post('/update-install', 'Admin\AppUpdateController@install')->name('update.install');
+
 Route::get('/empresa', 'Admin\AdminController@empresa')->name('admin.empresa')->middleware('permission:empresa,punto_venta,[show|update]'); //vista muetsra datos de la empresa
 Route::post('/empresa-update', 'Admin\AdminController@empresaUpdate')->name('admin.empresaUpdate')->middleware('permission:empresa,punto_venta,[update]'); //vista muetsra datos de la empresa
 

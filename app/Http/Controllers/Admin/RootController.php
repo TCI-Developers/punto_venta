@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{Role, UserRole, Customer, Brand, Product, Proveedor, User, BranchUser};
+use App\Models\{Role, UserRole, Customer, Brand, Product, Proveedor, User, BranchUser, EmpresaDetail};
 use Illuminate\Support\Facades\{Auth, Hash, Artisan, File, Http, Log, DB};
 use Database\Seeders\DatabaseSeeder;
 
@@ -112,20 +112,116 @@ class RootController extends Controller
 
     //funcion para importar el catalogo completo (lineas/productos/proveedores/clientes) directo
     //desde la Matriz, en un solo paso (reemplaza a Quick -> DB Externa -> Local para estas 4 tablas).
+    //este boton (pantalla de Importacion) siempre hace un sync COMPLETO (sin updated_after),
+    //a diferencia del banner de "hay cambios" que usa el incremental -- se deja asi a proposito
+    //como opcion de "resincronizar todo desde cero" ante cualquier duda/desfase.
     public function importCatalogoFromMatriz(){
         ini_set('max_execution_time', 600);
         ini_set('memory_limit', '1024M');
 
-        $response = $this->matrizApi('get', 'catalogo');
+        $result = $this->runCatalogSync(null);
+
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['message']);
+        }
+
+        $this->markCatalogSynced();
+
+        return redirect()->back()->with('success', 'Catálogo sincronizado desde Matriz.');
+    }
+
+    //version del mismo sync pensada para el banner de "hay cambios en el catalogo" -- via
+    //fetch/AJAX para no sacar al usuario de la pantalla en la que este, e incremental
+    //(updated_after = ultimo sync aplicado) para que sea rapida.
+    public function catalogSyncAjax(){
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
+
+        $empresa = EmpresaDetail::first();
+        $updatedAfter = $empresa?->last_catalog_sync?->toIso8601String();
+
+        $result = $this->runCatalogSync($updatedAfter);
+
+        if ($result['success']) {
+            $this->markCatalogSynced();
+        }
+
+        return response()->json($result);
+    }
+
+    //funcion consultada por polling desde el navegador (sin aplicar nada) para saber si hay
+    //cambios pendientes en el catalogo de la Matriz desde la ultima sincronizacion aplicada.
+    //siempre falla en silencio (pending=false) -- nunca debe romper la pantalla por esto.
+    public function catalogStatus(){
+        try {
+            $empresa = EmpresaDetail::first();
+            if (!$empresa) {
+                return response()->json(['pending' => false]);
+            }
+
+            $updatedAfter = $empresa->last_catalog_sync?->toIso8601String();
+            $params = $updatedAfter ? ['updated_after' => $updatedAfter] : [];
+            $response = $this->matrizApi('get', 'catalogo', $params);
+
+            if (!$response->successful()) {
+                return response()->json(['pending' => false]);
+            }
+
+            $counts = $this->countCatalogPayload($response->json());
+
+            // 'usuarios' no respeta updated_after del lado de la Matriz (confirmado probando
+            // con una fecha limite a futuro -- las otras 4 llaves si regresan vacio, esta no).
+            // Se excluye del conteo para decidir si hay "cambios pendientes": de lo contrario
+            // el banner nunca se apagaria, porque esa llave siempre trae la lista completa.
+            $total = $counts['productos'] + $counts['lineas'] + $counts['proveedores'] + $counts['clientes'];
+
+            return response()->json(['pending' => $total > 0, 'counts' => $counts, 'total' => $total]);
+        } catch (\Throwable $th) {
+            Log::warning('No se pudo revisar cambios de catalogo en Matriz: '.$th->getMessage());
+            return response()->json(['pending' => false]);
+        }
+    }
+
+    //marca el momento del ultimo sync de catalogo APLICADO (no solo revisado), para que la
+    //siguiente consulta (banner o boton) solo pida lo que cambio desde entonces.
+    private function markCatalogSynced(): void
+    {
+        $empresa = EmpresaDetail::first();
+        if ($empresa) {
+            $empresa->last_catalog_sync = now();
+            $empresa->save();
+        }
+    }
+
+    //cuenta cuantos registros trae cada llave del catalogo (para el banner y el chequeo previo)
+    private function countCatalogPayload(array $data): array
+    {
+        return [
+            'productos' => count($data['productos'] ?? []),
+            'lineas' => count($data['lineas'] ?? []),
+            'proveedores' => count($data['proveedores'] ?? []),
+            'clientes' => count($data['clientes'] ?? []),
+            'usuarios' => count($data['usuarios'] ?? []),
+        ];
+    }
+
+    //logica compartida de aplicar el catalogo de Matriz a la BD local. $updatedAfter = null
+    //significa sync completo (usado por el boton de Importacion); con fecha, es incremental
+    //(usado por el banner) -- ver nota sobre la revocacion mas abajo, es el unico paso que
+    //se comporta distinto entre los dos modos.
+    private function runCatalogSync(?string $updatedAfter): array
+    {
+        $params = $updatedAfter ? ['updated_after' => $updatedAfter] : [];
+        $response = $this->matrizApi('get', 'catalogo', $params);
 
         if (!$response->successful()) {
-            return redirect()->back()->with('error', 'No se pudo conectar con la Matriz.');
+            return ['success' => false, 'message' => 'No se pudo conectar con la Matriz.'];
         }
 
         $data = $response->json();
 
         try {
-            DB::transaction(function () use ($data) {
+            DB::transaction(function () use ($data, $updatedAfter) {
                 // Lineas primero: productos referencia linea_id como brand_id, tiene que existir
                 // la marca antes de asignarsela a un producto (brand_id es FK obligatoria).
                 foreach ($data['lineas'] ?? [] as $l) {
@@ -138,7 +234,18 @@ class RootController extends Controller
                     );
                 }
 
+                $productosOmitidos = [];
+                $codigosActualizados = [];
                 foreach ($data['productos'] ?? [] as $p) {
+                    // brand_id es NOT NULL localmente -- si Matriz manda un producto sin linea_id
+                    // asignada, se omite ese producto en vez de tronar TODA la transaccion (con
+                    // miles de productos por sync, un solo registro con datos incompletos no
+                    // debe bloquear el resto).
+                    if (empty($p['linea_id'])) {
+                        $productosOmitidos[] = $p['code_product'] ?? '(sin code_product)';
+                        continue;
+                    }
+
                     Product::updateOrCreate(
                         ['code_product' => $p['code_product']],
                         [
@@ -150,13 +257,22 @@ class RootController extends Controller
                             'amount_taxes' => $p['amount_taxes'],
                             'precio' => $p['precio'],
                             'precio_mayoreo' => $p['precio_mayoreo'],
+                            'cantidad_mayoreo' => $p['cantidad_mayoreo'] ?? 0,
                             'precio_despiece' => $p['precio_despiece'],
                             'brand_id' => $p['linea_id'],
                             'category_id' => $p['category_id'] ?? null,
                             'activo' => true,
                         ]
                     );
+                    $codigosActualizados[] = $p['code_product'];
                 }
+                if (count($productosOmitidos)) {
+                    Log::warning('Productos omitidos en sync de catalogo Matriz por no tener linea_id: '.implode(', ', $productosOmitidos));
+                }
+
+                // mismo hueco que en syncProductPrices(): sin esto, este camino (boton/banner de
+                // catalogo) actualiza el producto pero deja las presentaciones con el precio viejo.
+                $this->cascadePresentationPrices($codigosActualizados);
 
                 // proveedores/clientes: se usa el id de Matriz para el match, no rfc/code_proveedor
                 // (son nullable localmente -- dos registros sin ese dato se pisarian entre si).
@@ -217,20 +333,34 @@ class RootController extends Controller
                 // revocacion: usuarios que en algun sync anterior tenian acceso via Matriz pero
                 // ya no vienen en el catalogo actual (les quitaron todas las sucursales alla)
                 // pierden ese acceso. No afecta accesos con source distinto de 'matriz'.
-                $userIdsConAccesoMatriz = BranchUser::where('source', 'matriz')->pluck('user_id')->unique();
-                foreach ($userIdsConAccesoMatriz as $userId) {
-                    $user = User::find($userId);
-                    if ($user && !in_array($user->email, $emailsEnMatriz, true)) {
-                        BranchUser::where('user_id', $userId)->where('source', 'matriz')->delete();
+                //
+                // OJO: esto solo es correcto en un sync COMPLETO. En uno incremental
+                // (updated_after != null), $emailsEnMatriz solo trae los usuarios que
+                // cambiaron recientemente -- la gran mayoria de usuarios no vienen ahi
+                // simplemente porque no cambiaron, no porque perdieron acceso. Si se corriera
+                // esta revocacion tambien en modo incremental, se le quitaria el acceso a
+                // practicamente todos los usuarios en cada sync parcial. Por eso se salta
+                // por completo cuando $updatedAfter tiene valor -- la revocacion "usuario ya
+                // no existe en absoluto en Matriz" solo se aplica en el resync completo del
+                // boton de Importacion. La revocacion de un usuario puntual (le quitaron SUS
+                // sucursales) si funciona igual en ambos modos, porque esa se resuelve arriba
+                // reemplazando las filas de cualquier usuario que SI aparezca en la respuesta.
+                if ($updatedAfter === null) {
+                    $userIdsConAccesoMatriz = BranchUser::where('source', 'matriz')->pluck('user_id')->unique();
+                    foreach ($userIdsConAccesoMatriz as $userId) {
+                        $user = User::find($userId);
+                        if ($user && !in_array($user->email, $emailsEnMatriz, true)) {
+                            BranchUser::where('user_id', $userId)->where('source', 'matriz')->delete();
+                        }
                     }
                 }
             });
         } catch (\Throwable $th) {
             Log::error('Error al importar catalogo desde Matriz: '.$th->getMessage());
-            return redirect()->back()->with('error', 'La importación no se pudo completar.');
+            return ['success' => false, 'message' => 'La importación no se pudo completar.'];
         }
 
-        return redirect()->back()->with('success', 'Catálogo sincronizado desde Matriz.');
+        return ['success' => true, 'counts' => $this->countCatalogPayload($data)];
     }
 
     //funcion para importar los registros de la db externa a la db local

@@ -25,6 +25,7 @@ class Product extends Model
         'existence',
         'precio',
         'precio_mayoreo',
+        'cantidad_mayoreo',
         'precio_despiece',
         'comments',
         'brand_id',

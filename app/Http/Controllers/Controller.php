@@ -289,6 +289,34 @@ class Controller extends BaseController
         return false;
     }
 
+    //actualiza el precio de las presentaciones (parts_to_product) de los productos en $codes,
+    //para que queden igual que el producto base recien actualizado. Formula compartida con
+    //ProductsImport (carga de Excel) y usada por los 2 caminos que actualizan precios de
+    //productos (syncProductPrices en el login, runCatalogSync en el sync/banner de catalogo):
+    //si la presentacion tiene despiece, precio_despiece/cantidad_despiezado; si no, el precio
+    //normal. Tambien cascadea price_mayoreo y cantidad_mayoreo (minimo de piezas para que
+    //aplique mayoreo, ahora gestionado desde la Matriz igual que el resto de los precios).
+    //No toca cantidad_despiezado (estructura de despiece) ni code_bar de la presentacion.
+    protected function cascadePresentationPrices(array $codes): void
+    {
+        $codes = array_values(array_filter($codes, fn($c) => trim((string)$c) !== ''));
+        if (!count($codes)) {
+            return;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($codes), '?'));
+        $sql = "UPDATE parts_to_product SET
+            price = CASE
+                WHEN cantidad_despiezado > 0 THEN (SELECT precio_despiece FROM products WHERE products.id = parts_to_product.product_id) / cantidad_despiezado
+                ELSE (SELECT precio FROM products WHERE products.id = parts_to_product.product_id)
+            END,
+            price_mayoreo = (SELECT precio_mayoreo FROM products WHERE products.id = parts_to_product.product_id),
+            cantidad_mayoreo = (SELECT cantidad_mayoreo FROM products WHERE products.id = parts_to_product.product_id)
+            WHERE product_id IN (SELECT id FROM products WHERE code_product IN ({$placeholders}))";
+
+        DB::update($sql, $codes);
+    }
+
     //funcion para quitar signo de pesos y hacerlo numerico el valor
     function formatNumberr($valor){
         return (float)str_replace(',','', str_replace('$', '', $valor));

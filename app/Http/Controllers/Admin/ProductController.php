@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\{Product, PresentationProduct, UnidadSat, Box, Promotion, PartToProduct};
-use Illuminate\Support\Facades\{DB,Auth};
+use Illuminate\Support\Facades\{DB,Auth,Log};
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ProductsImport;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -161,7 +161,14 @@ class ProductController extends Controller
 
     //funcion para cargar el excel y procesarlo
     public function uploadExcel(Request $request)
-    {   
+    {
+        // se ponia dentro de ProductsImport::collection(), pero eso corre DESPUES de que el
+        // paquete de Excel ya cargó/parseó todo el archivo en memoria -- para archivos grandes,
+        // ese parseo inicial es el momento mas pesado, asi que el limite tiene que aplicar desde
+        // aqui para que realmente sirva de algo.
+        ini_set('memory_limit', '512M');
+        set_time_limit(0);
+
         $request->validate([
             'excel_file' => 'required|mimetypes:application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
@@ -183,7 +190,14 @@ class ProductController extends Controller
 
             return back()->with('success', $message);
         } catch (\Throwable $th) {
-            return back()->with('error', 'Excel Dañado.');
+            // antes se mostraba "Excel Dañado." sin importar la causa real, haciendo
+            // imposible diagnosticar el problema a distancia -- ahora se deja el error real
+            // en el log para poder ver exactamente que tronó (memoria, formato, etc.).
+            Log::error('Error al subir/procesar Excel de productos: '.$th->getMessage(), [
+                'exception' => get_class($th),
+                'archivo' => $request->file('excel_file')?->getClientOriginalName(),
+            ]);
+            return back()->with('error', 'No se pudo procesar el archivo: '.$th->getMessage());
         }
     }
 

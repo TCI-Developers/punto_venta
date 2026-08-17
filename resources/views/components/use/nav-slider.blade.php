@@ -1,4 +1,26 @@
 <link rel="stylesheet" href="{{asset('css/style_nav_slider.css')}}">
+<script src="{{asset('js/app_update.js')}}"></script>
+
+<!-- Aviso de actualizacion disponible/descargando/lista (poll a /update-status, ver app_update.js) -->
+<div id="updateBanner" style="display:none; align-items:center; justify-content:center; gap:1rem; background:#0d6efd; color:#fff; padding:6px 16px; font-size:0.9rem; text-align:center;">
+    <span id="updateBannerText"></span>
+    <button id="updateBannerBtn" type="button" class="btn btn-light btn-sm" style="display:none;" onclick="installUpdate()">Reiniciar y actualizar</button>
+</div>
+<form id="updateInstallForm" action="{{ route('update.install') }}" method="POST" style="display:none;">
+    @csrf
+</form>
+
+@if(auth()->user()->hasPermissionThroughModule('empresa','punto_venta','auth'))
+<!-- Aviso de cambios pendientes en el catalogo de Matriz (solo para quien puede sincronizarlo) -->
+<script src="{{asset('js/catalog_sync.js')}}"></script>
+<div id="catalogBanner" style="display:none; align-items:center; justify-content:center; gap:1rem; background:#6c757d; color:#fff; padding:6px 16px; font-size:0.9rem; text-align:center;">
+    <span id="catalogBannerText"></span>
+    <button id="catalogBannerBtn" type="button" class="btn btn-light btn-sm" onclick="syncCatalogNow()">Sincronizar ahora</button>
+</div>
+<form id="catalogSyncCsrfForm" style="display:none;">
+    @csrf
+</form>
+@endif
 
 <!-- Header -->
   <header class="main-header d-flex align-items-center justify-content-between px-3 py-2">
@@ -16,6 +38,12 @@
 
         {{--@if(!auth()->user()->hasPermissionThroughModule('cierre_caja') || Auth::User()->hasRole('root') || Auth::User()->name == 'TCI_DEV')--}}
         <div class="dropdown-menu">
+            <form method="POST" action="{{ route('update.check') }}">
+                @csrf
+                <button type="submit">
+                    <i class="fa fa-refresh"></i> Buscar actualizaciones
+                </button>
+            </form>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit">

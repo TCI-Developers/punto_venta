@@ -182,9 +182,11 @@ class UserController extends Controller
                     $codes = [];
                     $precioWhens = [];
                     $mayoreoWhens = [];
+                    $cantidadMayoreoWhens = [];
                     $despiezoWhens = [];
                     $precioBindings = [];
                     $mayoreoBindings = [];
+                    $cantidadMayoreoBindings = [];
                     $despiezoBindings = [];
 
                     foreach($chunk as $item){
@@ -203,6 +205,10 @@ class UserController extends Controller
                         $mayoreoBindings[] = $code;
                         $mayoreoBindings[] = (float)($item['precio_mayoreo'] ?? 0);
 
+                        $cantidadMayoreoWhens[] = 'WHEN ? THEN ?';
+                        $cantidadMayoreoBindings[] = $code;
+                        $cantidadMayoreoBindings[] = (float)($item['cantidad_mayoreo'] ?? 0);
+
                         $despiezoWhens[] = 'WHEN ? THEN ?';
                         $despiezoBindings[] = $code;
                         $despiezoBindings[] = (float)($item['precio_despiece'] ?? 0);
@@ -217,12 +223,19 @@ class UserController extends Controller
                     $sql = "UPDATE products SET
                         precio = CASE code_product " . implode(' ', $precioWhens) . " ELSE precio END,
                         precio_mayoreo = CASE code_product " . implode(' ', $mayoreoWhens) . " ELSE precio_mayoreo END,
+                        cantidad_mayoreo = CASE code_product " . implode(' ', $cantidadMayoreoWhens) . " ELSE cantidad_mayoreo END,
                         precio_despiece = CASE code_product " . implode(' ', $despiezoWhens) . " ELSE precio_despiece END
                         WHERE code_product IN ({$placeholders})";
 
-                    $bindings = array_merge($precioBindings, $mayoreoBindings, $despiezoBindings, $codes);
+                    $bindings = array_merge($precioBindings, $mayoreoBindings, $cantidadMayoreoBindings, $despiezoBindings, $codes);
 
                     DB::update($sql, $bindings);
+
+                    // las presentaciones (parts_to_product) tienen su propio precio
+                    // independiente -- sin este paso se quedan con el precio viejo aunque el
+                    // producto base ya se haya actualizado (asi se detecto el desfase: 244
+                    // productos con precio de presentacion desincronizado del precio real).
+                    $this->cascadePresentationPrices($codes);
                 }
             });
         } catch (\Throwable $th) {

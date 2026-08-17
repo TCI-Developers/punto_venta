@@ -22,8 +22,13 @@ class EmpresaDetail extends Model
         'vigencia',
         'path_logo',
         'matriz_token',
+        'last_catalog_sync',
     ];
-    
+
+    protected $casts = [
+        'last_catalog_sync' => 'datetime',
+    ];
+
     public function setEmpresa($detail) {
         if(count($detail)){
             foreach($detail as $item){
