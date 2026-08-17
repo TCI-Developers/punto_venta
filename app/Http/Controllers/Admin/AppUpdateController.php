@@ -13,7 +13,18 @@ class AppUpdateController extends Controller
     //EventServiceProvider a partir de los eventos que ya dispara Electron solo.
     public function status()
     {
-        return response()->json(Cache::get('nativephp_update_status', ['state' => 'none']));
+        $status = Cache::get('nativephp_update_status', ['state' => 'none']);
+
+        // si quedo guardado "lista para instalar" de una version que YA es la que esta
+        // corriendo ahorita, es que se aplico y la app ya reinicio -- pero nadie limpio el
+        // cache, y el banner se queda ofreciendo reinstalar algo que ya esta instalado (y
+        // Electron correctamente rechaza con "No valid update available"). Se autolimpia aqui.
+        if (($status['state'] ?? null) === 'ready' && ($status['version'] ?? null) === config('nativephp.version')) {
+            Cache::forget('nativephp_update_status');
+            $status = ['state' => 'none'];
+        }
+
+        return response()->json($status);
     }
 
     //funcion para forzar una revision manual de actualizaciones (ademas de la automatica que
