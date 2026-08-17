@@ -219,6 +219,9 @@
            </li>
         @endif
       </ul>
+      <div class="text-center text-muted" style="font-size:0.75rem; padding:8px 0;">
+          POSTCI v{{ config('nativephp.version') }}
+      </div>
     </nav>
   </aside>
 

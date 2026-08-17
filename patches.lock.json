@@ -1,0 +1,17 @@
+{
+    "_hash": "e8d95b5ecc126b0bbea6c26e7f3055a32ea0df29bc9fa3001273a7ffb0d042c4",
+    "patches": {
+        "nativephp/laravel": [
+            {
+                "package": "nativephp/laravel",
+                "description": "Los eventos de AutoUpdater truenan con ArgumentCountError cuando Electron omite un campo opcional (ej. stagingPercentage/minimumSystemVersion ausentes) al reenviarlos a Laravel, porque el constructor no tiene valores por defecto. Ver https://github.com/NativePHP/laravel/issues",
+                "url": "patches/nativephp-laravel-autoupdater-events-defaults.patch",
+                "sha256": "56cabace56b0512bf57b3fe626f1f3d69dddb381c2907e270a0740c37eb7f464",
+                "depth": 1,
+                "extra": {
+                    "provenance": "root"
+                }
+            }
+        ]
+    }
+}
