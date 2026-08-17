@@ -127,7 +127,11 @@ class FacturaController extends Controller
         $payload = [
             'emisor' => [
                 'rfc'            => $empresa->rfc,
-                'nombre'         => $empresa->name ?? $empresa->razon_social,
+                // el SAT valida el Nombre del emisor contra el nombre LEGAL registrado para ese
+                // RFC (razon_social, ej. "...S.A. DE C.V."), no el nombre comercial corto -- al
+                // reves de como estaba, causaba CFDI40139 "el Nombre del emisor debe pertenecer
+                // al nombre asociado al RFC". El receptor ya usaba el orden correcto (linea 102).
+                'nombre'         => $empresa->razon_social ?? $empresa->name,
                 'regimen_fiscal' => $empresa->regimen_fiscal,
                 'codigo_postal'  => $empresa->codigo_postal,
             ],
