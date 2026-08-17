@@ -253,6 +253,7 @@ class RootController extends Controller
                             'barcode' => $p['barcode'],
                             'unit' => $p['unit'],
                             'unit_description' => $p['unit_description'],
+                            'clave_sat' => $p['clave_sat'] ?? null,
                             'taxes' => $p['taxes'],
                             'amount_taxes' => $p['amount_taxes'],
                             'precio' => $p['precio'],

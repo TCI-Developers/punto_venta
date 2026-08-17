@@ -22,6 +22,7 @@ class Product extends Model
         'amount_taxes',
         'unit',
         'unit_description',
+        'clave_sat',
         'existence',
         'precio',
         'precio_mayoreo',

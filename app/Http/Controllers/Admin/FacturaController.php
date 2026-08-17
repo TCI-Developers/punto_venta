@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\FacturacionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{Auth, Log};
 use App\Models\{Factura, Sale, Customer, EmpresaDetail, PartToProduct, Product};
 
 class FacturaController extends Controller
@@ -483,7 +483,16 @@ class FacturaController extends Controller
 
                 $descripcion = $product?->description ?? 'Producto';
                 $claveUnidad = $product?->unit ?? 'H87';
-                $claveProd   = '01010101'; // sin clave SAT específica — actualizar si los productos tienen clave
+
+                // el SAT valida el Importe contra un rango de precio esperado segun la clave de
+                // producto/servicio -- un codigo generico fijo para todo rechaza cualquier venta
+                // fuera de ese rango (CFDI40167). Se usa la clave real del producto (la Matriz ya
+                // la trae, ver clave_sat); si un producto no la tiene sincronizada todavia, cae
+                // al generico como antes, pero se deja registrado para poder identificarlos.
+                $claveProd = $product?->clave_sat ?: '01010101';
+                if (!$product?->clave_sat) {
+                    Log::warning('Producto sin clave_sat, se uso clave generica para facturar: '.($product?->code_product ?? 'desconocido'));
+                }
 
                 $subtotal = round((float) $detail->subtotal, 2);
                 $iva      = round((float) $detail->iva, 2);
