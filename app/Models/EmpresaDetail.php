@@ -25,9 +25,11 @@ class EmpresaDetail extends Model
         'last_catalog_sync',
     ];
 
-    protected $casts = [
-        'last_catalog_sync' => 'datetime',
-    ];
+    // last_catalog_sync se deja SIN cast 'datetime' a proposito. Ese cast interpreta el valor
+    // guardado usando la zona horaria de la app (America/Mexico_City) al leerlo de vuelta,
+    // aunque se haya guardado como un instante UTC -- corriendo el valor 6 horas al leerlo.
+    // Se guarda y se lee siempre como texto ya normalizado a UTC (ver RootController::
+    // markCatalogSynced/catalogStatus/catalogSyncAjax), sin depender de la zona horaria de la app.
 
     public function setEmpresa($detail) {
         if(count($detail)){

@@ -125,7 +125,7 @@ class RootController extends Controller
             return redirect()->back()->with('error', $result['message']);
         }
 
-        $this->markCatalogSynced();
+        $this->markCatalogSynced($result['synced_at'] ?? null);
 
         return redirect()->back()->with('success', 'Catálogo sincronizado desde Matriz.');
     }
@@ -138,12 +138,12 @@ class RootController extends Controller
         ini_set('memory_limit', '1024M');
 
         $empresa = EmpresaDetail::first();
-        $updatedAfter = $empresa?->last_catalog_sync?->toIso8601String();
+        $updatedAfter = $this->lastCatalogSyncIso($empresa);
 
         $result = $this->runCatalogSync($updatedAfter);
 
         if ($result['success']) {
-            $this->markCatalogSynced();
+            $this->markCatalogSynced($result['synced_at'] ?? null);
         }
 
         return response()->json($result);
@@ -159,7 +159,7 @@ class RootController extends Controller
                 return response()->json(['pending' => false]);
             }
 
-            $updatedAfter = $empresa->last_catalog_sync?->toIso8601String();
+            $updatedAfter = $this->lastCatalogSyncIso($empresa);
             $params = $updatedAfter ? ['updated_after' => $updatedAfter] : [];
             $response = $this->matrizApi('get', 'catalogo', $params);
 
@@ -183,13 +183,48 @@ class RootController extends Controller
     }
 
     //marca el momento del ultimo sync de catalogo APLICADO (no solo revisado), para que la
-    //siguiente consulta (banner o boton) solo pida lo que cambio desde entonces.
-    private function markCatalogSynced(): void
+    //siguiente consulta (banner o boton) solo pida lo que cambio desde entonces. Se usa el
+    //synced_at que regresa la propia Matriz (hora de su servidor, en UTC) en vez de la hora
+    //local de la PC -- si el reloj de una sucursal esta desfasado, usar la hora local podria
+    //cortar el updated_after antes o despues de lo correcto y perder o repetir registros. La
+    //Matriz genera synced_at despues de leer todo, asi que garantiza que nada quede sin cubrir.
+    //Si por alguna razon la respuesta no trae synced_at (version vieja de la Matriz, etc.), cae
+    //a la hora local como respaldo -- sigue siendo mejor que no guardar nada.
+    private function markCatalogSynced(?string $syncedAt = null): void
     {
         $empresa = EmpresaDetail::first();
-        if ($empresa) {
-            $empresa->last_catalog_sync = now();
-            $empresa->save();
+        if (!$empresa) {
+            return;
+        }
+
+        // se normaliza y se guarda como texto plano ya convertido a UTC (la columna no tiene
+        // cast 'datetime' -- ver nota en EmpresaDetail -- para que la lectura no la reinterprete
+        // con la zona horaria de la app). El formato 'Y-m-d H:i:s' guarda solo los dígitos, sin
+        // marcador de zona, pero SIEMPRE representan un instante en UTC por convencion aqui.
+        try {
+            $instant = $syncedAt ? \Carbon\Carbon::parse($syncedAt)->utc() : now('UTC');
+        } catch (\Throwable $th) {
+            Log::warning('No se pudo interpretar synced_at de la Matriz ("'.$syncedAt.'"), se usa la hora local: '.$th->getMessage());
+            $instant = now('UTC');
+        }
+
+        $empresa->last_catalog_sync = $instant->format('Y-m-d H:i:s');
+        $empresa->save();
+    }
+
+    //lee last_catalog_sync (texto plano, siempre UTC por convencion -- ver nota de arriba) y lo
+    //regresa como ISO8601 con el offset +00:00 explicito, listo para mandar como updated_after.
+    private function lastCatalogSyncIso(?EmpresaDetail $empresa): ?string
+    {
+        if (!$empresa || !$empresa->last_catalog_sync) {
+            return null;
+        }
+
+        try {
+            return \Carbon\Carbon::parse($empresa->last_catalog_sync, 'UTC')->toIso8601String();
+        } catch (\Throwable $th) {
+            Log::warning('No se pudo interpretar last_catalog_sync guardado ("'.$empresa->last_catalog_sync.'"): '.$th->getMessage());
+            return null;
         }
     }
 
@@ -361,7 +396,11 @@ class RootController extends Controller
             return ['success' => false, 'message' => 'La importación no se pudo completar.'];
         }
 
-        return ['success' => true, 'counts' => $this->countCatalogPayload($data)];
+        return [
+            'success' => true,
+            'counts' => $this->countCatalogPayload($data),
+            'synced_at' => $data['synced_at'] ?? null,
+        ];
     }
 
     //funcion para importar los registros de la db externa a la db local
