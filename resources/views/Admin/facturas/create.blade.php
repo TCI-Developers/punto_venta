@@ -278,7 +278,9 @@
                                         @foreach($ventas as $v)
                                         @php
                                             $fpMap = ['efectivo'=>'01','tarjeta_credito'=>'04','tarjeta_debito'=>'28','transferencia'=>'03'];
-                                            $fpSugerido = $v->paymentMethod?->pay_method === 'PPD' ? '99' : ($fpMap[$v->type_payment] ?? '01');
+                                            // venta mixta (efectivo + tarjeta): no existe un FormaPago SAT que la represente,
+                                            // se sugiere "99 Por definir" para forzar a elegir manualmente en vez de asumir Efectivo.
+                                            $fpSugerido = $v->paymentMethod?->pay_method === 'PPD' ? '99' : ($v->type_payment === 'mixto' ? '99' : ($fpMap[$v->type_payment] ?? '01'));
                                         @endphp
                                         <tr onclick="toggleVenta(this)"
                                             data-forma-pago="{{ $fpSugerido }}"
@@ -296,7 +298,12 @@
                                             <td>{{ $v->folio }}</td>
                                             <td>{{ $v->getClient?->name ?? 'Público general' }}</td>
                                             <td>{{ $v->updated_at ? $v->updated_at->format('d/m/Y H:i') : $v->date }}</td>
-                                            <td>{{ ucfirst($v->type_payment) }}</td>
+                                            <td>
+                                                {{ $v->type_payment == 'mixto' ? 'Mixto' : ucfirst($v->type_payment) }}
+                                                @if($v->type_payment == 'mixto')
+                                                <br><small class="text-muted">Efvo ${{ number_format($v->monto_efectivo, 2) }} / Tarj ${{ number_format($v->monto_tarjeta, 2) }}</small>
+                                                @endif
+                                            </td>
                                             <td>${{ number_format($v->total_sale, 2) }}</td>
                                         </tr>
                                         @endforeach

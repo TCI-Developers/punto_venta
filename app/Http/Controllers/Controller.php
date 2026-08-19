@@ -565,6 +565,8 @@ class Controller extends BaseController
             'uuid' => $sale->uuid,
             'payment_method_id' => $sale->payment_method_id,
             'type_payment' => $sale->type_payment,
+            'monto_efectivo' => $sale->monto_efectivo, // solo llenos cuando type_payment = 'mixto'
+            'monto_tarjeta' => $sale->monto_tarjeta,
             'amount_received' => $sale->amount_received,
             'change_' => $sale->change,
             'sat_document_type' => $sale->sat_document_type,
@@ -601,6 +603,8 @@ class Controller extends BaseController
             'fecha_devolucion' => $devolution->fecha_devolucion,
             'total_descuentos' => $devolution->total_descuentos,
             'total_devolucion' => $devolution->total_devolucion,
+            'monto_efectivo' => $devolution->monto_efectivo, // solo llenos cuando la venta original fue 'mixto'
+            'monto_tarjeta' => $devolution->monto_tarjeta,
             'status' => 1,
             'created_at' => $devolution->created_at,
             'updated_at' => $devolution->updated_at,

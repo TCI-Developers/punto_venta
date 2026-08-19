@@ -594,8 +594,10 @@ class Sale extends Component
         $this->calculoImpuestos($sale_detail, $presentation); //calculo de impuestos
     }
 
-    //funcion para guardar el monto recibido, total venta y el cambio
-    function cobrar($monto, $total_venta, $change){
+    //funcion para guardar el monto recibido, total venta y el cambio. $tipo_pago/$monto_efectivo/
+    //$monto_tarjeta solo se usan para pago mixto (efectivo + tarjeta en la misma venta) -- para
+    //cualquier otro tipo de pago se dejan null y todo funciona exactamente igual que antes.
+    function cobrar($monto, $total_venta, $change, $tipo_pago = null, $monto_efectivo = null, $monto_tarjeta = null){
         $sale = SaleModel::find($this->id);
 
         if(!$sale->getDetails()->count()){
@@ -609,6 +611,20 @@ class Sale extends Component
         if($real_change < 0){
             $this->dispatch('cobrarError', ['message' => 'El monto recibido no cubre el total de la venta.']);
             return;
+        }
+
+        if($tipo_pago === 'mixto'){
+            $mEfectivo = round((float)$monto_efectivo, 2);
+            $mTarjeta = round((float)$monto_tarjeta, 2);
+
+            if(($mEfectivo + $mTarjeta) < $real_total){
+                $this->dispatch('cobrarError', ['message' => 'La suma de efectivo y tarjeta no cubre el total de la venta.']);
+                return;
+            }
+
+            $sale->type_payment = 'mixto';
+            $sale->monto_efectivo = $mEfectivo;
+            $sale->monto_tarjeta = $mTarjeta;
         }
 
         $sale->amount_received = $monto;

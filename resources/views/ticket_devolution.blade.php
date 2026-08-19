@@ -71,8 +71,14 @@
 
         <!-- Método de Pago -->
         <div class="info-venta">
+            @if(!is_null($devolucion->monto_efectivo) || !is_null($devolucion->monto_tarjeta))
+            <div><strong>Método de reembolso:</strong> Mixto (efectivo + tarjeta)</div>
+            <div><strong>Efectivo entregado:</strong> $ {{number_format($devolucion->monto_efectivo, 2)}}</div>
+            <div><strong>Tarjeta:</strong> $ {{number_format($devolucion->monto_tarjeta, 2)}}</div>
+            @else
             <div><strong>Método de reembolso:</strong> Efectivo</div>
             <div><strong>Efectivo entregado:</strong> $ {{number_format($devolucion->total_devolucion, 2)}}</div>
+            @endif
         </div>
 
         <!-- Pie -->

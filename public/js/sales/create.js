@@ -62,9 +62,16 @@
 
             //select tipo de pago
             $('#type_payment').on('change', function(){
-                if($(this).val() !== 'efectivo'){
+                let tipo = $(this).val();
+                if(tipo === 'mixto'){
+                    $('#div_mixto').removeClass('d-none');
+                    $('#amount_received').val('').attr('readonly', true);
+                    $('.input_amounts').not('#monto_efectivo_mixto, #monto_tarjeta_mixto').attr('disabled', true);
+                }else if(tipo !== 'efectivo'){
+                    $('#div_mixto').addClass('d-none');
                     $('.input_amounts').val('').attr('disabled', true);
                 }else{
+                    $('#div_mixto').addClass('d-none');
                     $('.input_amounts').attr('disabled', false);
                 }
             });
@@ -327,17 +334,32 @@
             $('#btnCancelSale').removeClass('d-none');
             
             $('#amount_received').attr('readonly', false);
-            
+
             // if($('#payment_method_id option:selected').data('name') == 'PPD'){
             //     $('#amount_received').val($('#total_sale').val()).attr('readonly', true);
-            // }            
-            if($('#type_payment').val() !== 'efectivo'){
+            // }
+            if($('#type_payment').val() === 'mixto'){
+                $('#div_mixto').removeClass('d-none');
+                $('#amount_received').attr('readonly', true);
+                calcularMixto();
+            }else if($('#type_payment').val() !== 'efectivo'){
                 $('#amount_received').val($('#total_sale').val()).attr('readonly', true);
-            }            
-            getChange($('#total_sale').val());
+                getChange($('#total_sale').val());
+            }else{
+                getChange($('#total_sale').val());
+            }
 
             $('#btnCobro').addClass('d-none');
             $('input[name=status]').val('cobro');
+        }
+
+        //funcion para sumar efectivo + tarjeta en pago mixto y reflejarlo en monto recibido/cambio
+        function calcularMixto(){
+            let efectivo = parseFloat($('#monto_efectivo_mixto').val()) || 0;
+            let tarjeta  = parseFloat($('#monto_tarjeta_mixto').val()) || 0;
+            let suma = efectivo + tarjeta;
+            $('#amount_received').val(suma.toFixed(2));
+            getChange(suma);
         }
 
         //funcion para obtener el cambio
@@ -383,15 +405,28 @@
             let total_sale     = parseFloat($('#total_sale').val());
             let change         = parseFloat($('#change').val());
             let tipo           = $('#type_payment').val();
+            let monto_efectivo = null;
+            let monto_tarjeta  = null;
 
-            // El redondeo de centavos aplica solo en efectivo; cualquier otro tipo usa el total exacto
+            if(tipo === 'mixto'){
+                monto_efectivo = parseFloat($('#monto_efectivo_mixto').val()) || 0;
+                monto_tarjeta  = parseFloat($('#monto_tarjeta_mixto').val()) || 0;
+            }
+
+            // El redondeo de centavos aplica solo en efectivo; cualquier otro tipo (incluido
+            // mixto) usa el total exacto -- dividir la tolerancia entre dos montos es ambiguo.
             let total_threshold = tipo !== 'efectivo' ? total_sale : ajustarMonto(total_sale);
 
             if (amount_received > 0 && amount_received >= total_threshold) {
                 Swal.fire({
                     icon: 'question',
                     title: '¿Confirmar cobro?',
-                    html: `<b>Total:</b> $${number_format(total_sale)}<br>
+                    html: tipo === 'mixto'
+                        ? `<b>Total:</b> $${number_format(total_sale)}<br>
+                           <b>Efectivo:</b> $${number_format(monto_efectivo)}<br>
+                           <b>Tarjeta:</b> $${number_format(monto_tarjeta)}<br>
+                           <b>Cambio:</b> $${number_format(change)}`
+                        : `<b>Total:</b> $${number_format(total_sale)}<br>
                            <b>Recibido:</b> $${number_format(amount_received)}<br>
                            <b>Cambio:</b> $${number_format(change)}`,
                     showCancelButton: true,
@@ -407,6 +442,9 @@
                             'monto': amount_received,
                             'total_venta': total_sale,
                             'change': change,
+                            'tipo_pago': tipo,
+                            'monto_efectivo': monto_efectivo,
+                            'monto_tarjeta': monto_tarjeta,
                         });
                     }
                 });

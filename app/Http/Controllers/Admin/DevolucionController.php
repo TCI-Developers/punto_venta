@@ -244,7 +244,21 @@ class DevolucionController extends Controller
                 $total_devolucion = $devolucion->total_devolucion;
             }
 
-            for ($i=0; $i < count($request->part_to_product_id) ; $i++) { 
+            // pago mixto: si la venta original se cobro en efectivo + tarjeta, el cajero indica
+            // como se reparte esta devolucion entre ambos metodos. Se valida ANTES de crear
+            // registros/tocar stock para no dejar datos huerfanos si la suma no cuadra.
+            $sale = Sale::find($request->sale_id);
+            if(is_object($sale) && $sale->type_payment == 'mixto'){
+                $total_devolucion_esperado = round($total_devolucion + array_sum($request->total ?? []), 2);
+                $mEfectivo = round((float)($request->monto_efectivo_devolucion ?? 0), 2);
+                $mTarjeta = round((float)($request->monto_tarjeta_devolucion ?? 0), 2);
+
+                if(round($mEfectivo + $mTarjeta, 2) != $total_devolucion_esperado){
+                    return redirect()->back()->withInput()->with('error', 'La suma de efectivo ($'.number_format($mEfectivo, 2).') y tarjeta ($'.number_format($mTarjeta, 2).') debe ser igual al total de la devolución: $'.number_format($total_devolucion_esperado, 2));
+                }
+            }
+
+            for ($i=0; $i < count($request->part_to_product_id) ; $i++) {
                 $sale = Sale::find($request->sale_id);
 
                 $presentation = PartToProduct::find($request->part_to_product_id[$i]);
@@ -293,6 +307,12 @@ class DevolucionController extends Controller
             $devolucion->user_dev = Auth::User()->id; //usuario que realizo la devolucion
             $devolucion->total_descuentos = $total_descuentos; //total descuentos
             $devolucion->total_devolucion = $total_devolucion; //total devolucion sin aplicar los descuentos que tenian los productos
+
+            if(is_object($sale) && $sale->type_payment == 'mixto'){
+                $devolucion->monto_efectivo = round((float)($request->monto_efectivo_devolucion ?? 0), 2);
+                $devolucion->monto_tarjeta = round((float)($request->monto_tarjeta_devolucion ?? 0), 2);
+            }
+
             $devolucion->save();
 
             if($this->hasInternetConnection()){

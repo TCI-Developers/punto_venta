@@ -101,6 +101,12 @@ class BoxController extends Controller
 
         $total_efectivo = Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'efectivo')->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale');
         $total_tarjeta  = Sale::where('user_id', $user_id)->where('status', 2)->whereIn('type_payment', ['tarjeta', 'tarjeta_credito', 'tarjeta_debito', 'transferencia'])->whereBetween('updated_at', [$start_date, $end_date])->sum('total_sale');
+
+        // pago mixto: las ventas efectivo+tarjeta no caen en ninguno de los dos filtros de arriba
+        // (type_payment = 'mixto'), se suman aparte usando su propio desglose por metodo.
+        $total_efectivo += Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'mixto')->whereBetween('updated_at', [$start_date, $end_date])->sum('monto_efectivo');
+        $total_tarjeta  += Sale::where('user_id', $user_id)->where('status', 2)->where('type_payment', 'mixto')->whereBetween('updated_at', [$start_date, $end_date])->sum('monto_tarjeta');
+
         $saleIds = Sale::where('user_id', $user_id)->pluck('id');
         $devoluciones = Devolucion::whereIn('sale_id', $saleIds)->whereBetween('updated_at', [$start_date, $end_date])->get();
         $total_devolucion_efectivo = 0;
@@ -110,7 +116,11 @@ class BoxController extends Controller
         foreach($devoluciones as $item){
             $sale = $item->getSale;
             if(!is_object($sale)) continue;
-            if($sale->type_payment == 'efectivo'){
+            if(!is_null($item->monto_efectivo) || !is_null($item->monto_tarjeta)){
+                // devolucion de una venta mixta: el cajero ya indico el reparto especifico al capturarla
+                $total_devolucion_efectivo += (float)$item->monto_efectivo;
+                $total_devolucion_tarjeta += (float)$item->monto_tarjeta;
+            }elseif($sale->type_payment == 'efectivo'){
                 $total_devolucion_efectivo += $item->total_devolucion;
             }else{
                 $total_devolucion_tarjeta += $item->total_devolucion;

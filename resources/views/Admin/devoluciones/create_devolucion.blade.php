@@ -176,6 +176,27 @@
                             <label for="notes" class="col-12">Nota
                                 <textarea class="form-control showEditread" name="notes" id="notes" required {{isset($devolution) ? 'readonly':''}}>{{$devolution->description ?? ''}}</textarea>
                             </label>
+                            @if($sale->type_payment == 'mixto')
+                            <!-- La venta original se cobro en efectivo + tarjeta: el cajero indica
+                                 como se reparte esta devolucion entre ambos metodos. La suma se
+                                 valida contra el total devuelto en el servidor. -->
+                            <div class="col-12 row">
+                                <label for="monto_efectivo_devolucion" class="col-6">Regresar en efectivo
+                                    <div class="input-group mb-2">
+                                        <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                                        <input type="number" class="form-control showEditread" step="0.01" placeholder="0"
+                                        name="monto_efectivo_devolucion" id="monto_efectivo_devolucion" value="{{$devolution->monto_efectivo ?? ''}}" {{isset($devolution) ? 'readonly':''}}>
+                                    </div>
+                                </label>
+                                <label for="monto_tarjeta_devolucion" class="col-6">Regresar con tarjeta
+                                    <div class="input-group mb-2">
+                                        <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                                        <input type="number" class="form-control showEditread" step="0.01" placeholder="0"
+                                        name="monto_tarjeta_devolucion" id="monto_tarjeta_devolucion" value="{{$devolution->monto_tarjeta ?? ''}}" {{isset($devolution) ? 'readonly':''}}>
+                                    </div>
+                                </label>
+                            </div>
+                            @endif
                         </form>
                     </div>
                     <div class="col-4" style="display:flex; ustify-content: center; align-items: center; justify-content: space-around;">

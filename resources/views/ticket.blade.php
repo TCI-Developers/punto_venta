@@ -71,8 +71,13 @@
 
         <!-- Método de Pago -->
         <div class="info-venta">
-            <div><strong>Método de pago:</strong> {{$sale->type_payment}}</div>
+            <div><strong>Método de pago:</strong> {{$sale->type_payment == 'mixto' ? 'Mixto (efectivo + tarjeta)':$sale->type_payment}}</div>
+            @if($sale->type_payment == 'mixto')
+            <div><strong>Efectivo:</strong> $ {{number_format($sale->monto_efectivo, 2)}}</div>
+            <div><strong>Tarjeta:</strong> $ {{number_format($sale->monto_tarjeta, 2)}}</div>
+            @else
             <div><strong>{{ $sale->type_payment == 'tarjeta' ? 'Monto':'Efectivo'}} :</strong> $ {{number_format($sale->amount_received, 2)}}</div>
+            @endif
             <div><strong>Cambio:</strong> $ {{number_format($sale->change, 2)}}</div>
         </div>
 

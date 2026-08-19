@@ -43,6 +43,7 @@
                             <option value="tarjeta_credito" {{ $sale->type_payment == 'tarjeta_credito' ? 'selected':'' }}>Tarjeta crédito</option>
                             <option value="tarjeta_debito"  {{ $sale->type_payment == 'tarjeta_debito'  ? 'selected':'' }}>Tarjeta débito</option>
                             <option value="transferencia"   {{ $sale->type_payment == 'transferencia'   ? 'selected':'' }}>Transferencia</option>
+                            <option value="mixto"           {{ $sale->type_payment == 'mixto'           ? 'selected':'' }}>Mixto (efectivo + tarjeta)</option>
                     </select>
                 </label>
                 <label for="coin" class="col-lg-2 col-md-2 col-sm-12">Moneda* <br>
@@ -64,6 +65,27 @@
                 <!-- Amounts -->
                 <div class="col-lg-12 col-md-12 col-sm-12 text-center {{(float)$sale->amount_received > 0 ? '':'d-none'}}" id="div_amounts">
                     <hr>
+                    <!-- Pago mixto: efectivo + tarjeta -->
+                    <div class="col-lg-12 col-md-12 col-sm-12 {{ $sale->type_payment == 'mixto' ? '':'d-none' }}" id="div_mixto">
+                        <label for="monto_efectivo_mixto" class="col-lg-3 col-md-3 col-sm-12 padding-0"> Monto en efectivo<br>
+                            <div class="input-group mb-3" style="width:100%;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">$</span>
+                                </div>
+                                <input type="number" id="monto_efectivo_mixto" class="form-control text-center" step="0.01" placeholder="0"
+                                value="{{ $sale->monto_efectivo ?? '' }}" onchange="calcularMixto()">
+                            </div>
+                        </label>
+                        <label for="monto_tarjeta_mixto" class="col-lg-3 col-md-3 col-sm-12 padding-0"> Monto con tarjeta<br>
+                            <div class="input-group mb-3" style="width:100%;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">$</span>
+                                </div>
+                                <input type="number" id="monto_tarjeta_mixto" class="form-control text-center" step="0.01" placeholder="0"
+                                value="{{ $sale->monto_tarjeta ?? '' }}" onchange="calcularMixto()">
+                            </div>
+                        </label>
+                    </div>
                     <label for="amount_received" class="col-lg-3 col-md-3 col-sm-12 padding-0"> Monto recibido<br>
                         <div class="input-group mb-3" style="width:100%;">
                             <div class="input-group-prepend">
