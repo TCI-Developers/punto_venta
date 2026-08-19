@@ -19,7 +19,7 @@
         <!-- Encabezado -->
         <div class="header">
             <div>
-                <img src="{{$logoBase64}}" alt="logo" width="70">
+                <img src="{{$logoBase64}}" alt="logo" width="70" height="45">
             </div>
             <div><strong>{{$empresa->razon_social}}</strong></div>
             <div>RFC: {{$empresa->rfc}}</div>

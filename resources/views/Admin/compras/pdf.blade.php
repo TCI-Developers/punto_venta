@@ -11,7 +11,7 @@
     <!-- Logo, Datos compañia y fecha -->
     <div class="container">
         <div class="box box-3">
-            <img src="{{ $logoBase64 }}" alt="logo" width="170">
+            <img src="{{ $logoBase64 }}" alt="logo" width="170" height="108">
         </div>
         <div class="box box-3 mt-30">
             <p class="text text-lg text-left text-bold">Pequeñita</p>

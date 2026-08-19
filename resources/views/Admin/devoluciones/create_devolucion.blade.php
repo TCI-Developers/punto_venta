@@ -37,7 +37,7 @@
                 <div class="row">
                     <label for="" class="col-4">Cliente: {{$sale->getClient->name}}</label>
                     <label for="" class="col-4">Vendedor: {{$sale->getUser->name}}</label>
-                    <label for="" class="col-4">Total Venta: {{$sale->total_sale}}</label>
+                    <label for="" class="col-4">Total Venta: $ {{number_format($sale->total_sale, 2)}}</label>
                 </div>
             </div>
             <div class="card card-body">

@@ -277,10 +277,7 @@ class CompraController extends Controller
         }
 
         $logoPath = public_path('img/logo_cliente.png');
-        $logoBase64 = null;
-        if (file_exists($logoPath)) {
-            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-        }
+        $logoBase64 = $this->logoDataUri($logoPath);
 
         $pdf = PDF::loadView('Admin.compras.pdf', [
             'compra' => $compra,

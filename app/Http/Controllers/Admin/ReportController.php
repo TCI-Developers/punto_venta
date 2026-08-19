@@ -22,10 +22,7 @@ class ReportController extends Controller
         $empresa->nombre = mb_convert_encoding($empresa->nombre, 'UTF-8', 'UTF-8');
 
         $logoPath = public_path('img/logo_cliente.png');
-        $logoBase64 = null;
-        if (file_exists($logoPath)) {
-            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-        }
+        $logoBase64 = $this->logoDataUri($logoPath);
 
         $dir = 'pdf_reports';
         if (!Storage::disk('public')->exists($dir)) {

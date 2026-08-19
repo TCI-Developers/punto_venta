@@ -13,6 +13,16 @@ class ProductsImport implements ToCollection, WithMultipleSheets
     public int $skipped = 0;
     public array $skippedCodes = [];
 
+    // columna I (novena, indice 8): precio real de despiece tomado directo del archivo -- cuando
+    // viene y es > 0, reemplaza el calculo producto->precio_despiece / cantidad_despiece. Se activa
+    // solo si el usuario confirmo usarla (ver ProductController::uploadExcel/confirmUploadExcel).
+    public bool $useExcelPrice = false;
+
+    public function __construct(bool $useExcelPrice = false)
+    {
+        $this->useExcelPrice = $useExcelPrice;
+    }
+
     public function collection_old(Collection $rows)
     {   
         ini_set('memory_limit', '512M');
@@ -186,13 +196,21 @@ class ProductsImport implements ToCollection, WithMultipleSheets
                                 : (100 / $equivalencia);
                         }
 
+                        // columna I (indice 8): precio real de despiece del archivo. Si el usuario
+                        // confirmo usarlo y viene un valor > 0 para ESTA fila, reemplaza a
+                        // producto->precio_despiece dentro del MISMO calculo (se sigue dividiendo
+                        // entre cantidad_despiece) -- el precio del excel es el precio de la
+                        // presentacion "entera" de referencia, no el precio final por pieza.
+                        $excelPrice = $this->useExcelPrice ? (float) ($rows[$item][8] ?? 0) : 0;
+                        $precioDespiece = $excelPrice > 0 ? $excelPrice : $product->precio_despiece;
+
                         $partToProductToInsert[] = [
                             'product_id'        => $product->id,
                             'code_bar'          => $code_bar,
                             'unidad_sat_id'     => $unit_sat->id,
                             'price_mayoreo'     => $product->precio_mayoreo,
                             'price'             => $cantidad_despiece > 0
-                                                    ? ($product->precio_despiece / $cantidad_despiece)
+                                                    ? ($precioDespiece / $cantidad_despiece)
                                                     : $product->precio,
                             'cantidad_despiezado' => $cantidad_despiece > 0 ? $cantidad_despiece : 0,
                             'created_at'        => now(),
@@ -235,6 +253,27 @@ class ProductsImport implements ToCollection, WithMultipleSheets
                 'codes' => array_slice($this->skippedCodes, 0, 200),
                 'total_skipped' => $this->skipped,
             ]);
+        }
+    }
+
+    //revisa (sin importar nada) si el archivo trae una novena columna "Precio" -- se usa antes
+    //de importar para decidir si hay que preguntarle al usuario si quiere tomar esos precios.
+    public static function hasPriceColumn(string $filePath, ?string $readerType = null): bool
+    {
+        try {
+            $reader = $readerType
+                ? \PhpOffice\PhpSpreadsheet\IOFactory::createReader($readerType)
+                : \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($filePath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($filePath);
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // fila 2 = encabezados de columna (misma convencion que el resto del archivo)
+            $header = trim((string) $sheet->getCell('I2')->getValue());
+            return str_contains(mb_strtolower($header), 'precio');
+        } catch (\Throwable $th) {
+            // si algo falla al inspeccionar, no bloqueamos el flujo normal de importacion
+            return false;
         }
     }
 

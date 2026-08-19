@@ -38,6 +38,12 @@
 
         data['detail_cant_id'] = detail_cant_id;
         data['cant'] = parseFloat($('#cant').val()); //cantidad a devolver
+
+        if(!(data['cant'] > 0)){ //no se puede devolver una cantidad en 0, negativa o vacia
+            alertCantidadInvalida();
+            return;
+        }
+
             data['cantidad_sale'] = parseFloat($('#tr-'+detail_cant_id+' .cant').html()); //total cantidad detalle venta
             data['code_product'] = $('#tr-'+detail_cant_id+' .code_product').html(); //codigo producto
             data['tipo_impuesto'] = $('#tr-'+detail_cant_id+' .tipo_impuesto').html(); //tipo impuesto
@@ -81,6 +87,11 @@
     //mostramos alerta
     function alert(){
         Swal.fire('La cantidad ingresada es mayor a la de la venta.', '', 'info');
+    }
+
+    //mostramos alerta cuando la cantidad a devolver es 0, negativa o vacia
+    function alertCantidadInvalida(){
+        Swal.fire('La cantidad a devolver debe ser mayor a 0.', '', 'info');
     }
 
     //funcion creamos los td que se ingresaran

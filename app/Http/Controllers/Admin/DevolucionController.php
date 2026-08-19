@@ -233,6 +233,15 @@ class DevolucionController extends Controller
     //funcion para guardar una devolucion de venta
     public function store(Request $request, $devolucion_id = null){ 
         if(isset($request->part_to_product_id) && count($request->part_to_product_id)){
+            // no se puede devolver una cantidad en 0 o negativa (el JS ya lo valida, pero se
+            // vuelve a validar aqui por si se llega a este endpoint sin pasar por esa pantalla).
+            foreach(($request->cant ?? []) as $cant){
+                if(!((float)$cant > 0)){
+                    return redirect()->route('devoluciones.createSaleToDevolucion', $request->sale_id)
+                        ->with('error', 'La cantidad a devolver debe ser mayor a 0.');
+                }
+            }
+
             $cantidad = 0;
             $total_descuentos = 0;
             $total_devolucion = 0;
@@ -247,14 +256,30 @@ class DevolucionController extends Controller
             // pago mixto: si la venta original se cobro en efectivo + tarjeta, el cajero indica
             // como se reparte esta devolucion entre ambos metodos. Se valida ANTES de crear
             // registros/tocar stock para no dejar datos huerfanos si la suma no cuadra.
+            // Se usa una ruta explicita (no back()) para no depender del header Referer, que en
+            // el contexto de la app de escritorio puede no llegar y mandar el redirect a un lugar
+            // inesperado (viendose como si "no hiciera nada").
             $sale = Sale::find($request->sale_id);
             if(is_object($sale) && $sale->type_payment == 'mixto'){
                 $total_devolucion_esperado = round($total_devolucion + array_sum($request->total ?? []), 2);
                 $mEfectivo = round((float)($request->monto_efectivo_devolucion ?? 0), 2);
                 $mTarjeta = round((float)($request->monto_tarjeta_devolucion ?? 0), 2);
 
-                if(round($mEfectivo + $mTarjeta, 2) != $total_devolucion_esperado){
-                    return redirect()->back()->withInput()->with('error', 'La suma de efectivo ($'.number_format($mEfectivo, 2).') y tarjeta ($'.number_format($mTarjeta, 2).') debe ser igual al total de la devolución: $'.number_format($total_devolucion_esperado, 2));
+                if($mEfectivo == 0 && $mTarjeta == 0){
+                    return redirect()->route('devoluciones.createSaleToDevolucion', $request->sale_id)
+                        ->with('error', 'Esta venta fue pago mixto: indica cuánto del reembolso se regresa en efectivo y cuánto en tarjeta antes de aceptar.');
+                }
+
+                // el efectivo no siempre se puede regresar al centavo exacto (no hay monedas de
+                // centavos), asi que se da un margen de $1 peso -- igual que la tolerancia que ya
+                // se usa en el corte de caja (BoxController). La tarjeta si debe cuadrar exacto
+                // porque el cobro/reembolso electronico no se puede redondear.
+                $diff = round(($mEfectivo + $mTarjeta) - $total_devolucion_esperado, 2);
+                $tolerancia = $mEfectivo > 0 ? 1 : 0;
+
+                if(abs($diff) > $tolerancia){
+                    return redirect()->route('devoluciones.createSaleToDevolucion', $request->sale_id)
+                        ->with('error', 'La suma de efectivo ($'.number_format($mEfectivo, 2).') y tarjeta ($'.number_format($mTarjeta, 2).') debe ser igual (con un margen de $1 en efectivo) al total de la devolución: $'.number_format($total_devolucion_esperado, 2));
                 }
             }
 

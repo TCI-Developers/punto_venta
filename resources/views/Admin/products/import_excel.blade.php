@@ -57,6 +57,37 @@
         </div>
     </div>
 </div>
- </main>   
+
+@if(session('confirmExcelPrice'))
+    @php $pendiente = session('confirmExcelPrice'); @endphp
+    <!-- El archivo trae una columna "Precio" (precio real de despiece) -- se pregunta antes
+         de importar si se debe usar tal cual en vez del calculo producto->precio_despiece/cantidad. -->
+    <form action="{{ route('product.confirmUploadExcel') }}" method="POST" id="formConfirmExcelPrice" style="display:none;">
+        @csrf
+        <input type="hidden" name="temp_path" value="{{ $pendiente['path'] }}">
+        <input type="hidden" name="reader" value="{{ $pendiente['reader'] }}">
+        <input type="hidden" name="use_excel_price" id="use_excel_price_confirm" value="0">
+    </form>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: 'question',
+                title: 'Se detectó una columna de Precio',
+                html: 'El archivo <b>{{ $pendiente['nombre_original'] }}</b> trae una columna de Precio.<br>¿Deseas usar esos precios como precio final de las presentaciones de despiece?',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, usarlos',
+                cancelButtonText: 'No, calcular como siempre',
+                customClass: {
+                    confirmButton: 'btn btn-success',
+                    cancelButton: 'btn btn-secondary'
+                },
+            }).then((result) => {
+                document.getElementById('use_excel_price_confirm').value = result.isConfirmed ? '1' : '0';
+                document.getElementById('formConfirmExcelPrice').submit();
+            });
+        });
+    </script>
+@endif
+ </main>
 </body>
 </html>

@@ -41,7 +41,7 @@
                                     <td>{{$item->folio}}</td>
                                     <td>{{$item->customer->name}}</td>
                                     <td>{{date('d-m-Y', strtotime($item->date))}}</td>
-                                    <td>$ {{number_format($item->total_sale)}}</td>
+                                    <td>$ {{number_format($item->total_sale, 2)}}</td>
                                     <td><a href="{{route('devoluciones.createSaleToDevolucion', $item->id)}}" class="btn btn-warning"><i class="fa fa-undo"></i></a></td>
                                 </tr>
                                 @endif

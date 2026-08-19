@@ -88,7 +88,15 @@
                     event.preventDefault();
                 }
             });
-            
+
+            //enter en el modal de cantidad = Aceptar, para agilizar la captura
+            $('#update_cant_prod').on('keydown', function(event){
+                if(event.key === 'Enter'){
+                    event.preventDefault();
+                    updateCant();
+                }
+            });
+
         })
 
         //funcion para habilitar campos de venta para actualizar
@@ -238,6 +246,7 @@
             
             $('#presentation_id').val('').focus();
             $('#update_cant_prod').val('');
+            $('#cant_modal_presentation_id').val('');
             $('#update_sale_detail_id').val('');
             $('#modal_cant').hide();
             $('#total_sale').val((total - descuento).toFixed(2));
@@ -258,18 +267,31 @@
         });
 
         //funcion para modificar cantidad de productos registrados
-        function btnCantProduct(presentation_id){ 
-            $('#presentation_id').val(presentation_id);
+        function btnCantProduct(presentation_id){
+            $('#cant_modal_presentation_id').val(presentation_id);
             $('#modal_cant').show();
             $('#update_cant_prod').focus();
         }
 
-        //funcion para actualizar cantidad de producto
+        //funcion para pedir la cantidad al agregar un producto nuevo desde el buscador manual
+        //(reutiliza el mismo modal/flujo que editar cantidad -- updateCant() ya soporta agregar
+        //un producto que aun no existe en la venta, no solo editar uno existente)
+        function btnCantNuevoProducto(presentation_id){
+            modalProductos('false'); //cerramos el buscador para dejar ver el modal de cantidad
+            btnCantProduct(presentation_id);
+        }
+
+        //funcion para actualizar cantidad de producto (o agregar uno nuevo con la cantidad indicada)
         function updateCant(){
-            let presentation_id = $('#presentation_id').val();
+            let presentation_id = $('#cant_modal_presentation_id').val();
             let cant = $('#update_cant_prod').val();
+
+            if(cant === ''){ //si se deja vacio, se toma como 1 por default
+                cant = '1';
+            }
+
             let aux = esNumero(cant);
-            
+
             if(aux && cant>0){
                 Livewire.dispatch('updateCant', {'presentation_id' : presentation_id, 'cant' : cant});
             }else if(!aux){
@@ -277,7 +299,7 @@
             }else{
                 Swal.fire('No se permiten valores negativos','','info');
             }
-            
+
         }
 
         //funcion para eliminar detalle de venta
@@ -303,6 +325,7 @@
         function btnCancelModal(){
             $('#modal_cant').hide();
             $('#update_cant_prod').val('');
+            $('#cant_modal_presentation_id').val('');
         }
 
         //funcion para formatear numeros

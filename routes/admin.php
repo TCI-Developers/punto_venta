@@ -40,6 +40,7 @@ Route::post('/presentation-store', 'Admin\ProductController@storePresentationPro
 Route::post('/presentation-update', 'Admin\ProductController@updatePresentationProduct')->name('product.updatePresentationProduct')->middleware('permission:inventarios,punto_venta,update');
 
 Route::post('/products-upload-excel', 'Admin\ProductController@uploadExcel')->name('product.uploadExcel')->middleware('permission:inventarios,punto_venta,create');
+Route::post('/products-confirm-upload-excel', 'Admin\ProductController@confirmUploadExcel')->name('product.confirmUploadExcel')->middleware('permission:inventarios,punto_venta,create');
 
 //customers
 Route::get('/customers', 'Admin\CustomerController@index')->name('customer.index')->middleware('permission:clientes'); //vista principal clcientes

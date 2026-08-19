@@ -10,8 +10,8 @@
     @csrf
 </form>
 
-@if(auth()->user()->hasPermissionThroughModule('empresa','punto_venta','auth'))
-<!-- Aviso de cambios pendientes en el catalogo de Matriz (solo para quien puede sincronizarlo) -->
+<!-- Aviso de cambios pendientes en el catalogo de Matriz -- visible para cualquier usuario
+     logueado, sin importar el rol, para que cualquiera pueda sincronizar desde su sesion -->
 <script src="{{asset('js/catalog_sync.js')}}"></script>
 <div id="catalogBanner" style="display:none; align-items:center; justify-content:center; gap:1rem; background:#6c757d; color:#fff; padding:6px 16px; font-size:0.9rem; text-align:center;">
     <span id="catalogBannerText"></span>
@@ -20,7 +20,6 @@
 <form id="catalogSyncCsrfForm" style="display:none;">
     @csrf
 </form>
-@endif
 
 <!-- Header -->
   <header class="main-header d-flex align-items-center justify-content-between px-3 py-2">

@@ -8,7 +8,9 @@
       <div class="modal-body col-12">
           <label for="new_cant_prod" id="label_cant_prod" class="col-12 text-center">Cantidad
               <input type="number" class="form-control text-center" id="update_cant_prod" min="1">
-              <input type="hidden" class="form-control text-center" id="presentation_id" >
+              <!-- id distinto a #presentation_id (el input del scanner fisico en mov_details.blade.php)
+                   para no pisar ese campo -- antes compartian el mismo id por accidente. -->
+              <input type="hidden" class="form-control text-center" id="cant_modal_presentation_id" >
           </label>
       </div>
 

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\{Product, PresentationProduct, UnidadSat, Box, Promotion, PartToProduct};
-use Illuminate\Support\Facades\{DB,Auth,Log};
+use Illuminate\Support\Facades\{DB,Auth,Log,Storage};
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ProductsImport;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -178,17 +178,25 @@ class ProductController extends Controller
             // formato); detectamos el formato real del archivo en vez de confiar en la extensión.
             $readerType = IOFactory::identify($request->file('excel_file')->getRealPath());
 
+            // si el archivo trae una novena columna "Precio" (precio real de despiece), se le
+            // pregunta al usuario si quiere tomarla en vez de asumirlo -- se guarda el archivo
+            // temporalmente y se le muestra la confirmación en la misma pantalla.
+            if (ProductsImport::hasPriceColumn($request->file('excel_file')->getRealPath(), $readerType)) {
+                $tempPath = $request->file('excel_file')->store('imports_pendientes');
+                // ruta explicita (no back()) -- back() depende del header Referer, que en la app
+                // de escritorio puede no llegar y mandar la respuesta a otra pantalla, dejando el
+                // mensaje de exito/error sin mostrarse (aunque la importacion si haya corrido).
+                return redirect()->route('product.showUploadExcel')->with('confirmExcelPrice', [
+                    'path' => $tempPath,
+                    'reader' => $readerType,
+                    'nombre_original' => $request->file('excel_file')->getClientOriginalName(),
+                ]);
+            }
+
             $import = new ProductsImport();
             Excel::import($import, $request->file('excel_file'), null, $readerType);
 
-            $message = "Archivo procesado: {$import->matched} productos actualizados";
-            if ($import->skipped > 0) {
-                $message .= ", {$import->skipped} sin coincidencia en el catálogo (revisar log).";
-            } else {
-                $message .= '.';
-            }
-
-            return back()->with('success', $message);
+            return redirect()->route('product.showUploadExcel')->with('success', $this->buildImportMessage($import));
         } catch (\Throwable $th) {
             // antes se mostraba "Excel Dañado." sin importar la causa real, haciendo
             // imposible diagnosticar el problema a distancia -- ahora se deja el error real
@@ -197,8 +205,53 @@ class ProductController extends Controller
                 'exception' => get_class($th),
                 'archivo' => $request->file('excel_file')?->getClientOriginalName(),
             ]);
-            return back()->with('error', 'No se pudo procesar el archivo: '.$th->getMessage());
+            return redirect()->route('product.showUploadExcel')->with('error', 'No se pudo procesar el archivo: '.$th->getMessage());
         }
+    }
+
+    //funcion para completar la importacion una vez que el usuario ya contesto si quiere usar
+    //los precios de la columna "Precio" detectada en uploadExcel()
+    public function confirmUploadExcel(Request $request)
+    {
+        ini_set('memory_limit', '512M');
+        set_time_limit(0);
+
+        $request->validate([
+            'temp_path' => 'required|string',
+            'reader' => 'required|string',
+            'use_excel_price' => 'required|in:0,1',
+        ]);
+
+        if (!Storage::exists($request->temp_path)) {
+            return redirect()->route('product.showUploadExcel')->with('error', 'El archivo ya no está disponible, vuelve a subirlo.');
+        }
+
+        try {
+            $fullPath = Storage::path($request->temp_path);
+            $import = new ProductsImport($request->boolean('use_excel_price'));
+            Excel::import($import, $fullPath, null, $request->reader);
+
+            return redirect()->route('product.showUploadExcel')->with('success', $this->buildImportMessage($import));
+        } catch (\Throwable $th) {
+            Log::error('Error al confirmar importación de Excel de productos: '.$th->getMessage(), [
+                'exception' => get_class($th),
+            ]);
+            return redirect()->route('product.showUploadExcel')->with('error', 'No se pudo procesar el archivo: '.$th->getMessage());
+        } finally {
+            Storage::delete($request->temp_path);
+        }
+    }
+
+    //mensaje comun de resultado para uploadExcel/confirmUploadExcel
+    private function buildImportMessage(ProductsImport $import): string
+    {
+        $message = "Archivo procesado: {$import->matched} productos actualizados";
+        if ($import->skipped > 0) {
+            $message .= ", {$import->skipped} sin coincidencia en el catálogo (revisar log).";
+        } else {
+            $message .= '.';
+        }
+        return $message;
     }
 
     //funcion para vista de inventarios

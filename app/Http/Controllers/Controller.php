@@ -466,14 +466,23 @@ class Controller extends BaseController
         return json_decode($db);
     }
 
+    //arma un data URI con el mime real del archivo (no asumido por la extension) -- un logo
+    //guardado como .png que en realidad es un jpg (u otro formato) rompe el render en PDF si
+    //se le pone un mime incorrecto.
+    protected function logoDataUri(string $logoPath): ?string
+    {
+        if (!file_exists($logoPath)) {
+            return null;
+        }
+        $mime = mime_content_type($logoPath) ?: 'image/png';
+        return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($logoPath));
+    }
+
     //generamos tickets
-    public function ticket($id, $auto = false){    
+    public function ticket($id, $auto = false){
         $empresa = EmpresaDetail::first();
         $logoPath = public_path('img/logo_cliente.png');
-        $logoBase64 = null;
-        if (file_exists($logoPath)) {
-            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-        }
+        $logoBase64 = $this->logoDataUri($logoPath);
 
         if(request()->is('ticket-sale/'.$id) || request()->is('ticket-sale/'.$id."/".$auto)){
             $dir = 'tickets_sale';

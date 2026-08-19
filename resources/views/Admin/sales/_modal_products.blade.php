@@ -27,8 +27,8 @@
                           <td>{{$item->getProduct->code_product}}</td>
                           <td>{{$item->getProduct->description}}</td>
                           <td class="text-center">
-                            <button type="button" class="btn {{$item->cantidad_despiezado > 0 ? 'btn-success':'btn-primary'}} select-button" 
-                             wire:click="scaner_codigo('{{$item->id}}')">Unidad: {{$item->getUnidadSat->name}} $ {{$item->price}}</button> 
+                            <button type="button" class="btn {{$item->cantidad_despiezado > 0 ? 'btn-success':'btn-primary'}} select-button"
+                             onclick="btnCantNuevoProducto('{{$item->id}}')">Unidad: {{$item->getUnidadSat->name}} $ {{$item->price}}</button>
                           </td>
                         </tr>
                       @endforeach
