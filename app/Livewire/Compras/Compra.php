@@ -82,7 +82,10 @@ class Compra extends Component
     }
 
     //funcion para calcular el subtotal con lo recibido
-    public function recibidoProduct($detalle_id, float $recibido, $precio_unitario, $tipo_impuesto, $impuesto){
+    public function recibidoProduct($detalle_id, $recibido, $precio_unitario, $tipo_impuesto, $impuesto){
+        // antes $recibido tenia tipo estricto float -- si se deja vacio el campo de cantidad
+        // recibida (onchange manda '' tal cual), truena con TypeError en vez de tratarlo como 0.
+        $recibido = (float) $recibido;
         $this->subtotal[$detalle_id] = $recibido * $this->formatNumberr($precio_unitario);
         if($tipo_impuesto != 'SYS'){
            $this->valor_impuesto[$detalle_id] = ($this->subtotal[$detalle_id] * $impuesto);
