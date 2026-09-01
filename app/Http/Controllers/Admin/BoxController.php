@@ -22,11 +22,19 @@ class BoxController extends Controller
         $user_id = Auth::User()->id;
         $box = Box::where('user_id', $user_id)->where('status', 0)->orderBy('id', 'desc')->first();
         if(!is_object($box)){
-            if(!session()->has('ticket')){
-                return redirect()->route('sale.index')->with('error', 'No tienes un turno abierto.');
+            // Verificar si hay un turno cerrado hoy (la sesión 'ticket' pudo haberse perdido)
+            $boxCerradoHoy = Box::where('user_id', $user_id)
+                ->where('status', '>', 0)
+                ->whereDate('end_date', now()->toDateString())
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if($boxCerradoHoy || session()->has('ticket')){
+                // Mostrar vista de ticket aunque la sesión ya no tenga 'ticket'
+                return view('Admin.box.turn_off', ['start_amount_box' => null, 'ventas_cerradas' => [], 'status' => 0, 'total_gastos' => 0]);
             }
-            // Turno recién cerrado — solo mostrar vista con el ticket
-            return view('Admin.box.turn_off', ['start_amount_box' => null, 'ventas_cerradas' => [], 'status' => 0, 'total_gastos' => 0]);
+
+            return redirect()->route('sale.index')->with('error', 'No tienes un turno abierto.');
         }
         $start_date = $box->start_date;
         $end_date = date('Y-m-d H:i:s');
