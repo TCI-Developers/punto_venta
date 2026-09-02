@@ -15,11 +15,20 @@
         background-color: white;
     }
     .ticket-container {
-        padding: 2mm;
+        padding: 0 2mm 2mm 2mm; /* sin padding arriba para no desperdiciar papel */
         margin: 0 auto;
         box-sizing: border-box;
     }
-    .header, .footer {
+    .header {
+        text-align: center;
+        margin: 0 0 5px 0;
+        padding-top: 0;
+    }
+    .header img {
+        display: block;
+        margin: 0 auto;
+    }
+    .footer {
         text-align: center;
         margin-bottom: 5px;
     }
