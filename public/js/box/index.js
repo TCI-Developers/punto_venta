@@ -35,13 +35,17 @@
         }
 
         //funcion para abrir modal y llenar la tabla
+        // Nota: se checa event.detail[0].status (1=encontrado, 0=no encontrado),
+        // NO data.status (que es el campo status del box: 0=abierto, 1=completado, 2=irregular)
+        // para evitar falso negativo en turnos abiertos (status=0 en BD).
         window.addEventListener('openModalMoney', event => {
-            let data = event.detail[0].box;
-            if(data.status){
+            let payload = event.detail[0];
+            let data    = payload.box;
+            if(payload.status && data){
                 $('#totalTickets').html('Total: $ '+setDenominaciones(data, $('#tickets')));
                 $('#totalCoins').html('Total: $ '+setDenominaciones(data, $('#coins')));
                 $('#modal_money').fadeIn();
             }else{
-                swal.fire('Error inesperado.', 'Actualiza la pagina en intentalo de nuevo.', 'info');
+                alert('Error inesperado. Actualiza la página e inténtalo de nuevo.');
             }
         })
