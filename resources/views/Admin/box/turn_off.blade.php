@@ -10,7 +10,14 @@
     <script src="{{asset('js/box/index.js')}}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            $('#modal_box').show();
+            @if($mostrarTicket ?? false)
+                // Turno recién cerrado: mostrar ticket directamente
+                $('#modalTicket').show();
+                if(window.loadTicketBox) window.loadTicketBox();
+            @else
+                // Turno abierto: mostrar formulario de conteo
+                $('#modal_box').show();
+            @endif
         })
 
         //fucion para el conteo de billetes y monedas
@@ -44,14 +51,7 @@
         }
     </style>
 
-    @if(session('ticket'))
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    $('#modalTicket').show();
-                    if(window.loadTicketBox) window.loadTicketBox();
-                });
-            </script>
-        @endif
+    {{-- El ticket se controla desde el DOMContentLoaded principal arriba --}}
 </head>
 <body>
     <main class="content">

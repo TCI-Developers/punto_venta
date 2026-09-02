@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth};
-use App\Models\{Sale, Box, Devolucion, Compra, CuentaPagar, Gasto};
+use App\Models\{Sale, Box, Devolucion, Compra, CuentaPagar, Gasto, Product};
 use Carbon\Carbon;
 
 class BoxController extends Controller
@@ -30,8 +30,14 @@ class BoxController extends Controller
                 ->first();
 
             if($boxCerradoHoy || session()->has('ticket')){
-                // Mostrar vista de ticket aunque la sesión ya no tenga 'ticket'
-                return view('Admin.box.turn_off', ['start_amount_box' => null, 'ventas_cerradas' => [], 'status' => 0, 'total_gastos' => 0]);
+                // Mostrar solo el ticket, no el formulario de conteo
+                return view('Admin.box.turn_off', [
+                    'start_amount_box' => null,
+                    'ventas_cerradas'  => [],
+                    'status'           => 0,
+                    'total_gastos'     => 0,
+                    'mostrarTicket'    => true,
+                ]);
             }
 
             return redirect()->route('sale.index')->with('error', 'No tienes un turno abierto.');
@@ -189,6 +195,7 @@ class BoxController extends Controller
         $this->getComprasDbExt();
         $this->getCuentasPagarDbExt();
         $this->getGastosDbExt();
+        $this->getStockDbExt();
 
         return redirect()->back()->with('ticket', 'ok');
     }
@@ -258,6 +265,35 @@ class BoxController extends Controller
         ];
        
         return $rules;
+    }
+
+    // Envía snapshot completo del inventario local a la Matriz al cerrar turno.
+    // La Matriz hace updateOrCreate por sucursal, por lo que enviar quantity:0
+    // es válido para productos agotados. Se manda TODO el catálogo, no solo diferencias.
+    function getStockDbExt()
+    {
+        if (!$this->hasInternetConnection()) {
+            return;
+        }
+
+        try {
+            $stock = Product::select('code_product', 'existence')
+                ->get()
+                ->map(fn ($p) => [
+                    'code_product' => $p->code_product,
+                    'quantity'     => (float) ($p->existence ?? 0),
+                ])
+                ->values()
+                ->toArray();
+
+            if (empty($stock)) {
+                return;
+            }
+
+            $this->matrizApi('post', 'stock', ['stock' => $stock]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('getStockDbExt error: ' . $e->getMessage());
+        }
     }
 
     //funcion para consultar ultima venta y almacenar ventas pendientes
