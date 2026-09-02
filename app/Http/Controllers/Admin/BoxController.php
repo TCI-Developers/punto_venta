@@ -290,7 +290,12 @@ class BoxController extends Controller
                 return;
             }
 
-            $this->matrizApi('post', 'stock', ['stock' => $stock]);
+            // Timeout corto (5s) para no bloquear el cierre de turno si el endpoint
+            // aún no está disponible en la Matriz o tarda en responder.
+            \Illuminate\Support\Facades\Http::withToken($this->getMatrizToken())
+                ->acceptJson()
+                ->timeout(5)
+                ->post(config('services.matriz.url') . '/api/pos/stock', ['stock' => $stock]);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('getStockDbExt error: ' . $e->getMessage());
         }
