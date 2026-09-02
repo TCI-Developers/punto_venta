@@ -150,7 +150,8 @@
                         <td>$ {{ number_format(($item->amount_credit_system + $expected_cash), 2) }}</td>
                         <td>
                             <button type="button" class="btn btn-outline-info btn-sm"
-                                wire:click="openModalMoney({{ $item->id }})">
+                                wire:click.stop="openModalMoney({{ $item->id }})"
+                                title="Ver conteo de billetes">
                                 <i class="fa fa-money"></i>
                             </button>
                         </td>
