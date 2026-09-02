@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{Auth};
+use Illuminate\Support\Facades\{Auth, DB, Http, Log};
 use App\Models\{Sale, Box, Devolucion, Compra, CuentaPagar, Gasto, Product};
 use Carbon\Carbon;
 
@@ -267,9 +267,9 @@ class BoxController extends Controller
         return $rules;
     }
 
-    // Envía snapshot completo del inventario local a la Matriz al cerrar turno.
-    // La Matriz hace updateOrCreate por sucursal, por lo que enviar quantity:0
-    // es válido para productos agotados. Se manda TODO el catálogo, no solo diferencias.
+    // Envía el stock actualizado solo de los productos que tuvieron movimiento
+    // durante el turno: ventas, compras y devoluciones del período.
+    // La Matriz hace updateOrCreate, así que mandar un subconjunto es válido.
     function getStockDbExt()
     {
         if (!$this->hasInternetConnection()) {
@@ -277,7 +277,54 @@ class BoxController extends Controller
         }
 
         try {
-            $stock = Product::select('code_product', 'existence')
+            $user_id = Auth::User()->id;
+
+            // Rango del turno recién cerrado
+            $box        = Box::where('user_id', $user_id)->where('status', '>', 0)->orderBy('id', 'desc')->first();
+            $start_date = $box ? $box->start_date : Carbon::now()->subDay()->toDateTimeString();
+            $end_date   = $box ? $box->end_date   : Carbon::now()->toDateTimeString();
+
+            // 1. Productos de ventas del turno
+            $codesVentas = DB::table('sales_detail as sd')
+                ->join('parts_to_product as ptp', 'ptp.id', '=', 'sd.part_to_product_id')
+                ->join('products as p', 'p.id', '=', 'ptp.product_id')
+                ->join('sales as s', 's.id', '=', 'sd.sale_id')
+                ->where('s.user_id', $user_id)
+                ->where('s.status', 2)
+                ->whereBetween('s.updated_at', [$start_date, $end_date])
+                ->pluck('p.code_product');
+
+            // 2. Productos de compras del turno (code_product directo en detalles_compra)
+            $codesCompras = DB::table('detalles_compra as dc')
+                ->join('compras as c', 'c.id', '=', 'dc.compra_id')
+                ->whereBetween('c.updated_at', [$start_date, $end_date])
+                ->whereNotNull('dc.code_product')
+                ->where('dc.code_product', '!=', '')
+                ->pluck('dc.code_product');
+
+            // 3. Productos de devoluciones del turno (via sale_id → sales_detail)
+            $codesDevoluciones = DB::table('devoluciones as dev')
+                ->join('sales_detail as sd', 'sd.sale_id', '=', 'dev.sale_id')
+                ->join('parts_to_product as ptp', 'ptp.id', '=', 'sd.part_to_product_id')
+                ->join('products as p', 'p.id', '=', 'ptp.product_id')
+                ->whereBetween('dev.updated_at', [$start_date, $end_date])
+                ->pluck('p.code_product');
+
+            // Unir los 3 conjuntos, deduplicar y filtrar vacíos
+            $codes = $codesVentas
+                ->merge($codesCompras)
+                ->merge($codesDevoluciones)
+                ->unique()
+                ->filter()
+                ->values();
+
+            if ($codes->isEmpty()) {
+                return;
+            }
+
+            // Existencia actual de solo esos productos
+            $stock = Product::whereIn('code_product', $codes)
+                ->select('code_product', 'existence')
                 ->get()
                 ->map(fn ($p) => [
                     'code_product' => $p->code_product,
@@ -290,14 +337,13 @@ class BoxController extends Controller
                 return;
             }
 
-            // Timeout corto (5s) para no bloquear el cierre de turno si el endpoint
-            // aún no está disponible en la Matriz o tarda en responder.
-            \Illuminate\Support\Facades\Http::withToken($this->getMatrizToken())
+            Http::withToken($this->getMatrizToken())
                 ->acceptJson()
-                ->timeout(5)
+                ->timeout(15)
                 ->post(config('services.matriz.url') . '/api/pos/stock', ['stock' => $stock]);
+
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('getStockDbExt error: ' . $e->getMessage());
+            Log::error('getStockDbExt error: ' . $e->getMessage());
         }
     }
 
