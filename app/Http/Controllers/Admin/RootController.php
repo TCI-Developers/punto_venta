@@ -139,8 +139,9 @@ class RootController extends Controller
 
         $empresa = EmpresaDetail::first();
         $updatedAfter = $this->lastCatalogSyncIso($empresa);
+        $skip = (array)(request()->input('skip', []));
 
-        $result = $this->runCatalogSync($updatedAfter);
+        $result = $this->runCatalogSync($updatedAfter, $skip);
 
         if ($result['success']) {
             $this->markCatalogSynced($result['synced_at'] ?? null);
@@ -169,11 +170,11 @@ class RootController extends Controller
 
             $counts = $this->countCatalogPayload($response->json());
 
-            // 'usuarios' no respeta updated_after del lado de la Matriz (confirmado probando
-            // con una fecha limite a futuro -- las otras 4 llaves si regresan vacio, esta no).
-            // Se excluye del conteo para decidir si hay "cambios pendientes": de lo contrario
-            // el banner nunca se apagaria, porque esa llave siempre trae la lista completa.
-            $total = $counts['productos'] + $counts['lineas'] + $counts['proveedores'] + $counts['clientes'] + $counts['descuentos'];
+            // 'usuarios' y 'descuentos' no respetan updated_after — Matriz siempre los manda
+            // completos (confirmado con el equipo de Matriz). Se excluyen del conteo para decidir
+            // si hay "cambios pendientes": de lo contrario el banner nunca se apagaría.
+            // Los descuentos igual se sincronizan en login y en sync manual del catálogo.
+            $total = $counts['productos'] + $counts['lineas'];
 
             return response()->json(['pending' => $total > 0, 'counts' => $counts, 'total' => $total]);
         } catch (\Throwable $th) {
@@ -234,8 +235,6 @@ class RootController extends Controller
         return [
             'productos'   => count($data['productos']   ?? []),
             'lineas'      => count($data['lineas']       ?? []),
-            'proveedores' => count($data['proveedores']  ?? []),
-            'clientes'    => count($data['clientes']     ?? []),
             'usuarios'    => count($data['usuarios']     ?? []),
             'descuentos'  => count($data['descuentos']   ?? []),
         ];
@@ -245,7 +244,7 @@ class RootController extends Controller
     //significa sync completo (usado por el boton de Importacion); con fecha, es incremental
     //(usado por el banner) -- ver nota sobre la revocacion mas abajo, es el unico paso que
     //se comporta distinto entre los dos modos.
-    private function runCatalogSync(?string $updatedAfter): array
+    private function runCatalogSync(?string $updatedAfter, array $skip = []): array
     {
         $params = $updatedAfter ? ['updated_after' => $updatedAfter] : [];
         $response = $this->matrizApi('get', 'catalogo', $params);
@@ -257,91 +256,68 @@ class RootController extends Controller
         $data = $response->json();
 
         try {
-            DB::transaction(function () use ($data, $updatedAfter) {
-                // Lineas primero: productos referencia linea_id como brand_id, tiene que existir
-                // la marca antes de asignarsela a un producto (brand_id es FK obligatoria).
-                foreach ($data['lineas'] ?? [] as $l) {
-                    Brand::updateOrCreate(
-                        ['id' => $l['id']],
-                        [
-                            'name' => $l['codigo'],
-                            'description' => $l['descripcion'],
-                        ]
-                    );
+            DB::transaction(function () use ($data, $updatedAfter, $skip) {
+                if (!in_array('lineas', $skip)) {
+                    // Lineas primero: productos referencia linea_id como brand_id, tiene que existir
+                    // la marca antes de asignarsela a un producto (brand_id es FK obligatoria).
+                    foreach ($data['lineas'] ?? [] as $l) {
+                        Brand::updateOrCreate(
+                            ['id' => $l['id']],
+                            [
+                                'name' => $l['codigo'],
+                                'description' => $l['descripcion'],
+                            ]
+                        );
+                    }
                 }
 
-                $productosOmitidos = [];
                 $codigosActualizados = [];
-                foreach ($data['productos'] ?? [] as $p) {
-                    // brand_id es NOT NULL localmente -- si Matriz manda un producto sin linea_id
-                    // asignada, se omite ese producto en vez de tronar TODA la transaccion (con
-                    // miles de productos por sync, un solo registro con datos incompletos no
-                    // debe bloquear el resto).
-                    if (empty($p['linea_id'])) {
-                        $productosOmitidos[] = $p['code_product'] ?? '(sin code_product)';
-                        continue;
+                if (!in_array('productos', $skip)) {
+                    $productosOmitidos = [];
+                    foreach ($data['productos'] ?? [] as $p) {
+                        // brand_id es NOT NULL localmente -- si Matriz manda un producto sin linea_id
+                        // asignada, se omite ese producto en vez de tronar TODA la transaccion (con
+                        // miles de productos por sync, un solo registro con datos incompletos no
+                        // debe bloquear el resto).
+                        if (empty($p['linea_id'])) {
+                            $productosOmitidos[] = $p['code_product'] ?? '(sin code_product)';
+                            continue;
+                        }
+
+                        Product::updateOrCreate(
+                            ['code_product' => $p['code_product']],
+                            [
+                                'description' => $p['description'],
+                                'barcode' => $p['barcode'],
+                                'unit' => $p['unit'],
+                                'unit_description' => $p['unit_description'],
+                                'clave_sat' => $p['clave_sat'] ?? null,
+                                'taxes' => match((string)($p['taxes'] ?? '')) {
+                                    '002' => 'IVA',
+                                    '003' => 'IE3',
+                                    default => $p['taxes'],
+                                },
+                                'amount_taxes' => $p['amount_taxes'],
+                                'precio' => $p['precio'],
+                                'precio_mayoreo' => $p['precio_mayoreo'],
+                                'cantidad_mayoreo' => $p['cantidad_mayoreo'] ?? 0,
+                                'precio_despiece' => $p['precio_despiece'],
+                                'brand_id' => $p['linea_id'],
+                                'category_id' => $p['category_id'] ?? null,
+                                'activo' => true,
+                            ]
+                        );
+                        $codigosActualizados[] = $p['code_product'];
+                    }
+                    if (count($productosOmitidos)) {
+                        Log::warning('Productos omitidos en sync de catalogo Matriz por no tener linea_id: '.implode(', ', $productosOmitidos));
                     }
 
-                    Product::updateOrCreate(
-                        ['code_product' => $p['code_product']],
-                        [
-                            'description' => $p['description'],
-                            'barcode' => $p['barcode'],
-                            'unit' => $p['unit'],
-                            'unit_description' => $p['unit_description'],
-                            'clave_sat' => $p['clave_sat'] ?? null,
-                            'taxes' => match((string)($p['taxes'] ?? '')) {
-                                '002' => 'IVA',
-                                '003' => 'IE3',
-                                default => $p['taxes'],
-                            },
-                            'amount_taxes' => $p['amount_taxes'],
-                            'precio' => $p['precio'],
-                            'precio_mayoreo' => $p['precio_mayoreo'],
-                            'cantidad_mayoreo' => $p['cantidad_mayoreo'] ?? 0,
-                            'precio_despiece' => $p['precio_despiece'],
-                            'brand_id' => $p['linea_id'],
-                            'category_id' => $p['category_id'] ?? null,
-                            'activo' => true,
-                        ]
-                    );
-                    $codigosActualizados[] = $p['code_product'];
-                }
-                if (count($productosOmitidos)) {
-                    Log::warning('Productos omitidos en sync de catalogo Matriz por no tener linea_id: '.implode(', ', $productosOmitidos));
+                    // mismo hueco que en syncProductPrices(): sin esto, este camino (boton/banner de
+                    // catalogo) actualiza el producto pero deja las presentaciones con el precio viejo.
+                    $this->cascadePresentationPrices($codigosActualizados);
                 }
 
-                // mismo hueco que en syncProductPrices(): sin esto, este camino (boton/banner de
-                // catalogo) actualiza el producto pero deja las presentaciones con el precio viejo.
-                $this->cascadePresentationPrices($codigosActualizados);
-
-                // proveedores/clientes: se usa el id de Matriz para el match, no rfc/code_proveedor
-                // (son nullable localmente -- dos registros sin ese dato se pisarian entre si).
-                foreach ($data['proveedores'] ?? [] as $p) {
-                    Proveedor::updateOrCreate(
-                        ['id' => $p['id']],
-                        [
-                            'code_proveedor' => $p['code_proveedor'],
-                            'name' => $p['name'],
-                            'rfc' => $p['rfc'],
-                            'phone' => $p['phone'],
-                            'contacto' => $p['contacto'],
-                            'email' => $p['email'],
-                        ]
-                    );
-                }
-
-                foreach ($data['clientes'] ?? [] as $c) {
-                    Customer::updateOrCreate(
-                        ['id' => $c['id']],
-                        [
-                            'name' => $c['nombre'],
-                            'razon_social' => $c['razon_social'],
-                            'rfc' => $c['rfc'],
-                            'regimen_fiscal' => $c['regimen_fiscal'],
-                        ]
-                    );
-                }
 
                 // usuarios: Matriz solo gestiona la relacion usuario-sucursal, no crea usuarios.
                 // Si el usuario todavia no existe localmente (no ha venido de QuickBase), se

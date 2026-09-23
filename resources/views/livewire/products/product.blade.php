@@ -5,8 +5,9 @@
         <div class="form-group card-header with-border">
             <a href="{{route('report.index')}}" class="btn btn-info btn-sm"><i class="fa fa-upload"></i> Reportes</a>
             <a href="{{route('inventarios.index')}}" class="btn btn-warning btn-sm"><i class="fa fa-file"></i> Inventariar</a>
+            <button type="button" class="btn btn-secondary btn-sm float-right mr-1" title="Sincronizar catálogo con Matriz" onclick="syncCatalogManual(this)"><i class="fa fa-refresh"></i></button>
             @if(Auth::User()->hasPermissionThroughModule('inventarios', 'punto_venta', 'create'))
-            <a href="{{route('product.showUploadExcel')}}" class="btn btn-success btn-sm float-right"><i class="fa fa-upload"></i> Carga Masiva Stock/Codigos de barra</a>
+            <a href="{{route('product.showUploadExcel')}}" class="btn btn-success btn-sm float-right mr-1"><i class="fa fa-upload"></i> Carga Masiva Stock/Codigos de barra</a>
             @endif
         </div>
         <div class="card-body">

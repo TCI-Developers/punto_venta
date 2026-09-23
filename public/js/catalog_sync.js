@@ -29,34 +29,66 @@
         }
     }
 
-    window.syncCatalogNow = function () {
-        if (!btnEl) return;
-        btnEl.disabled = true;
-        btnEl.textContent = 'Sincronizando...';
-
+    function doSync(skip, onSuccess, onError) {
+        var body = new FormData();
+        (skip || []).forEach(function (s) { body.append('skip[]', s); });
         fetch('/catalogo-matriz-sync-ajax', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': csrfToken()
-            }
+            },
+            body: body
         })
             .then(function (r) { return r.json(); })
             .then(function (result) {
-                if (result.success) {
-                    textEl.textContent = 'Catálogo sincronizado con éxito.';
-                    setTimeout(function () { bannerEl.style.display = 'none'; }, 4000);
-                } else {
-                    btnEl.disabled = false;
-                    btnEl.textContent = 'Reintentar';
-                    textEl.textContent = result.message || 'No se pudo sincronizar el catálogo.';
-                }
+                if (result.success) { onSuccess(result); } else { onError(result.message || 'No se pudo sincronizar el catálogo.'); }
             })
-            .catch(function () {
+            .catch(function () { onError('No se pudo sincronizar el catálogo.'); });
+    }
+
+    // Sync desde el banner (requiere que el banner esté visible)
+    window.syncCatalogNow = function () {
+        if (!btnEl) return;
+        btnEl.disabled = true;
+        btnEl.textContent = 'Sincronizando...';
+        doSync(
+            [],
+            function () {
+                textEl.textContent = 'Catálogo sincronizado con éxito.';
+                setTimeout(function () { bannerEl.style.display = 'none'; }, 4000);
+            },
+            function (msg) {
                 btnEl.disabled = false;
                 btnEl.textContent = 'Reintentar';
-                textEl.textContent = 'No se pudo sincronizar el catálogo.';
-            });
+                textEl.textContent = msg;
+            }
+        );
+    };
+
+    // Sync desde cualquier botón externo (ej. módulo de productos o clientes)
+    // skip: array de secciones a omitir, ej. ['clientes']
+    window.syncCatalogManual = function (triggerBtn, skip) {
+        if (triggerBtn) {
+            triggerBtn.disabled = true;
+            triggerBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+        }
+        doSync(
+            skip || [],
+            function () {
+                if (triggerBtn) {
+                    triggerBtn.disabled = false;
+                    triggerBtn.innerHTML = '<i class="fa fa-refresh"></i>';
+                }
+                poll();
+            },
+            function () {
+                if (triggerBtn) {
+                    triggerBtn.disabled = false;
+                    triggerBtn.innerHTML = '<i class="fa fa-refresh"></i>';
+                }
+            }
+        );
     };
 
     document.addEventListener('DOMContentLoaded', function () {

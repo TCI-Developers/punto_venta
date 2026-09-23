@@ -338,6 +338,24 @@ class Controller extends BaseController
             $productIds = DB::table('products')->where('code_product', $code)->pluck('id');
             if ($productIds->isEmpty()) continue;
 
+            $matrizId = $d['id'] ?? null;
+
+            // Descuentos por cantidad: si el mismo ID ya fue consumido localmente (vigencia=0),
+            // notificar a Matriz (puede ser que no tuviera internet al venderlo) y no restaurar.
+            // Si Matriz manda un ID distinto para el mismo producto, es un descuento nuevo → aplica normal.
+            if ($vigenciaTipo === 'cantidad' && $matrizId) {
+                $consumido = DB::table('parts_to_product')
+                    ->whereIn('product_id', $productIds)
+                    ->where('matriz_descuento_id', $matrizId)
+                    ->where('vigencia', '0')
+                    ->exists();
+
+                if ($consumido) {
+                    static::notificarDescuentoConsumido((int)$matrizId);
+                    continue; // Matriz lo marcará terminado; en el siguiente sync ya no viene
+                }
+            }
+
             DB::table('parts_to_product')
                 ->whereIn('product_id', $productIds)
                 ->update([
@@ -345,6 +363,7 @@ class Controller extends BaseController
                     'monto_porcentaje'        => (float)($d['valor'] ?? 0),
                     'vigencia_cantidad_fecha' => $vigenciaTipo,
                     'vigencia'                => $vigencia,
+                    'matriz_descuento_id'     => $matrizId,
                 ]);
         }
 
@@ -362,6 +381,7 @@ class Controller extends BaseController
                 'monto_porcentaje'        => null,
                 'vigencia_cantidad_fecha' => null,
                 'vigencia'                => null,
+                'matriz_descuento_id'     => null,
             ]);
         }
     }
@@ -396,6 +416,27 @@ class Controller extends BaseController
             ->acceptJson()
             ->timeout(15)
             ->{$method}(config('services.matriz.url') . '/api/pos/' . $endpoint, $params);
+    }
+
+    // Notifica a Matriz que un descuento por cantidad fue consumido en esta sucursal.
+    // Se puede llamar desde Livewire o Controllers. Falla en silencio para no interrumpir la venta.
+    public static function notificarDescuentoConsumido(int $matrizDescuentoId): void
+    {
+        try {
+            $empresa = \App\Models\EmpresaDetail::first();
+            $token = null;
+            if ($empresa && !empty($empresa->matriz_token)) {
+                try { $token = \Illuminate\Support\Facades\Crypt::decrypt($empresa->matriz_token); } catch (\Throwable) {}
+            }
+            if (!$token) $token = config('services.matriz.token');
+
+            Http::withToken($token)
+                ->acceptJson()
+                ->timeout(10)
+                ->post(config('services.matriz.url') . '/api/pos/descuento/' . $matrizDescuentoId . '/consumido');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('No se pudo notificar descuento consumido a Matriz (id='.$matrizDescuentoId.'): '.$e->getMessage());
+        }
     }
 
     //el token se puede guardar cifrado en empresa_details (editable desde la pantalla de

@@ -244,6 +244,10 @@ class Sale extends Component
             $presentation->save();
             return 'new_or_update';
         }else{
+            // Al llegar a 0 el descuento por cantidad queda consumido — notificar a Matriz
+            if($presentation->vigencia_cantidad_fecha == 'cantidad' && (float)$presentation->vigencia === 0.0 && $presentation->matriz_descuento_id){
+                \App\Http\Controllers\Controller::notificarDescuentoConsumido((int)$presentation->matriz_descuento_id);
+            }
             $presentation->save();
             return 'update';
         }
