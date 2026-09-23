@@ -34,11 +34,11 @@
                             <td>{{$item->descripcion_producto}}</td>
                             <td wire:ignore><input type="number" class="form-control text-right entradas" name="entrada_saved[{{$item->id}}]" placeholder="0" 
                                         onchange="entradaProduct({{$item->id}}, this.value, '{{$item->getProduct->taxes}}', {{$item->getProduct->amount_taxes}})" min="1" 
-                                        value="{{$item->getEntrada->entrada}}" {{isset($compra) ? 'disabled':''}} required></td>
+                                        value="{{$item->getEntrada?->entrada ?? 0}}" {{isset($compra) ? 'disabled':''}} required></td>
                             @if($compra->status == 4 || $compra->status == 5)
-                                <td><input type="number" class="form-control text-right" name="recibido[{{$item->getEntrada->id}}]" placeholder="0" 
+                                <td><input type="number" class="form-control text-right" name="recibido[{{$item->getEntrada?->id ?? 0}}]" placeholder="0"
                                 onchange="recibidoProduct({{$item->id}}, this.value, '{{$item->getProduct->taxes}}', {{$item->getProduct->amount_taxes}})"
-                                    min="1" value="{{$compra->status == 4 ? $item->getEntrada->entrada:$item->getEntrada->recibido}}" {{$compra->status == 5 ? 'readonly':''}}></td>
+                                    min="1" value="{{$compra->status == 4 ? ($item->getEntrada?->entrada ?? 0) : ($item->getEntrada?->recibido ?? 0)}}" {{$compra->status == 5 ? 'readonly':''}}></td>
                             @endif
                             <td class="text-right precioUnitario-{{$item->id}}">$ {{number_format($item->precio_unitario, 2)}}</td>
                             <td class="text-right"><input type="text" class="form-control text-right" name="subtotal_saved[{{$item->id}}]" wire:model.defer="subtotal[{{$item->id}}]" value="$ {{number_format(isset($subtotal[$item->id]) ? $subtotal[$item->id]:$item->subtotal, 2)}}" readonly></td>

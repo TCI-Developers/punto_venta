@@ -108,7 +108,7 @@
                         <tr>
                             <td class="td text-xs text-center">{{$item->getProduct->code_product}}</td>
                             <td class="td text-xs">{{$item->descripcion_producto}}</td>
-                            <td class="td text-xs text-center">{{$item->getEntrada->entrada}}</td>
+                            <td class="td text-xs text-center">{{$item->getEntrada?->entrada ?? 0}}</td>
                             <td class="td text-xs text-right">$ {{number_format($item->precio_unitario, 2)}}</td>
                             <td class="td text-xs text-right">$ {{number_format($item->subtotal, 2)}}</td>
                             <td class="td text-xs text-center">{{$item->taxes}}</td>
