@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Proveedor;
 
 class ProveedorController extends Controller
@@ -73,7 +74,9 @@ class ProveedorController extends Controller
     }
 
         public function destroyAll(){
-        Proveedor::truncate();
+        DB::statement('PRAGMA foreign_keys = OFF');
+        Proveedor::query()->delete();
+        DB::statement('PRAGMA foreign_keys = ON');
         return redirect()->back()->with('success', 'Todos los proveedores han sido eliminados.');
     }
 

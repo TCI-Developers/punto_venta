@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Customer;
 
 class CustomerController extends Controller
@@ -54,7 +55,9 @@ class CustomerController extends Controller
     }
 
     public function destroyAll(){
-        Customer::truncate();
+        DB::statement('PRAGMA foreign_keys = OFF');
+        Customer::query()->delete();
+        DB::statement('PRAGMA foreign_keys = ON');
         return redirect()->back()->with('success', 'Todos los clientes han sido eliminados.');
     }
 }
