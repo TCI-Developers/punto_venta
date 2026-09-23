@@ -217,7 +217,9 @@ class Sale extends Component
 
         if(!count($sale_detail_cants)){
             $withDesc = false;
-            if(!is_null($presentation->vigencia) && !is_null($presentation->tipo_descuento) && $presentation->vigencia_cantidad_fecha == 'cantidad' && $presentation->vigencia > 0){
+            if(!is_null($presentation->tipo_descuento) && $presentation->vigencia_cantidad_fecha == 'permanente'){
+                $withDesc = true;
+            }else if(!is_null($presentation->vigencia) && !is_null($presentation->tipo_descuento) && $presentation->vigencia_cantidad_fecha == 'cantidad' && $presentation->vigencia > 0){
                 $withDesc = true;
             }else if(!is_null($presentation->vigencia) && !is_null($presentation->tipo_descuento) && $presentation->vigencia_cantidad_fecha == 'fecha' && $presentation->vigencia.' 23:59:59' > date('Y-m-d H:i:s')){
                 $withDesc = true;
@@ -298,13 +300,14 @@ class Sale extends Component
             }
 
             $sale_detail_cant->descuento = 0;
-            if(!is_null($presentation->vigencia) && $presentation->tipo_descuento == 'monto'){
-                if(is_numeric($presentation->vigencia) || $presentation->vigencia.' 23:59:59' > date('Y-m-d H:i:s')){
+            $isPermanente = $presentation->vigencia_cantidad_fecha == 'permanente';
+            if(!is_null($presentation->tipo_descuento) && $presentation->tipo_descuento == 'monto'){
+                if($isPermanente || (!is_null($presentation->vigencia) && (is_numeric($presentation->vigencia) || $presentation->vigencia.' 23:59:59' > date('Y-m-d H:i:s')))){
                     $sale_detail_cant->descuento = round(($presentation->monto_porcentaje ?? 0), 2);
                     $sale_detail_cant->total_descuento = round(((($presentation->monto_porcentaje ?? 0) * $sale_detail_cant->cant)), 2);
                 }
-            }else if(!is_null($presentation->vigencia) && $presentation->tipo_descuento == 'porcentaje'){
-                if(is_numeric($presentation->vigencia) || $presentation->vigencia.' 23:59:59' > date('Y-m-d H:i:s')){
+            }else if(!is_null($presentation->tipo_descuento) && $presentation->tipo_descuento == 'porcentaje'){
+                if($isPermanente || (!is_null($presentation->vigencia) && (is_numeric($presentation->vigencia) || $presentation->vigencia.' 23:59:59' > date('Y-m-d H:i:s')))){
                     $sale_detail_cant->descuento = round(($presentation->monto_porcentaje ?? 0),2);
                     $sale_detail_cant->total_descuento = 0;
                     if(!is_null($presentation->monto_porcentaje) && $presentation->monto_porcentaje > 0){

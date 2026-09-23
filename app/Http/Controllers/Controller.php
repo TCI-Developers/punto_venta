@@ -317,6 +317,55 @@ class Controller extends BaseController
         DB::update($sql, $codes);
     }
 
+    protected function syncDescuentos(array $descuentos, bool $fullSync): void
+    {
+        $codesConDescuento = [];
+
+        foreach ($descuentos as $d) {
+            $code = trim((string)($d['code_product'] ?? ''));
+            if (!$code) continue;
+
+            $codesConDescuento[] = $code;
+
+            $tipoDescuento = ($d['tipo'] ?? '') === 'monto_fijo' ? 'monto' : 'porcentaje';
+            $vigenciaTipo  = $d['vigencia_tipo'] ?? 'permanente';
+            $vigencia      = match($vigenciaTipo) {
+                'fecha'    => $d['vigencia_fecha'] ?? null,
+                'cantidad' => $d['vigencia_cantidad'] ?? null,
+                default    => null,
+            };
+
+            $productIds = DB::table('products')->where('code_product', $code)->pluck('id');
+            if ($productIds->isEmpty()) continue;
+
+            DB::table('parts_to_product')
+                ->whereIn('product_id', $productIds)
+                ->update([
+                    'tipo_descuento'          => $tipoDescuento,
+                    'monto_porcentaje'        => (float)($d['valor'] ?? 0),
+                    'vigencia_cantidad_fecha' => $vigenciaTipo,
+                    'vigencia'                => $vigencia,
+                ]);
+        }
+
+        if ($fullSync) {
+            $productIdsConDesc = count($codesConDescuento)
+                ? DB::table('products')->whereIn('code_product', $codesConDescuento)->pluck('id')
+                : collect();
+
+            $query = DB::table('parts_to_product')->whereNotNull('tipo_descuento');
+            if ($productIdsConDesc->isNotEmpty()) {
+                $query->whereNotIn('product_id', $productIdsConDesc);
+            }
+            $query->update([
+                'tipo_descuento'          => null,
+                'monto_porcentaje'        => null,
+                'vigencia_cantidad_fecha' => null,
+                'vigencia'                => null,
+            ]);
+        }
+    }
+
     //funcion para quitar signo de pesos y hacerlo numerico el valor
     function formatNumberr($valor){
         return (float)str_replace(',','', str_replace('$', '', $valor));

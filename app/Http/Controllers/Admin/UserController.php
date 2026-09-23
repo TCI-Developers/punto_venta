@@ -172,7 +172,9 @@ class UserController extends Controller
                 return;
             }
 
-            $productos = $response->json('productos') ?? [];
+            $productos  = $response->json('productos') ?? [];
+            $descuentos = $response->json('descuentos') ?? [];
+
             if(!count($productos)){
                 return;
             }
@@ -238,6 +240,8 @@ class UserController extends Controller
                     $this->cascadePresentationPrices($codes);
                 }
             });
+            // descuentos: sync en login siempre es completo (sin updated_after)
+            $this->syncDescuentos($descuentos, true);
         } catch (\Throwable $th) {
             Log::warning('No se pudieron actualizar los precios de productos al iniciar sesión: '.$th->getMessage());
         }

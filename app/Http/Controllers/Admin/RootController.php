@@ -394,6 +394,9 @@ class RootController extends Controller
                         }
                     }
                 }
+
+                // descuentos: sync completo limpia los que ya no vienen; incremental solo agrega/actualiza
+                $this->syncDescuentos($data['descuentos'] ?? [], $updatedAfter === null);
             });
         } catch (\Throwable $th) {
             Log::error('Error al importar catalogo desde Matriz: '.$th->getMessage());
