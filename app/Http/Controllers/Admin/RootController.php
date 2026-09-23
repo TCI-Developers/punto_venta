@@ -173,7 +173,7 @@ class RootController extends Controller
             // con una fecha limite a futuro -- las otras 4 llaves si regresan vacio, esta no).
             // Se excluye del conteo para decidir si hay "cambios pendientes": de lo contrario
             // el banner nunca se apagaria, porque esa llave siempre trae la lista completa.
-            $total = $counts['productos'] + $counts['lineas'] + $counts['proveedores'] + $counts['clientes'];
+            $total = $counts['productos'] + $counts['lineas'] + $counts['proveedores'] + $counts['clientes'] + $counts['descuentos'];
 
             return response()->json(['pending' => $total > 0, 'counts' => $counts, 'total' => $total]);
         } catch (\Throwable $th) {
@@ -232,11 +232,12 @@ class RootController extends Controller
     private function countCatalogPayload(array $data): array
     {
         return [
-            'productos' => count($data['productos'] ?? []),
-            'lineas' => count($data['lineas'] ?? []),
-            'proveedores' => count($data['proveedores'] ?? []),
-            'clientes' => count($data['clientes'] ?? []),
-            'usuarios' => count($data['usuarios'] ?? []),
+            'productos'   => count($data['productos']   ?? []),
+            'lineas'      => count($data['lineas']       ?? []),
+            'proveedores' => count($data['proveedores']  ?? []),
+            'clientes'    => count($data['clientes']     ?? []),
+            'usuarios'    => count($data['usuarios']     ?? []),
+            'descuentos'  => count($data['descuentos']   ?? []),
         ];
     }
 
