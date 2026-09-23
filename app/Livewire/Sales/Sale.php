@@ -321,19 +321,21 @@ class Sale extends Component
     function calculoImpuestos($sale_detail, $presentation){
         $product = $presentation->getProducto($presentation->product_id);
 
-        $cants = $sale_detail->getCantDetails($sale_detail->id, $presentation->id);
+        $cants      = $sale_detail->getCantDetails($sale_detail->id, $presentation->id);
+        $descuento  = $sale_detail->getCantSalesDetail->sum('total_descuento');
 
-        $amount = $sale_detail->unit_price * $cants;
-        $subtotal = $amount;
-        $iva = round(($product->taxes == 'IVA' ? ($amount * $product->amount_taxes):0),2);
-        $ieps = round(($product->taxes == 'IE3' ? ($amount * $product->amount_taxes):0),2);
+        $amount        = $sale_detail->unit_price * $cants;
+        $base_gravable = $amount - $descuento;
+        $subtotal      = $amount;
+        $iva  = round(($product->taxes == 'IVA' ? ($base_gravable * $product->amount_taxes) : 0), 2);
+        $ieps = round(($product->taxes == 'IE3' ? ($base_gravable * $product->amount_taxes) : 0), 2);
         $total = round(($subtotal + $iva + $ieps), 2);
 
-        $sale_detail->amount = round($amount,2);
-        $sale_detail->subtotal = round($subtotal,2);
-        $sale_detail->iva = round($iva,2);
-        $sale_detail->ieps = round($ieps,2);
-        $sale_detail->total = round($total,2);
+        $sale_detail->amount   = round($amount, 2);
+        $sale_detail->subtotal = round($subtotal, 2);
+        $sale_detail->iva      = round($iva, 2);
+        $sale_detail->ieps     = round($ieps, 2);
+        $sale_detail->total    = round($total, 2);
         $sale_detail->save();
     }
 
