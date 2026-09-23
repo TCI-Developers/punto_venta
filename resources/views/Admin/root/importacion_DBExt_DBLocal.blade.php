@@ -26,7 +26,7 @@
             @if(Auth::User()->hasRole('root') || Auth::User()->name === 'TCI_DEV')
             <form action="{{ route('proveedor.destroyAll') }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar TODOS los proveedores? Esta acción no se puede deshacer.')">
                 @csrf
-                <button type="submit" class="btn btn-danger btn-sm mt-1"><i class="fa fa-trash"></i> Eliminar todos</button>
+                <button type="submit" class="btn btn-danger btn-sm mt-1" title="Eliminar todos los proveedores"><i class="fa fa-trash"></i></button>
             </form>
             @endif
         </label>
