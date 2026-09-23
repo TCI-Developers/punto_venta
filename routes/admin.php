@@ -47,6 +47,7 @@ Route::get('/customers', 'Admin\CustomerController@index')->name('customer.index
 Route::post('/customers-store', 'Admin\CustomerController@store')->name('customer.store')->middleware('permission:clientes,punto_venta,create'); //vista principal clcientes
 Route::post('/customers-update', 'Admin\CustomerController@store')->name('customer.update')->middleware('permission:clientes,punto_venta,update'); //vista principal clcientes
 Route::get('/customers-destroy/{id}/{status}', 'Admin\CustomerController@destroy')->name('customer.destroy')->middleware('permission:clientes,punto_venta,destroy'); //vista principal clcientes
+Route::post('/customers-destroy-all', 'Admin\CustomerController@destroyAll')->name('customer.destroyAll');
 
 //proveedores
 Route::get('/poveedores/{status?}', 'Admin\ProveedorController@index')->name('proveedor.index')->middleware('permission:proveedores');

@@ -31,6 +31,14 @@
             @endif
         </label>
         <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
+            @if(Auth::User()->hasRole('root') || Auth::User()->name === 'TCI_DEV')
+            <form action="{{ route('customer.destroyAll') }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar TODOS los clientes? Esta acción no se puede deshacer.')">
+                @csrf
+                <button type="submit" class="btn btn-danger btn-sm" title="Eliminar todos los clientes"><i class="fa fa-trash"></i></button>
+            </form>
+            @endif
+        </label>
+        <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
             <a href="{{ route('import.dataLocal', ['Branch', 'branchs']) }}" class="btn btn-info"><i class="fa fa-download"></i> Sucursales</a>
         </label>
         @if(Auth::User()->name == 'TCI_DEV')

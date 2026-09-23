@@ -11,19 +11,19 @@
         <div class="modal-body">
                 <div class="row">
                     <label for="name" class="col-lg-12 col-md-12 col-sm-12">Nombre* <br>
-                        <input type="text" class="form-control inputModal" name="name" id="name" placeholder="Nombre" required>
+                        <input type="text" class="form-control inputModal" name="name" id="name" placeholder="ej: Juan García López" required>
                     </label>
                     <label for="razon_social" class="col-lg-12 col-md-12 col-sm-12">Razón Social <br>
-                        <input type="text" class="form-control inputModal" name="razon_social" id="razon_social" placeholder="Razón Social">
+                        <input type="text" class="form-control inputModal" name="razon_social" id="razon_social" placeholder="ej: Comercializadora García S.A. de C.V.">
                     </label>
                     <label for="rfc" class="col-lg-6 col-md-6 col-sm-12">RFC <br>
-                        <input type="text" class="form-control inputModal" name="rfc" id="rfc" placeholder="RFC">
+                        <input type="text" class="form-control inputModal" name="rfc" id="rfc" placeholder="ej: GALJ901231ABC">
                     </label>
                     <label for="postal_code" class="col-lg-6 col-md-6 col-sm-12">Codigo Postal <br>
-                        <input type="text" class="form-control inputModal" name="postal_code" id="postal_code" placeholder="Codigo Postal">
+                        <input type="text" class="form-control inputModal" name="postal_code" id="postal_code" placeholder="ej: 58000">
                     </label>
                     <label for="regimen_fiscal" class="col-lg-12 col-md-12 col-sm-12">Regimen Fiscal <br>
-                        <input type="text" class="form-control inputModal" name="regimen_fiscal" id="regimen_fiscal" placeholder="Regimen Fiscal">
+                        <input type="text" class="form-control inputModal" name="regimen_fiscal" id="regimen_fiscal" placeholder="ej: 616 - Sin obligaciones fiscales">
                     </label>
                 </div>
         </div>

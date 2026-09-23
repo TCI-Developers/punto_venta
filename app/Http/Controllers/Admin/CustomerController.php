@@ -52,4 +52,9 @@ class CustomerController extends Controller
 
         return redirect()->back()->with('error', 'Ocurrio un error.');
     }
+
+    public function destroyAll(){
+        Customer::truncate();
+        return redirect()->back()->with('success', 'Todos los clientes han sido eliminados.');
+    }
 }
