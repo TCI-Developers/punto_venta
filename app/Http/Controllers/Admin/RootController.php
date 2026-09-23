@@ -289,7 +289,11 @@ class RootController extends Controller
                             'unit' => $p['unit'],
                             'unit_description' => $p['unit_description'],
                             'clave_sat' => $p['clave_sat'] ?? null,
-                            'taxes' => $p['taxes'],
+                            'taxes' => match((string)($p['taxes'] ?? '')) {
+                                '002' => 'IVA',
+                                '003' => 'IE3',
+                                default => $p['taxes'],
+                            },
                             'amount_taxes' => $p['amount_taxes'],
                             'precio' => $p['precio'],
                             'precio_mayoreo' => $p['precio_mayoreo'],
