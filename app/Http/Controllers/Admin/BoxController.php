@@ -96,6 +96,8 @@ class BoxController extends Controller
         $box->start_amount_box = $request->start_amount_box;
         $box->save();
 
+        $this->turnoAbrir();
+
         return redirect()->route('sale.index');
     }
 
@@ -319,6 +321,8 @@ class BoxController extends Controller
                 ->values();
 
             if ($codes->isEmpty()) {
+                // Sin movimientos en el turno — cerrar en Matriz sin enviar stock
+                $this->turnoCerrar();
                 return;
             }
 
@@ -344,6 +348,26 @@ class BoxController extends Controller
 
         } catch (\Throwable $e) {
             Log::error('getStockDbExt error: ' . $e->getMessage());
+        }
+    }
+
+    function turnoAbrir()
+    {
+        if (!$this->hasInternetConnection()) return;
+        try {
+            $this->matrizApi('post', 'turno/abrir', []);
+        } catch (\Throwable $e) {
+            Log::error('turnoAbrir error: ' . $e->getMessage());
+        }
+    }
+
+    function turnoCerrar()
+    {
+        if (!$this->hasInternetConnection()) return;
+        try {
+            $this->matrizApi('post', 'turno/cerrar', []);
+        } catch (\Throwable $e) {
+            Log::error('turnoCerrar error: ' . $e->getMessage());
         }
     }
 
