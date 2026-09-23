@@ -52,7 +52,11 @@ class Product extends Model
                     $product->unit = $item->unidad;
                     $product->unit_description = $item->{'unidad_sat___descripción'};
                     $product->existence = $item->existencia_real;
-                    $product->taxes = $item->impuesto;
+                    $product->taxes = match((string)$item->impuesto) {
+                        '002' => 'IVA',
+                        '003' => 'IE3',
+                        default => $item->impuesto,
+                    };
 
                     $product->precio = (float)$item->preciov_1;
                     $product->precio_mayoreo = (float)$item->preciov_3;
