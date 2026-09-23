@@ -27,26 +27,26 @@
 
                     <div class="row form-group">
                         <label for="name" class="col-lg-4 col-sm-12">Nombre
-                            <input type="text" class="form-control" name="name" id="name" value="{{isset($proveedor) ? $proveedor->name:''}}">
+                            <input type="text" class="form-control" name="name" id="name" placeholder="ej: Distribuidora García S.A." value="{{isset($proveedor) ? $proveedor->name:''}}">
                         </label>
                         <label for="code_proveedor" class="col-lg-4 col-sm-12">Codigo
-                            <input type="text" class="form-control" name="code_proveedor" id="code_proveedor" value="{{isset($proveedor) ? $proveedor->code_proveedor:''}}">
+                            <input type="text" class="form-control" name="code_proveedor" id="code_proveedor" placeholder="ej: PROV-001" value="{{isset($proveedor) ? $proveedor->code_proveedor:''}}">
                         </label>
                         <label for="rfc" class="col-lg-4 col-sm-12">RFC
-                            <input type="text" class="form-control" name="rfc" id="rfc" value="{{isset($proveedor) ? $proveedor->rfc:''}}">
+                            <input type="text" class="form-control" name="rfc" id="rfc" placeholder="ej: DGA901231ABC" value="{{isset($proveedor) ? $proveedor->rfc:''}}">
                         </label>
                         <label for="phone" class="col-lg-4 col-sm-12">Telefono
                             <input type="tel" class="form-control" name="phone" id="phone" placeholder="ej: 4521234567" value="{{isset($proveedor) ? $proveedor->phone:''}}">
                         </label>
 
                         <label for="contacto" class="col-lg-4 col-sm-12">Contacto
-                            <input type="text" class="form-control" name="contacto" id="contacto" value="{{isset($proveedor) ? $proveedor->contacto:''}}">
+                            <input type="text" class="form-control" name="contacto" id="contacto" placeholder="ej: Juan Pérez" value="{{isset($proveedor) ? $proveedor->contacto:''}}">
                         </label>
                         <label for="email" class="col-lg-4 col-sm-12">Email
-                            <input type="email" class="form-control" name="email" id="email" placeholder="ej: email@email.com" value="{{isset($proveedor) ? $proveedor->email:''}}">
+                            <input type="email" class="form-control" name="email" id="email" placeholder="ej: contacto@proveedor.com" value="{{isset($proveedor) ? $proveedor->email:''}}">
                         </label>
                         <label for="address" class="col-lg-4 col-sm-12">Dirección
-                            <input type="text" class="form-control" name="address" id="address" value="{{isset($proveedor) ? $proveedor->address:''}}">
+                            <input type="text" class="form-control" name="address" id="address" placeholder="ej: Av. Principal 123, Col. Centro" value="{{isset($proveedor) ? $proveedor->address:''}}">
                         </label>
                         <label for="credit_days" class="col-lg-4 col-sm-12">Dias de credito
                             <input type="number" class="form-control" name="credit_days" id="credit_days" placeholder="0.00" value="{{isset($proveedor) ? $proveedor->credit_days:''}}">
