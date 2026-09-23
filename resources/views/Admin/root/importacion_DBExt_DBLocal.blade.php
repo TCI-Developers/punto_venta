@@ -23,6 +23,12 @@
         </label>
         <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
             <a href="{{ route('import.dataLocal', ['Proveedor', 'proveedores']) }}" class="btn btn-info"><i class="fa fa-download"></i> Proveedores</a>
+            @if(Auth::User()->hasRole('root') || Auth::User()->name === 'TCI_DEV')
+            <form action="{{ route('proveedor.destroyAll') }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar TODOS los proveedores? Esta acción no se puede deshacer.')">
+                @csrf
+                <button type="submit" class="btn btn-danger btn-sm mt-1"><i class="fa fa-trash"></i> Eliminar todos</button>
+            </form>
+            @endif
         </label>
         <label class="col-lg-4 col-ms-6 col-sm-12 text-center">
             <a href="{{ route('import.dataLocal', ['Branch', 'branchs']) }}" class="btn btn-info"><i class="fa fa-download"></i> Sucursales</a>

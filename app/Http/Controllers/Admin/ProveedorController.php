@@ -72,7 +72,12 @@ class ProveedorController extends Controller
         }
     }
 
-    //funcion para validar los campos requeridos 
+        public function destroyAll(){
+        Proveedor::truncate();
+        return redirect()->back()->with('success', 'Todos los proveedores han sido eliminados.');
+    }
+
+    //funcion para validar los campos requeridos
     function rules($request){
         $validated = $request->validate([ 
             'name' => 'required',

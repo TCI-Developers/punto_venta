@@ -55,6 +55,7 @@ Route::post('/poveedores-store/{proveedor_id?}', 'Admin\ProveedorController@stor
 Route::get('/poveedores-show/{proveedor_id?}', 'Admin\ProveedorController@create')->name('proveedor.show')->middleware('permission:proveedores,punto_venta,[show|update]');
 Route::post('/poveedores-update/{proveedor_id?}', 'Admin\ProveedorController@store')->name('proveedor.update')->middleware('permission:proveedores,punto_venta,update');
 Route::get('/poveedores-enable/{proveedor_id}/{status}', 'Admin\ProveedorController@enable')->name('proveedor.enable')->middleware('permission:proveedores,punto_venta,create');
+Route::post('/proveedores-destroy-all', 'Admin\ProveedorController@destroyAll')->name('proveedor.destroyAll')->middleware('role:root');
 
 //sales
 Route::get('/sales', 'Admin\SaleController@index')->name('sale.index')->middleware('permission:ventas'); //vista principal ventas
