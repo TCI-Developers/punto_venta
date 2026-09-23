@@ -55,9 +55,12 @@ class CustomerController extends Controller
     }
 
     public function destroyAll(){
-        DB::statement('PRAGMA foreign_keys = OFF');
-        Customer::query()->delete();
-        DB::statement('PRAGMA foreign_keys = ON');
-        return redirect()->back()->with('success', 'Todos los clientes han sido eliminados.');
+        $usados = DB::table('sales')->pluck('customer_id')
+            ->merge(DB::table('prices')->whereNotNull('customer_id')->pluck('customer_id'))
+            ->merge(DB::table('facturas')->whereNotNull('customer_id')->pluck('customer_id'))
+            ->unique()->filter()->values();
+
+        $deleted = Customer::whereNotIn('id', $usados)->delete();
+        return redirect()->back()->with('success', "{$deleted} clientes eliminados. Los que tienen ventas u otras relaciones se conservaron.");
     }
 }
