@@ -5,7 +5,10 @@
        visible. "margin: 0" exacto tiene un bug conocido en dompdf que rompe el render de
        imagenes; 1px evita ese bug y en la practica es visualmente igual a 0. */
     @page {
-        margin: 1px;
+        margin-top: 0;
+        margin-left: 1px;
+        margin-right: 1px;
+        margin-bottom: 1px;
     }
     body {
         font-family: 'DejaVu Sans Mono', monospace;

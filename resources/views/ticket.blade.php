@@ -9,8 +9,7 @@
     <div class="ticket-container">
         <!-- Encabezado -->
         <div class="header">
-            <img src="{{$logoBase64}}" alt="logo" width="70" height="45">
-            <div><strong>{{$empresa->razon_social}}</strong></div>
+<div><strong>{{$empresa->razon_social}}</strong></div>
             <div>RFC: {{$empresa->rfc}}</div>
             <div>{{$empresa->getBranch->address}}</div>
         </div>

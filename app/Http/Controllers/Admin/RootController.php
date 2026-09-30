@@ -250,7 +250,8 @@ class RootController extends Controller
         $response = $this->matrizApi('get', 'catalogo', $params);
 
         if (!$response->successful()) {
-            return ['success' => false, 'message' => 'No se pudo conectar con la Matriz.'];
+            Log::error('runCatalogSync: Matriz respondió con error. Status: '.$response->status().' Body: '.$response->body());
+            return ['success' => false, 'message' => 'No se pudo conectar con la Matriz. (HTTP '.$response->status().')'];
         }
 
         $data = $response->json();
