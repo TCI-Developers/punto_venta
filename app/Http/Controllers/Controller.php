@@ -628,6 +628,10 @@ class Controller extends BaseController
         $alto = isset($lines) ? (($lines * 15)+50):500;
         $pdf->setPaper([0, 0, 226.77, $alto], 'portrait'); // 80mm de ancho (~226.77pt)
         $pdf->setOption('isRemoteEnabled', true);
+        $pdf->setOption('margin_top', 0);
+        $pdf->setOption('margin_left', 0);
+        $pdf->setOption('margin_right', 0);
+        $pdf->setOption('margin_bottom', 0);
         
         if($auto){
             $path = $this->imprPdf($pdf, $dir);
