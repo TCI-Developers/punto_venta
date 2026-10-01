@@ -186,10 +186,14 @@ class UserController extends Controller
                     $mayoreoWhens = [];
                     $cantidadMayoreoWhens = [];
                     $despiezoWhens = [];
+                    $taxesWhens = [];
+                    $amountTaxesWhens = [];
                     $precioBindings = [];
                     $mayoreoBindings = [];
                     $cantidadMayoreoBindings = [];
                     $despiezoBindings = [];
+                    $taxesBindings = [];
+                    $amountTaxesBindings = [];
 
                     foreach($chunk as $item){
                         $code = trim((string)($item['code_product'] ?? ''));
@@ -214,6 +218,18 @@ class UserController extends Controller
                         $despiezoWhens[] = 'WHEN ? THEN ?';
                         $despiezoBindings[] = $code;
                         $despiezoBindings[] = (float)($item['precio_despiece'] ?? 0);
+
+                        $taxesWhens[] = 'WHEN ? THEN ?';
+                        $taxesBindings[] = $code;
+                        $taxesBindings[] = match((string)($item['taxes'] ?? '')) {
+                            '002' => 'IVA',
+                            '003' => 'IE3',
+                            default => (string)($item['taxes'] ?? ''),
+                        };
+
+                        $amountTaxesWhens[] = 'WHEN ? THEN ?';
+                        $amountTaxesBindings[] = $code;
+                        $amountTaxesBindings[] = (float)($item['amount_taxes'] ?? 0);
                     }
 
                     if(!count($codes)){
@@ -226,10 +242,12 @@ class UserController extends Controller
                         precio = CASE code_product " . implode(' ', $precioWhens) . " ELSE precio END,
                         precio_mayoreo = CASE code_product " . implode(' ', $mayoreoWhens) . " ELSE precio_mayoreo END,
                         cantidad_mayoreo = CASE code_product " . implode(' ', $cantidadMayoreoWhens) . " ELSE cantidad_mayoreo END,
-                        precio_despiece = CASE code_product " . implode(' ', $despiezoWhens) . " ELSE precio_despiece END
+                        precio_despiece = CASE code_product " . implode(' ', $despiezoWhens) . " ELSE precio_despiece END,
+                        taxes = CASE code_product " . implode(' ', $taxesWhens) . " ELSE taxes END,
+                        amount_taxes = CASE code_product " . implode(' ', $amountTaxesWhens) . " ELSE amount_taxes END
                         WHERE code_product IN ({$placeholders})";
 
-                    $bindings = array_merge($precioBindings, $mayoreoBindings, $cantidadMayoreoBindings, $despiezoBindings, $codes);
+                    $bindings = array_merge($precioBindings, $mayoreoBindings, $cantidadMayoreoBindings, $despiezoBindings, $taxesBindings, $amountTaxesBindings, $codes);
 
                     DB::update($sql, $bindings);
 
