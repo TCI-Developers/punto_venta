@@ -1,6 +1,12 @@
 <?php
 use Illuminate\Support\Facades\Route;
 
+// Setup wizard (excluido de CheckSetup por el propio middleware)
+Route::get('/setup',              'Admin\SetupController@index')->name('setup.index');
+Route::post('/setup/verify-token','Admin\SetupController@verifyToken')->name('setup.verifyToken');
+Route::post('/setup',             'Admin\SetupController@complete')->name('setup.complete');
+Route::get('/setup/syncing',      'Admin\SetupController@syncing')->name('setup.syncing');
+
 Route::get('/import-data', 'Admin\RootController@index')->name('root.index'); //vista principal importacion de data a nube
 
 Route::get('/', 'Admin\BranchController@index')->name('admin.index'); //vista principal
