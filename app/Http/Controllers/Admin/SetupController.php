@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\EmpresaDetail;
+use App\Models\{Branch, EmpresaDetail};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Crypt, Http, Log};
 
@@ -66,17 +66,34 @@ class SetupController extends Controller
         }
 
         try {
+            // Upsert la sucursal en la tabla branchs para que branch_id sea válido
+            $branchId = (int) $request->input('branch_id', 0);
+            if ($branchId) {
+                Branch::updateOrCreate(
+                    ['id' => $branchId],
+                    [
+                        'name'         => trim($request->input('name', '')),
+                        'razon_social' => trim($request->input('razon_social', '')),
+                        'rfc'          => trim($request->input('rfc', '')),
+                        'address'      => trim($request->input('address', '')),
+                    ]
+                );
+            }
+
             $empresa = EmpresaDetail::first() ?? new EmpresaDetail();
-            $empresa->matriz_token  = Crypt::encrypt($token);
-            $empresa->name          = trim($request->input('name', ''));
-            $empresa->razon_social  = trim($request->input('razon_social', ''));
-            $empresa->rfc           = trim($request->input('rfc', ''));
+            $empresa->matriz_token   = Crypt::encrypt($token);
+            $empresa->name           = trim($request->input('name', ''));
+            $empresa->razon_social   = trim($request->input('razon_social', ''));
+            $empresa->rfc            = trim($request->input('rfc', ''));
             $empresa->regimen_fiscal = trim($request->input('regimen_fiscal', ''));
-            $empresa->codigo_postal = trim($request->input('codigo_postal', ''));
-            $empresa->address       = trim($request->input('address', ''));
-            $empresa->path_logo     = trim($request->input('path_logo', ''));
+            $empresa->codigo_postal  = trim($request->input('codigo_postal', ''));
+            $empresa->address        = trim($request->input('address', ''));
+            $empresa->path_logo      = trim($request->input('path_logo', ''));
             // vigencia siempre cifrada (UserController::vigencia() espera valor cifrado)
-            $empresa->vigencia      = Crypt::encrypt(trim($request->input('vigencia', '')));
+            $empresa->vigencia       = Crypt::encrypt(trim($request->input('vigencia', '')));
+            if ($branchId) {
+                $empresa->branch_id = $branchId;
+            }
             $empresa->save();
         } catch (\Throwable $e) {
             Log::error('Setup: error guardando empresa: ' . $e->getMessage());

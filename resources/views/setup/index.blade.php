@@ -38,6 +38,7 @@
         <form id="setupForm" action="{{ route('setup.complete') }}" method="POST">
             @csrf
             <input type="hidden" id="tokenHidden" name="token">
+            <input type="hidden" id="f_branch_id" name="branch_id">
 
             <div style="display:grid; gap:0.7rem;">
                 <div>
@@ -129,6 +130,7 @@
             // Rellenar campos con datos de sucursal
             var s = data.sucursal;
             document.getElementById('tokenHidden').value = token;
+            document.getElementById('f_branch_id').value     = s.id            || '';
             document.getElementById('f_name').value          = s.name          || '';
             document.getElementById('f_razon_social').value  = s.razon_social  || '';
             document.getElementById('f_rfc').value           = s.rfc           || '';
