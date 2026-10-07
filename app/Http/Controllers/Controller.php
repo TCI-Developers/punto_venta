@@ -980,18 +980,18 @@ class Controller extends BaseController
             $out .= str_repeat('-', $w) . "\n";
 
             $denom = [
-                $box->ticket_1000 => '$1000', $box->ticket_500  => '$500',
-                $box->ticket_200  => '$200',  $box->ticket_100  => '$100',
-                $box->ticket_50   => '$50',   $box->ticket_20   => '$20',
-                $box->coin_20     => 'M$20',  $box->coin_10     => 'M$10',
-                $box->coin_5      => 'M$5',   $box->coin_2      => 'M$2',
-                $box->coin_1      => 'M$1',   $box->coin_50_cen => 'M$.50',
+                [$box->ticket_1000, '$1000'], [$box->ticket_500,  '$500'],
+                [$box->ticket_200,  '$200'],  [$box->ticket_100,  '$100'],
+                [$box->ticket_50,   '$50'],   [$box->ticket_20,   '$20'],
+                [$box->coin_20,     '$20'],   [$box->coin_10,     '$10'],
+                [$box->coin_5,      '$5'],    [$box->coin_2,      '$2'],
+                [$box->coin_1,      '$1'],    [$box->coin_50_cen, '$.50'],
             ];
             $hasDenomin = false;
-            foreach ($denom as $qty => $label) { if ($qty > 0) { $hasDenomin = true; break; } }
+            foreach ($denom as [$qty, $label]) { if ($qty > 0) { $hasDenomin = true; break; } }
             if ($hasDenomin) {
                 $out .= "Denominaciones en efectivo:\n";
-                foreach ($denom as $qty => $label) {
+                foreach ($denom as [$qty, $label]) {
                     if ($qty > 0) $out .= "  $qty x $label\n";
                 }
                 $out .= str_repeat('-', $w) . "\n";
