@@ -30,7 +30,7 @@ class RoleController extends Controller
 
         $rol = new Role();
         $rol->name = $request->name;
-        $rol->description = $request->description;
+        $rol->description = $request->description ?? '';
         $rol->save();
 
         return redirect()->back()->with('success', 'Rol creado con exito.');
@@ -46,7 +46,7 @@ class RoleController extends Controller
         $rol = Role::find($request->id);
         if(is_object($rol)){
             $rol->name = $request->name;
-            $rol->description = $request->description;
+            $rol->description = $request->description ?? '';
             $rol->save();
             return redirect()->back()->with('success', 'Rol actualizado con exito.');
         }
