@@ -49,34 +49,36 @@ class Sale extends Component
     public $total_desc = 0.00; 
 
     public function mount($type, $id){
-        $this->customers = Customer::orderBy('name', 'asc')->get();
-        $this->payment_methods = PaymentMethod::orderBy('pay_method', 'asc')->orderBy('id','asc')->get();
+        $this->customers       = Customer::orderBy('name', 'asc')->get();
+        $this->payment_methods = PaymentMethod::orderBy('pay_method', 'asc')->orderBy('id', 'asc')->get();
+        $this->unidades_sat    = UnidadSat::where('status', 1)->get();
         $this->date = [date('Y-m-d'), date('Y-m-d')];
         $this->type = $type;
-        $this->id = $id;
+        $this->id   = $id;
     }
 
     public function render(){
-       
-        $this->unidades_sat = UnidadSat::where('status', 1)->get();
-        if($this->type == 'create'){//funcion para mostrar vista de crear
+        if($this->type == 'create'){
             return view('livewire.sales.create');
-        }else if($this->type == 'show'){ //condicion para mostrar venta para editar
+        }
+
+        if($this->type == 'show'){
             $sale = SaleModel::find($this->id);
-            $this->sales_detail = SaleDetail::where('sale_id', $this->id)->get();
+            $this->sales_detail     = SaleDetail::where('sale_id', $this->id)->get();
             $this->sales_detail_dev = SaleDetail::where('sale_id', $this->id)->where('status', 0)->get();
-            $devoluciones = Devolucion::where('sale_id', $this->id)->get();
+            $devoluciones           = Devolucion::where('sale_id', $this->id)->get();
 
             $hasAuth = Auth::User()->hasPermissionThroughModule('ventas', 'punto_venta', 'auth')
                        || Auth::User()->hasRole('root');
 
             if($this->search != ''){
-                $query = PartToProduct::where(function($q){
-                    $q->whereHas('getProduct', function($sq){
-                        $sq->where('description', 'LIKE', "%{$this->search}%")
-                           ->orWhere('code_product', 'LIKE', "%{$this->search}%");
-                    })->orWhere('code_bar', 'LIKE', "%{$this->search}%");
-                });
+                $query = PartToProduct::with(['getProduct', 'getUnidadSat'])
+                    ->where(function($q){
+                        $q->whereHas('getProduct', function($sq){
+                            $sq->where('description', 'LIKE', "%{$this->search}%")
+                               ->orWhere('code_product', 'LIKE', "%{$this->search}%");
+                        })->orWhere('code_bar', 'LIKE', "%{$this->search}%");
+                    });
 
                 if(!$hasAuth){
                     $query->whereHas('getProduct', fn($q) => $q->where('existence', '>', 0));
@@ -89,17 +91,21 @@ class Sale extends Component
 
             return view('livewire.sales.show', ['sale' => $sale, 'devoluciones' => $devoluciones]);
         }
-        $user = Auth::User();
-        $empresa = EmpresaDetail::first();
-        $this->products = Product::get();
 
-        // Limpiar ventas huérfanas: status=1, sin productos, creadas hace más de 2 horas
-        SaleModel::where('user_id', $user->id)
-            ->where('status', 1)
-            ->where('created_at', '<', now()->subHours(2))
-            ->whereDoesntHave('getDetails')
-            ->delete();
+        $user    = Auth::User();
+        $empresa = \Illuminate\Support\Facades\Cache::remember('empresa_detail', 3600, fn() => EmpresaDetail::first());
 
+        // Limpiar ventas huérfanas una vez por sesión de usuario (no en cada render)
+        if(!session()->has('orphan_clean_' . $user->id)){
+            SaleModel::where('user_id', $user->id)
+                ->where('status', 1)
+                ->where('created_at', '<', now()->subHours(2))
+                ->whereDoesntHave('getDetails')
+                ->delete();
+            session(['orphan_clean_' . $user->id => true]);
+        }
+
+        // $this->products no se usa en la vista de listado — no cargar todos los productos
         if($this->search != ''){
             if($user->hasAnyRole(['root','admin'])){
                 $sales = SaleModel::where('status', '!=', 0)->where('branch_id', $empresa->branch_id)

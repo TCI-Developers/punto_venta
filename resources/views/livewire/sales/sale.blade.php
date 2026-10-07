@@ -7,7 +7,7 @@
                     <div class="col-lg-1 col-md-1 col-sm-12" wire:ignore>
                         <div class="row">
                             <label for="paginate_cant" class="float-left col-lg-12 col-md-12 col-sm-12">Mostrar <br>
-                                <input type="number" class="form-control" id="paginate_cant" value="{{$paginate_cant}}" wire:model.live="paginate_cant">
+                                <input type="number" class="form-control" id="paginate_cant" value="{{$paginate_cant}}" wire:model.live.debounce.500ms="paginate_cant">
                             </label>
                         </div>
                     </div>
@@ -38,7 +38,7 @@
                     <div class="col-lg-2 col-md-2 col-sm-12" >
                         <div class="row text-center">
                             <label for="search" class="" wire:ignore>Buscar <br>
-                                <input type="text" class="form-control" id="search" value="{{$search}}" placeholder="Buscar" wire:model.live="search" step="10">
+                                <input type="text" class="form-control" id="search" value="{{$search}}" placeholder="Buscar" wire:model.live.debounce.400ms="search" step="10">
                             </label>
                             {{--<div class="w-20">
                             <label for="" class="col-lg-12 col-md-12 col-sm-12" data-toggle="tooltip" data-placement="top" title="Limpiar filtros"><br>
