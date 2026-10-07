@@ -542,29 +542,29 @@
             });
         });
 
-        // Enter en monto recibido → click Aceptar
-        document.getElementById('amount_received').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
+        // Flag: modal de ticket abierto
+        var _modalTicketAbierto = false;
+        window.addEventListener('showTicket', function() { _modalTicketAbierto = true; });
+
+        // Enter global: maneja monto recibido y modal ticket
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+
+            // Enter en monto recibido → click Aceptar
+            if (document.activeElement && document.activeElement.id === 'amount_received') {
                 e.preventDefault();
                 var btn = document.getElementById('btnAcept');
                 if (btn && !btn.classList.contains('d-none')) btn.click();
+                return;
             }
-        });
 
-        // Enter en modal ticket → click Cerrar
-        var _ticketKeydownHandler = null;
-        window.addEventListener('showTicket', function() {
-            if (_ticketKeydownHandler) document.removeEventListener('keydown', _ticketKeydownHandler);
-            _ticketKeydownHandler = function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    document.removeEventListener('keydown', _ticketKeydownHandler);
-                    _ticketKeydownHandler = null;
-                    var btnCerrar = document.querySelector('#modalTicket .btn-secondary[onclick^="cerrarVenta"]');
-                    if (btnCerrar) btnCerrar.click();
-                }
-            };
-            document.addEventListener('keydown', _ticketKeydownHandler);
+            // Enter con modal ticket abierto → click Cerrar
+            if (_modalTicketAbierto) {
+                e.preventDefault();
+                _modalTicketAbierto = false;
+                var btnCerrar = document.querySelector('#modalTicket .btn-secondary[onclick^="cerrarVenta"]');
+                if (btnCerrar) btnCerrar.click();
+            }
         });
 
         document.addEventListener('keydown', function(e) {
