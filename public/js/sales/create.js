@@ -374,6 +374,15 @@
 
             $('#btnCobro').addClass('d-none');
             $('input[name=status]').val('cobro');
+
+            // Focus automático en el campo de importe según tipo de pago
+            setTimeout(function() {
+                if ($('#type_payment').val() === 'mixto') {
+                    $('#monto_efectivo_mixto').focus().select();
+                } else if ($('#type_payment').val() === 'efectivo') {
+                    $('#amount_received').focus().select();
+                }
+            }, 0);
         }
 
         //funcion para sumar efectivo + tarjeta en pago mixto y reflejarlo en monto recibido/cambio
@@ -531,6 +540,31 @@
                 text: event.detail[0].message,
                 confirmButtonText: 'Aceptar'
             });
+        });
+
+        // Enter en monto recibido → click Aceptar
+        document.getElementById('amount_received').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                var btn = document.getElementById('btnAcept');
+                if (btn && !btn.classList.contains('d-none')) btn.click();
+            }
+        });
+
+        // Enter en modal ticket → click Cerrar
+        var _ticketKeydownHandler = null;
+        window.addEventListener('showTicket', function() {
+            if (_ticketKeydownHandler) document.removeEventListener('keydown', _ticketKeydownHandler);
+            _ticketKeydownHandler = function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.removeEventListener('keydown', _ticketKeydownHandler);
+                    _ticketKeydownHandler = null;
+                    var btnCerrar = document.querySelector('#modalTicket .btn-secondary[onclick^="cerrarVenta"]');
+                    if (btnCerrar) btnCerrar.click();
+                }
+            };
+            document.addEventListener('keydown', _ticketKeydownHandler);
         });
 
         document.addEventListener('keydown', function(e) {
