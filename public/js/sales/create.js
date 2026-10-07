@@ -515,6 +515,11 @@
                 var btnReimpr = document.getElementById('btnReimprimir');
                 if (btnReimpr) btnReimpr.style.display = 'inline-block';
                 $('#modalTicket').show();
+                // Enfocar el botón Cerrar para que Enter lo dispare sin depender del document
+                setTimeout(function() {
+                    var btnCerrar = document.querySelector('#modalTicket .btn-secondary[onclick^="cerrarVenta"]');
+                    if (btnCerrar) btnCerrar.focus();
+                }, 150);
         });
 
         window.reimprimirTicket = function() {
