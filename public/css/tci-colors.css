@@ -1,0 +1,13 @@
+/* ─── Paleta de colores TCI ─────────────────────────────────────────────────
+   Fuente única de variables de color para todo el sistema POSTCI.
+   Incluir en cualquier vista que necesite la paleta corporativa.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+    --tci-navy:  #202a53;   /* azul marino oscuro — fondos, encabezados */
+    --tci-deep:  #001f5f;   /* azul profundo       — hover oscuro, degradados */
+    --tci-blue:  #0025a6;   /* azul real           — color primario, botones, activos */
+    --tci-sky:   #2bbced;   /* azul cielo          — acento, focus, running */
+    --tci-gray:  #474647;   /* gris carbón         — texto principal */
+    --tci-light: #f4f4f8;   /* gris muy claro      — fondos de tarjetas, inputs */
+    --tci-white: #ffffff;
+}
