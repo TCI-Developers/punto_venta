@@ -654,12 +654,7 @@ class Controller extends BaseController
             } catch (\Throwable $th) {
                 Log::error('Auto-print error: ' . $th->getMessage());
             }
-            $pdfPath = tempnam(sys_get_temp_dir(), 'ticket_').'.pdf';
-            $pdf->save($pdfPath);
-            return response()->file($pdfPath, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="ticket.pdf"',
-            ]);
+            return $pdf->stream('ticket.pdf');
         }
 
         return $pdf->stream($dir,'/ticket.pdf');
@@ -779,9 +774,10 @@ class Controller extends BaseController
 
             $printer->feed(3);
             $printer->cut();
+            $data = $connector->getData();
             $printer->close();
 
-            $this->sendRawEscPos($connector->getData());
+            $this->sendRawEscPos($data);
 
         } catch (\Throwable $th) {
             Log::error('ESC/POS print error: ' . $th->getMessage());
@@ -880,8 +876,9 @@ class Controller extends BaseController
 
             $printer->feed(3);
             $printer->cut();
+            $data = $connector->getData();
             $printer->close();
-            $this->sendRawEscPos($connector->getData());
+            $this->sendRawEscPos($data);
 
         } catch (\Throwable $th) {
             Log::error('ESC/POS devolucion error: ' . $th->getMessage());
@@ -955,8 +952,9 @@ class Controller extends BaseController
 
             $printer->feed(3);
             $printer->cut();
+            $data = $connector->getData();
             $printer->close();
-            $this->sendRawEscPos($connector->getData());
+            $this->sendRawEscPos($data);
 
         } catch (\Throwable $th) {
             Log::error('ESC/POS devolucion matriz error: ' . $th->getMessage());
@@ -1019,8 +1017,9 @@ class Controller extends BaseController
 
             $printer->feed(3);
             $printer->cut();
+            $data = $connector->getData();
             $printer->close();
-            $this->sendRawEscPos($connector->getData());
+            $this->sendRawEscPos($data);
 
         } catch (\Throwable $th) {
             Log::error('ESC/POS gasto error: ' . $th->getMessage());
@@ -1147,8 +1146,9 @@ class Controller extends BaseController
 
             $printer->feed(3);
             $printer->cut();
+            $data = $connector->getData();
             $printer->close();
-            $this->sendRawEscPos($connector->getData());
+            $this->sendRawEscPos($data);
 
         } catch (\Throwable $th) {
             Log::error('ESC/POS box error: ' . $th->getMessage());
