@@ -577,25 +577,30 @@ class Controller extends BaseController
         if(request()->is('ticket-sale/'.$id) || request()->is('ticket-sale/'.$id."/".$auto)){
             $dir = 'tickets_sale';
             $sale = Sale::find($id);
-            $lines = count($sale->getDetails ?? []) + 30;
+            // Contar filas reales (cada detalle puede tener varias cantidades)
+            $productRows = 0;
+            foreach ($sale->getDetails ?? [] as $det) {
+                $productRows += max(1, count($det->getCantSalesDetail ?? []));
+            }
+            $lines = $productRows + 20;
             $pdf = Pdf::loadView('ticket', ['sale' => $sale, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
         }else if(request()->is('ticket-devolution/'.$id) || request()->is('ticket-devolution/'.$id."/".$auto)){
             $dir = 'tickets_dev';
             $devolucion = Devolucion::find($id);
             $sale = $devolucion->getSale;
             $products = $devolucion->getSale->getDetailsDev;
-            $lines = count($products ?? []) + 30;
+            $lines = count($products ?? []) + 20;
             $pdf = Pdf::loadView('ticket_devolution', ['devolucion' => $devolucion, 'products' => $products, 'sale' => $sale, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
         }else if(request()->is('ticket-devolution-matriz/'.$id) || request()->is('ticket-devolution-matriz/'.$id."/".$auto)){
             $dir = 'tickets_dev_matriz';
             $devolucion = DevolucionMatriz::find($id);
             $compra = $devolucion->getCompra;
-            $lines = 31;
+            $lines = 22;
             $pdf = Pdf::loadView('ticket_devolution_matriz', ['devolucion' => $devolucion, 'compra' => $compra, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
         }else if(request()->is('ticket-gasto/'.$id) || request()->is('ticket-gasto/'.$id."/".$auto)){
             $dir = 'tickets_gasto';
             $gasto = Gasto::find($id);
-            $lines = 20;
+            $lines = 14;
             $pdf = Pdf::loadView('ticket_gasto', ['gasto' => $gasto, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
         }else{
             $dir = 'tickets_box';
@@ -610,7 +615,7 @@ class Controller extends BaseController
             $folio_factura_inicial = Factura::where('user_id', $user->id)->where('status', 1)->whereBetween('created_at', [$box->start_date, $box->end_date])->min('id');
             $folio_factura_final = Factura::where('user_id', $user->id)->where('status', 1)->whereBetween('created_at', [$box->start_date, $box->end_date])->max('id');
 
-            $lines = 55; // el ticket ahora incluye ingresos/egresos/folios/arqueo, ya no cabe en el alto fijo original
+            $lines = 42; // header + secciones de caja + totales + footer
 
             $pdf = Pdf::loadView('ticket_box', [
                 'user' => $user, 'empresa' => $empresa, 'box' => $box, 'number_ventas' => $number_ventas, 'logoBase64' => $logoBase64,
@@ -625,7 +630,7 @@ class Controller extends BaseController
             Storage::disk('public')->makeDirectory($dir);
         }
 
-        $alto = isset($lines) ? (($lines * 15)+50):500;
+        $alto = isset($lines) ? (($lines * 12) + 25) : 400;
         $pdf->setPaper([0, 0, 226.77, $alto], 'portrait'); // 80mm de ancho (~226.77pt)
         $pdf->setOption('isRemoteEnabled', true);
         $pdf->setOption('margin_top', 0);
@@ -634,8 +639,24 @@ class Controller extends BaseController
         $pdf->setOption('margin_bottom', 0);
         
         if($auto){
-            $path = $this->imprPdf($pdf, $dir);
-            return response()->file($path, [
+            try {
+                if(request()->is('ticket-sale/'.$id) || request()->is('ticket-sale/'.$id."/".$auto)){
+                    $this->imprEscPosSale($sale, $empresa);
+                } elseif(request()->is('ticket-devolution/'.$id) || request()->is('ticket-devolution/'.$id."/".$auto)){
+                    $this->imprEscPosDevolucion($devolucion, $sale, $empresa);
+                } elseif(request()->is('ticket-devolution-matriz/'.$id) || request()->is('ticket-devolution-matriz/'.$id."/".$auto)){
+                    $this->imprEscPosDevolucionMatriz($devolucion, $compra, $empresa);
+                } elseif(request()->is('ticket-gasto/'.$id) || request()->is('ticket-gasto/'.$id."/".$auto)){
+                    $this->imprEscPosGasto($gasto, $empresa);
+                } else {
+                    $this->imprEscPosBox($user, $box, $empresa, $number_ventas, $folio_venta_inicial, $folio_venta_final, $folio_factura_inicial, $folio_factura_final);
+                }
+            } catch (\Throwable $th) {
+                Log::error('Auto-print error: ' . $th->getMessage());
+            }
+            $pdfPath = tempnam(sys_get_temp_dir(), 'ticket_').'.pdf';
+            $pdf->save($pdfPath);
+            return response()->file($pdfPath, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline; filename="ticket.pdf"',
             ]);
@@ -650,11 +671,568 @@ class Controller extends BaseController
             $pdfPath = tempnam(sys_get_temp_dir(), 'ticket_').'.pdf';
             $pdf->save($pdfPath);
             $sumatraPath = base_path('SumatraPDF.exe');
-            exec("\"$sumatraPath\" -print-to-default \"$pdfPath\"");
+            exec("\"$sumatraPath\" -print-to-default -print-settings \"noscale\" \"$pdfPath\"");
             return $pdfPath;
         } catch (\Throwable $th) {
             dd('Ocurrio un error inesperado.');
         }
+    }
+
+    private function imprEscPosSale(\App\Models\Sale $sale, \App\Models\EmpresaDetail $empresa): void
+    {
+        $connector = new \Mike42\Escpos\PrintConnectors\MemoryPrintConnector();
+        $printer   = new \Mike42\Escpos\Printer($connector);
+        $enc       = fn(string $s): string => $this->encEscPos($s);
+        $w         = 42;
+
+        try {
+            // Logo centrado (si existe y hay GD o Imagick)
+            $logoPath = public_path('img/logo_cliente.png');
+            if (file_exists($logoPath)) {
+                try {
+                    $image = \Mike42\Escpos\EscposImage::load($logoPath, true);
+                    $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+                    $printer->graphics($image);
+                } catch (\Throwable $e) {
+                    Log::warning('ESC/POS logo: ' . $e->getMessage());
+                }
+            }
+
+            // Encabezado — nombre largo envuelto en límite de palabra
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+            $printer->setEmphasis(true);
+            foreach (explode("\n", wordwrap($enc($empresa->razon_social), $w, "\n", false)) as $line) {
+                $printer->textRaw(trim($line) . "\n");
+            }
+            $printer->setEmphasis(false);
+            $printer->textRaw('RFC: ' . $enc($empresa->rfc) . "\n");
+            $printer->textRaw($enc($empresa->getBranch->address ?? '') . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            // Info venta
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_LEFT);
+            $printer->textRaw('Ticket: ' . $sale->folio . "\n");
+            $printer->textRaw('Fecha: '  . date('d-m-Y', strtotime($sale->date)) . "\n");
+            $printer->textRaw('Cliente: ' . $enc($sale->getClient->name) . "\n");
+            $printer->textRaw('Atendio: ' . $enc($sale->getUser->name) . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            // Cabecera tabla
+            $printer->setEmphasis(true);
+            $printer->textRaw($this->escRow('Cant', 'Descripcion', 'P.Unit', 'Importe') . "\n");
+            $printer->setEmphasis(false);
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            // Productos
+            $subtotal = 0; $descuento = 0;
+            foreach ($sale->getDetails ?? [] as $item) {
+                foreach ($item->getCantSalesDetail ?? [] as $cd) {
+                    $price       = $item->unit_price - ($cd->descuento ?? 0);
+                    $price_total = $cd->cant * $price;
+                    $descuento  += $cd->cant * ($cd->descuento ?? 0);
+                    $subtotal   += $price_total;
+                    $printer->textRaw($this->escRow(
+                        number_format($cd->cant, 2),
+                        $enc($item->getPartToProduct->getProduct->description),
+                        '$' . number_format($price, 2),
+                        '$' . number_format($price_total, 2)
+                    ) . "\n");
+                }
+            }
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            // Totales
+            $iva   = $sale->getDetailsTotales('iva');
+            $ieps  = $sale->getDetailsTotales('ieps');
+            $total = $subtotal + $iva + $ieps;
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_RIGHT);
+            $printer->textRaw('Subtotal: $' . number_format($subtotal, 2) . "\n");
+            $printer->textRaw('IVA: $'      . number_format($iva, 2) . "\n");
+            if ($descuento > 0) $printer->textRaw('Ahorro: $' . number_format($descuento, 2) . "\n");
+            if ($ieps > 0)      $printer->textRaw('IEPS: $'   . number_format($ieps, 2) . "\n");
+            $printer->setEmphasis(true);
+            $printer->textRaw('TOTAL: $' . number_format($total, 2) . "\n");
+            $printer->setEmphasis(false);
+
+            // Pago
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_LEFT);
+            $printer->textRaw("\n");
+            $typePay = $sale->type_payment === 'mixto' ? 'Mixto (efect+tarjeta)' : $sale->type_payment;
+            $printer->textRaw('Metodo de pago: ' . $enc($typePay) . "\n");
+            if ($sale->type_payment === 'mixto') {
+                $printer->textRaw('Efectivo: $' . number_format($sale->monto_efectivo, 2) . "\n");
+                $printer->textRaw('Tarjeta: $'  . number_format($sale->monto_tarjeta, 2) . "\n");
+            } else {
+                $label = $sale->type_payment === 'tarjeta' ? 'Monto' : 'Efectivo';
+                $printer->textRaw($label . ': $' . number_format($sale->amount_received, 2) . "\n");
+            }
+            $printer->textRaw('Cambio: $' . number_format($sale->change, 2) . "\n");
+
+            // Pie — nombre también envuelto
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+            $printer->textRaw("\n");
+            $printer->textRaw($enc('¡Gracias por su compra!') . "\n");
+            foreach (explode("\n", wordwrap($enc($empresa->razon_social), $w, "\n", false)) as $line) {
+                $printer->textRaw(trim($line) . "\n");
+            }
+            $printer->textRaw('-- No valido como factura --' . "\n");
+
+            $printer->feed(3);
+            $printer->cut();
+            $printer->close();
+
+            $this->sendRawEscPos($connector->getData());
+
+        } catch (\Throwable $th) {
+            Log::error('ESC/POS print error: ' . $th->getMessage());
+            try { $printer->close(); } catch (\Throwable $e) {}
+        }
+    }
+
+    private function imprEscPosDevolucion(\App\Models\Devolucion $devolucion, \App\Models\Sale $sale, \App\Models\EmpresaDetail $empresa): void
+    {
+        $connector = new \Mike42\Escpos\PrintConnectors\MemoryPrintConnector();
+        $printer   = new \Mike42\Escpos\Printer($connector);
+        $enc       = fn(string $s): string => $this->encEscPos($s);
+        $w         = 42;
+
+        try {
+            $logoPath = public_path('img/logo_cliente.png');
+            if (file_exists($logoPath)) {
+                try {
+                    $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+                    $printer->graphics(\Mike42\Escpos\EscposImage::load($logoPath, true));
+                } catch (\Throwable $e) { Log::warning('ESC/POS logo: ' . $e->getMessage()); }
+            }
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+            $printer->setEmphasis(true);
+            foreach (explode("\n", wordwrap($enc($empresa->razon_social), $w, "\n", false)) as $line) {
+                $printer->textRaw(trim($line) . "\n");
+            }
+            $printer->setEmphasis(false);
+            $printer->textRaw('RFC: ' . $enc($empresa->rfc) . "\n");
+            $printer->textRaw($enc($empresa->getBranch->address ?? '') . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_LEFT);
+            $printer->textRaw("TICKET DE DEVOLUCION\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+            $printer->textRaw('Folio: '            . $sale->folio . "\n");
+            $printer->textRaw('Fecha devolucion: ' . date('d-m-Y', strtotime($devolucion->fecha_devolucion)) . "\n");
+            $printer->textRaw('Cliente: '          . $enc($sale->getClient->name) . "\n");
+            $printer->textRaw('Atendio: '          . $enc($sale->getUser->name) . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->setEmphasis(true);
+            $printer->textRaw($this->escRow('Cant', 'Descripcion', 'P.Unit', 'Importe') . "\n");
+            $printer->setEmphasis(false);
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $subtotal = 0; $descuento = 0;
+            $products = $devolucion->getSale->getDetailsDev;
+            foreach ($products ?? [] as $item) {
+                foreach ($item->getCantSalesDetailDev ?? [] as $cd) {
+                    $price       = $item->unit_price - ($cd->descuento ?? 0);
+                    $price_total = $cd->cant * $price;
+                    $descuento  += $cd->cant * ($cd->descuento ?? 0);
+                    $subtotal   += $price_total;
+                    $printer->textRaw($this->escRow(
+                        number_format($cd->cant, 2),
+                        $enc($item->getPartToProduct->getProduct->description),
+                        '$' . number_format($price, 2),
+                        '$' . number_format($price_total, 2)
+                    ) . "\n");
+                }
+            }
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $iva   = $sale->getDetailsDevTotales('iva');
+            $ieps  = $sale->getDetailsDevTotales('ieps');
+            $total = $subtotal + $iva + $ieps;
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_RIGHT);
+            $printer->textRaw('Subtotal: $' . number_format($subtotal, 2) . "\n");
+            $printer->textRaw('IVA: $'      . number_format($iva, 2) . "\n");
+            if ($descuento > 0) $printer->textRaw('Ahorro: $' . number_format($descuento, 2) . "\n");
+            if ($ieps > 0)      $printer->textRaw('IEPS: $'   . number_format($ieps, 2) . "\n");
+            $printer->setEmphasis(true);
+            $printer->textRaw('TOTAL DEVOLUCION: $' . number_format($total, 2) . "\n");
+            $printer->setEmphasis(false);
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_LEFT);
+            $printer->textRaw("\n");
+            if (!is_null($devolucion->monto_efectivo) || !is_null($devolucion->monto_tarjeta)) {
+                $printer->textRaw("Metodo de reembolso: Mixto\n");
+                $printer->textRaw('Efectivo: $' . number_format($devolucion->monto_efectivo, 2) . "\n");
+                $printer->textRaw('Tarjeta: $'  . number_format($devolucion->monto_tarjeta, 2) . "\n");
+            } else {
+                $printer->textRaw("Metodo de reembolso: Efectivo\n");
+                $printer->textRaw('Efectivo: $' . number_format($devolucion->total_devolucion, 2) . "\n");
+            }
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+            $printer->textRaw("\n");
+            $printer->textRaw($enc('¡Gracias por su preferencia!') . "\n");
+            foreach (explode("\n", wordwrap($enc($empresa->razon_social), $w, "\n", false)) as $line) {
+                $printer->textRaw(trim($line) . "\n");
+            }
+            $printer->textRaw('-- No valido como factura --' . "\n");
+
+            $printer->feed(3);
+            $printer->cut();
+            $printer->close();
+            $this->sendRawEscPos($connector->getData());
+
+        } catch (\Throwable $th) {
+            Log::error('ESC/POS devolucion error: ' . $th->getMessage());
+            try { $printer->close(); } catch (\Throwable $e) {}
+        }
+    }
+
+    private function imprEscPosDevolucionMatriz(\App\Models\DevolucionMatriz $devolucion, $compra, \App\Models\EmpresaDetail $empresa): void
+    {
+        $connector = new \Mike42\Escpos\PrintConnectors\MemoryPrintConnector();
+        $printer   = new \Mike42\Escpos\Printer($connector);
+        $enc       = fn(string $s): string => $this->encEscPos($s);
+        $w         = 42;
+
+        try {
+            $logoPath = public_path('img/logo_cliente.png');
+            if (file_exists($logoPath)) {
+                try {
+                    $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+                    $printer->graphics(\Mike42\Escpos\EscposImage::load($logoPath, true));
+                } catch (\Throwable $e) { Log::warning('ESC/POS logo: ' . $e->getMessage()); }
+            }
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+            $printer->setEmphasis(true);
+            foreach (explode("\n", wordwrap($enc($empresa->razon_social), $w, "\n", false)) as $line) {
+                $printer->textRaw(trim($line) . "\n");
+            }
+            $printer->setEmphasis(false);
+            $printer->textRaw('RFC: ' . $enc($empresa->rfc) . "\n");
+            $printer->textRaw($enc($empresa->getBranch->address ?? '') . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_LEFT);
+            $printer->textRaw("TICKET DE DEVOLUCION MATRIZ\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+            $printer->textRaw('Folio: '           . $compra->folio . "\n");
+            $printer->textRaw('Fecha devolucion: '. date('d-m-Y', strtotime($devolucion->date)) . "\n");
+            $printer->textRaw('Cliente: '         . $enc($compra->user) . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->setEmphasis(true);
+            $printer->textRaw($this->escRow('Cant', 'Descripcion', 'P.Unit', 'Importe') . "\n");
+            $printer->setEmphasis(false);
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $unitPrice = $devolucion->cantidad > 0 ? $devolucion->subtotal / $devolucion->cantidad : 0;
+            $printer->textRaw($this->escRow(
+                number_format($devolucion->cantidad, 2),
+                $enc($devolucion->getProduct->description),
+                '$' . number_format($unitPrice, 2),
+                '$' . number_format($devolucion->subtotal, 2)
+            ) . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_RIGHT);
+            $printer->textRaw('Subtotal: $'  . number_format($devolucion->subtotal, 2) . "\n");
+            $printer->textRaw('Impuesto: $'  . number_format($devolucion->total_impuesto, 2) . "\n");
+            if ($devolucion->descuento > 0) $printer->textRaw('Descuento: $' . number_format($devolucion->descuento, 2) . "\n");
+            $printer->setEmphasis(true);
+            $printer->textRaw('TOTAL DEVOLUCION: $' . number_format($devolucion->total, 2) . "\n");
+            $printer->setEmphasis(false);
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+            $printer->textRaw("\n");
+            $printer->textRaw($enc('¡Gracias por su preferencia!') . "\n");
+            foreach (explode("\n", wordwrap($enc($empresa->razon_social), $w, "\n", false)) as $line) {
+                $printer->textRaw(trim($line) . "\n");
+            }
+            $printer->textRaw('-- No valido como factura --' . "\n");
+
+            $printer->feed(3);
+            $printer->cut();
+            $printer->close();
+            $this->sendRawEscPos($connector->getData());
+
+        } catch (\Throwable $th) {
+            Log::error('ESC/POS devolucion matriz error: ' . $th->getMessage());
+            try { $printer->close(); } catch (\Throwable $e) {}
+        }
+    }
+
+    private function imprEscPosGasto(\App\Models\Gasto $gasto, \App\Models\EmpresaDetail $empresa): void
+    {
+        $connector = new \Mike42\Escpos\PrintConnectors\MemoryPrintConnector();
+        $printer   = new \Mike42\Escpos\Printer($connector);
+        $enc       = fn(string $s): string => $this->encEscPos($s);
+        $w         = 42;
+
+        try {
+            $logoPath = public_path('img/logo_cliente.png');
+            if (file_exists($logoPath)) {
+                try {
+                    $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+                    $printer->graphics(\Mike42\Escpos\EscposImage::load($logoPath, true));
+                } catch (\Throwable $e) { Log::warning('ESC/POS logo: ' . $e->getMessage()); }
+            }
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+            $printer->setEmphasis(true);
+            foreach (explode("\n", wordwrap($enc($empresa->razon_social), $w, "\n", false)) as $line) {
+                $printer->textRaw(trim($line) . "\n");
+            }
+            $printer->setEmphasis(false);
+            $printer->textRaw('RFC: ' . $enc($empresa->rfc) . "\n");
+            $printer->textRaw($enc($empresa->getBranch->address ?? '') . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->setEmphasis(true);
+            $printer->textRaw("COMPROBANTE DE GASTO DE CAJA\n");
+            $printer->setEmphasis(false);
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_LEFT);
+            $printer->textRaw('Folio: '          . $gasto->id . "\n");
+            $printer->textRaw('Fecha: '           . $gasto->created_at->format('d/m/Y H:i') . "\n");
+            $printer->textRaw('Registrado por: '  . $enc($gasto->getUser->name ?? '') . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+            $printer->textRaw('Concepto: '        . $enc($gasto->concepto) . "\n");
+            if ($gasto->description) {
+                $printer->textRaw('Notas: ' . $enc($gasto->description) . "\n");
+            }
+            $printer->textRaw("\n");
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+            $printer->setEmphasis(true);
+            $printer->textRaw('TOTAL: $' . number_format($gasto->monto, 2) . "\n");
+            $printer->setEmphasis(false);
+
+            $printer->textRaw("\n");
+            $printer->textRaw($enc('Este monto se desconto del efectivo en caja.') . "\n");
+            foreach (explode("\n", wordwrap($enc($empresa->razon_social), $w, "\n", false)) as $line) {
+                $printer->textRaw(trim($line) . "\n");
+            }
+
+            $printer->feed(3);
+            $printer->cut();
+            $printer->close();
+            $this->sendRawEscPos($connector->getData());
+
+        } catch (\Throwable $th) {
+            Log::error('ESC/POS gasto error: ' . $th->getMessage());
+            try { $printer->close(); } catch (\Throwable $e) {}
+        }
+    }
+
+    private function imprEscPosBox(\App\Models\User $user, \App\Models\Box $box, \App\Models\EmpresaDetail $empresa, int $number_ventas, $folio_v_ini, $folio_v_fin, $folio_f_ini, $folio_f_fin): void
+    {
+        $connector = new \Mike42\Escpos\PrintConnectors\MemoryPrintConnector();
+        $printer   = new \Mike42\Escpos\Printer($connector);
+        $enc       = fn(string $s): string => $this->encEscPos($s);
+        $w         = 42;
+
+        try {
+            $logoPath = public_path('img/logo_cliente.png');
+            if (file_exists($logoPath)) {
+                try {
+                    $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+                    $printer->graphics(\Mike42\Escpos\EscposImage::load($logoPath, true));
+                } catch (\Throwable $e) { Log::warning('ESC/POS logo: ' . $e->getMessage()); }
+            }
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+            $printer->setEmphasis(true);
+            foreach (explode("\n", wordwrap($enc($empresa->razon_social), $w, "\n", false)) as $line) {
+                $printer->textRaw(trim($line) . "\n");
+            }
+            $printer->setEmphasis(false);
+            $printer->textRaw('RFC: ' . $enc($empresa->rfc) . "\n");
+            $printer->textRaw($enc($empresa->getBranch->address ?? '') . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->setEmphasis(true);
+            $printer->textRaw("CIERRE DE TURNO\n");
+            $printer->textRaw('Corte # ' . $box->id . "\n");
+            $printer->setEmphasis(false);
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_LEFT);
+            $printer->textRaw('Vendedor: ' . $enc($user->name) . "\n");
+            $printer->textRaw('Turno: '    . $enc($user->getTurno->turno ?? '') . "\n");
+            $printer->textRaw('Entrada: '  . ($user->getTurno->entrada ?? '') . "\n");
+            $printer->textRaw('Salida: '   . ($user->getTurno->salida ?? '') . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            // Cálculos
+            $devoluciones = $box->getTotalDevolutions($box->start_date, $box->end_date);
+            $total_ingresos = $box->start_amount_box + $box->amount_cash_system;
+            $total_egresos  = $devoluciones + $box->total_gastos;
+            $total_en_caja  = $total_ingresos - $total_egresos;
+            $retiro_caja    = $box->amount_cash_user - $box->monto_dejado_caja;
+            $diferencia     = $total_en_caja - $box->amount_cash_user;
+
+            $printer->textRaw("** INGRESOS **\n");
+            $printer->textRaw('Caja inicial: $'       . number_format($box->start_amount_box, 2) . "\n");
+            $printer->textRaw('Ventas efectivo: $'    . number_format($box->amount_cash_system, 2) . "\n");
+            $printer->setEmphasis(true);
+            $printer->textRaw('Total ingresos: $'     . number_format($total_ingresos, 2) . "\n");
+            $printer->setEmphasis(false);
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->textRaw("** EGRESOS **\n");
+            $printer->textRaw('Devoluciones: $'       . number_format($devoluciones, 2) . "\n");
+            $printer->textRaw('Gastos (varios): $'    . number_format($box->total_gastos, 2) . "\n");
+            $printer->setEmphasis(true);
+            $printer->textRaw('Total egresos: $'      . number_format($total_egresos, 2) . "\n");
+            $printer->setEmphasis(false);
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+            $printer->setEmphasis(true);
+            $printer->textRaw('TOTAL EN CAJA: $' . number_format($total_en_caja, 2) . "\n");
+            $printer->setEmphasis(false);
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_LEFT);
+            $printer->textRaw("** FOLIOS DE DOCUMENTOS **\n");
+            $printer->textRaw('Ticket inicial: '   . ($folio_v_ini ? 'R-'.$folio_v_ini : 'N/A') . "\n");
+            $printer->textRaw('Ticket final: '     . ($folio_v_fin ? 'R-'.$folio_v_fin : 'N/A') . "\n");
+            $printer->textRaw('Factura inicial: '  . ($folio_f_ini ? 'FAC-'.$folio_f_ini : 'Sin facturas') . "\n");
+            $printer->textRaw('Factura final: '    . ($folio_f_fin ? 'FAC-'.$folio_f_fin : 'Sin facturas') . "\n");
+            $printer->textRaw(str_repeat('-', $w) . "\n");
+
+            // Denominaciones (solo las que tienen valor)
+            $denom = [
+                $box->ticket_1000 => '$1000', $box->ticket_500  => '$500',
+                $box->ticket_200  => '$200',  $box->ticket_100  => '$100',
+                $box->ticket_50   => '$50',   $box->ticket_20   => '$20',
+                $box->coin_20     => 'M$20',  $box->coin_10     => 'M$10',
+                $box->coin_5      => 'M$5',   $box->coin_2      => 'M$2',
+                $box->coin_1      => 'M$1',   $box->coin_50_cen => 'M$.50',
+            ];
+            $hasDenomin = false;
+            foreach ($denom as $qty => $label) {
+                if ($qty > 0) { $hasDenomin = true; break; }
+            }
+            if ($hasDenomin) {
+                $printer->textRaw("Denominaciones en efectivo:\n");
+                foreach ($denom as $qty => $label) {
+                    if ($qty > 0) $printer->textRaw("  $qty x $label\n");
+                }
+                $printer->textRaw(str_repeat('-', $w) . "\n");
+            }
+
+            $printer->textRaw("** ARQUEO DE CAJA **\n");
+            $printer->textRaw('Efectivo contado: $'  . number_format($box->amount_cash_user, 2) . "\n");
+            $printer->textRaw('Tarjeta contada: $'   . number_format($box->amount_credit_user, 2) . "\n");
+            $printer->textRaw('Fondo (caja ini): $'  . number_format($box->start_amount_box, 2) . "\n");
+            $printer->textRaw('Total arqueo: $'      . number_format($box->amount_cash_user + $box->amount_credit_user, 2) . "\n");
+            $printer->textRaw('Retiro de caja: $'    . number_format($retiro_caja, 2) . "\n");
+            $printer->textRaw('Se deja en caja: $'   . number_format($box->monto_dejado_caja, 2) . "\n");
+            $signo = $diferencia < 0 ? '+' : ($diferencia > 0 ? '-' : '');
+            $printer->textRaw('Diferencia: '         . $signo . ' $' . number_format(abs($diferencia), 2) . "\n");
+            $printer->textRaw('Clientes atendidos: ' . $number_ventas . "\n");
+
+            $printer->setJustification(\Mike42\Escpos\Printer::JUSTIFY_CENTER);
+            $printer->textRaw("\n");
+            $printer->textRaw($enc('¡Gracias por tu trabajo!') . "\n");
+            foreach (explode("\n", wordwrap($enc($empresa->razon_social), $w, "\n", false)) as $line) {
+                $printer->textRaw(trim($line) . "\n");
+            }
+            $printer->textRaw('-- Cierre de turno registrado --' . "\n");
+
+            $printer->feed(3);
+            $printer->cut();
+            $printer->close();
+            $this->sendRawEscPos($connector->getData());
+
+        } catch (\Throwable $th) {
+            Log::error('ESC/POS box error: ' . $th->getMessage());
+            try { $printer->close(); } catch (\Throwable $e) {}
+        }
+    }
+
+    private function encEscPos(string $s): string
+    {
+        // Convierte UTF-8 a CP437 (code page default de Epson TM-T88V)
+        // Primero intenta con iconv; si no está disponible usa tabla manual
+        if (function_exists('iconv')) {
+            $result = @iconv('UTF-8', 'CP437//TRANSLIT//IGNORE', $s);
+            if ($result !== false && $result !== '') return $result;
+        }
+        $from = ['á','é','í','ó','ú','Á','É','Í','Ó','Ú','ñ','Ñ','ü','ö','ä','Ü','Ö','Ä','ç','Ç','¡','¿','°'];
+        $to   = ["\xa0","\x82","\xa1","\xa2","\xa3","A","E","I","O","U","\xa4","\xa5","\x81","o","a","\x9a","O","A","\x87","\x80","\xad","\xa8","\xf8"];
+        return str_replace($from, $to, $s);
+    }
+
+    private function sendRawEscPos(string $data): void
+    {
+        $printerName = $this->getDefaultPrinterName();
+        if (!$printerName) {
+            Log::error('ESC/POS: no se encontro impresora predeterminada.');
+            return;
+        }
+
+        $tmpBin = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'escpos_' . uniqid() . '.bin';
+        file_put_contents($tmpBin, $data);
+
+        // PowerShell raw-print via Win32 spooler API
+        $ps = <<<PS
+\$printer = "$printerName"
+\$file    = "$tmpBin"
+Add-Type -TypeDefinition @'
+using System;using System.Runtime.InteropServices;
+public class RawPrint {
+    [StructLayout(LayoutKind.Sequential,CharSet=CharSet.Ansi)] class DOCINFO { public string pDocName="ESC/POS"; public string pOutputFile=null; public string pDataType="RAW"; }
+    [DllImport("winspool.drv",CharSet=CharSet.Ansi)] static extern bool OpenPrinter(string n,out IntPtr h,IntPtr d);
+    [DllImport("winspool.drv")] static extern bool ClosePrinter(IntPtr h);
+    [DllImport("winspool.drv",CharSet=CharSet.Ansi)] static extern int StartDocPrinter(IntPtr h,int l,[In]DOCINFO i);
+    [DllImport("winspool.drv")] static extern bool EndDocPrinter(IntPtr h);
+    [DllImport("winspool.drv")] static extern bool StartPagePrinter(IntPtr h);
+    [DllImport("winspool.drv")] static extern bool EndPagePrinter(IntPtr h);
+    [DllImport("winspool.drv")] static extern bool WritePrinter(IntPtr h,byte[] b,int n,out int w);
+    public static void Send(string name,string path){
+        IntPtr hPrinter; if(!OpenPrinter(name,out hPrinter,IntPtr.Zero))return;
+        var di=new DOCINFO(); StartDocPrinter(hPrinter,1,di); StartPagePrinter(hPrinter);
+        var bytes=System.IO.File.ReadAllBytes(path); int written;
+        WritePrinter(hPrinter,bytes,bytes.Length,out written);
+        EndPagePrinter(hPrinter); EndDocPrinter(hPrinter); ClosePrinter(hPrinter);
+    }
+}
+'@
+[RawPrint]::Send(\$printer,\$file)
+PS;
+        $psFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'rp_' . uniqid() . '.ps1';
+        file_put_contents($psFile, $ps);
+        // Lanzar en background para no bloquear la respuesta HTTP
+        pclose(popen("start \"\" /b powershell -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File \"$psFile\"", "r"));
+    }
+
+    private function escRow(string $c1, string $c2, string $c3, string $c4): string
+    {
+        // 42 chars total: 6 + 20 + 8 + 8 — usar substr (strings ya en CP437 single-byte)
+        $col1 = str_pad(substr($c1, 0, 6), 6);
+        $col2 = str_pad(substr($c2, 0, 20), 20);
+        $col3 = str_pad(substr($c3, 0, 8), 8, ' ', STR_PAD_LEFT);
+        $col4 = str_pad(substr($c4, 0, 8), 8, ' ', STR_PAD_LEFT);
+        return $col1 . $col2 . $col3 . $col4;
+    }
+
+    private function getDefaultPrinterName(): string
+    {
+        $output = [];
+        exec('wmic printer where "Default=TRUE" get Name /value 2>&1', $output);
+        foreach ($output as $line) {
+            $line = trim($line);
+            if (str_starts_with($line, 'Name=')) {
+                return trim(mb_substr($line, 5));
+            }
+        }
+        return '';
     }
 
     //arma el payload de una venta para Matriz (reusado por saveSaleDBExt y el lote de getSales)

@@ -81,9 +81,11 @@
                             @endcan
 
                             @if($item->status == 2)
-                            <a href="{{route('ticket.sale', $item->id)}}" class="btn btn-success btn-sm" data-toggle="tooltip" 
+                            <a href="{{route('ticket.sale', $item->id)}}" class="btn btn-success btn-sm" data-toggle="tooltip"
                                 target="_blank" data-placement="top" title="Ver ticket">
                                 <i class="fa fa-file"></i></a>
+                            <button onclick="imprimirTicketSale({{$item->id}})" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Imprimir ticket">
+                                <i class="fa fa-print"></i></button>
                             @endif
                             
                             @if(!count($item->getDetails))
@@ -110,3 +112,11 @@
         </div>
         @include('admin.sales._modal')
   </div>
+
+<script>
+function imprimirTicketSale(saleId) {
+    fetch('http://127.0.0.1:8100/ticket-sale/' + saleId + '/true')
+        .then(() => {})
+        .catch(() => {});
+}
+</script>

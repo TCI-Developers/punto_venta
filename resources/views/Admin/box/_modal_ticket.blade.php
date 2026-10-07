@@ -6,8 +6,9 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="modalTicketLabel">Ticket</h5>
+        <button type="button" class="btn btn-primary btn-sm" onclick="reimprimirBox()"><i class="fa fa-print"></i> Imprimir</button>
         <a href="{{route('admin.startAmountBox')}}" class="btn btn-secondary btn-sm"><i class="fa fa-plus"></i> Nuevo turno</a>
-        <a href="{{route('box.statusBox')}}" class="btn btn-primary btn-sm"><i class="fa fa-sign-out-alt"></i> Cerrar sesión</a>
+        <a href="{{route('box.statusBox')}}" class="btn btn-danger btn-sm"><i class="fa fa-sign-out-alt"></i> Cerrar sesión</a>
       </div>
       <div class="modal-body col-12" style="position:relative; min-height:70vh;">
           <div id="ticketSpinner" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#fff; z-index:10;">
@@ -33,6 +34,9 @@
             if(iframe && (iframe.src === 'about:blank' || iframe.src === '')){
                 iframe.src = ticketUrl;
             }
+        };
+        window.reimprimirBox = function(){
+            fetch(ticketUrl).then(function(){}).catch(function(){});
         };
     })();
 </script>

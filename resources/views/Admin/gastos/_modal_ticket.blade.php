@@ -5,6 +5,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="modalTicketLabel">Ticket de gasto</h5>
+        <button type="button" class="btn btn-primary btn-sm" onclick="reimprimirGasto()"><i class="fa fa-print"></i> Imprimir</button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="$('#modalTicket').hide();"><i class="fa fa-times"></i> Cerrar</button>
       </div>
       <div class="modal-body col-12" style="position:relative; min-height:70vh;">
@@ -32,6 +33,10 @@
             iframe.style.opacity = '0';
             iframe.src = ticketUrlTemplate.replace('/0/', '/'+gastoId+'/');
             $('#modalTicket').show();
+        };
+        window.reimprimirGasto = function(){
+            var src = document.getElementById('ticketIframe').src;
+            if (src && src !== 'about:blank') fetch(src).then(function(){}).catch(function(){});
         };
     })();
 </script>

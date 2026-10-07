@@ -19,6 +19,7 @@
         "laravel/tinker": "^2.8",
         "livewire/livewire": "^3.0",
         "maatwebsite/excel": "^3.1",
+        "mike42/escpos-php": "^5.0",
         "nativephp/electron": "^1.1"
     },
     "require-dev": {

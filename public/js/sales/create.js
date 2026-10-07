@@ -495,15 +495,25 @@
         }
 
         //funcion para mostrar ticket
+        var _currentSaleId = null;
         window.addEventListener('showTicket', event => {
-                var saleId = event.detail[0].sale_id;
-                $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+saleId+'/true');
+                _currentSaleId = event.detail[0].sale_id;
+                $('#modalTicket iframe').attr('src', 'http://127.0.0.1:8100/ticket-sale/'+_currentSaleId+'/true');
                 var btnFacturar = document.getElementById('btnFacturarVenta');
                 if (btnFacturar) {
-                    btnFacturar.href = btnFacturar.dataset.baseUrl + '/' + saleId;
+                    btnFacturar.href = btnFacturar.dataset.baseUrl + '/' + _currentSaleId;
                 }
+                var btnReimpr = document.getElementById('btnReimprimir');
+                if (btnReimpr) btnReimpr.style.display = 'inline-block';
                 $('#modalTicket').show();
         });
+
+        window.reimprimirTicket = function() {
+            if (!_currentSaleId) return;
+            fetch('http://127.0.0.1:8100/ticket-sale/'+_currentSaleId+'/true')
+                .then(() => {})
+                .catch(() => {});
+        };
 
         window.addEventListener('cobrarError', event => {
             Swal.fire({

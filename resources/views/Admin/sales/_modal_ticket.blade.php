@@ -7,6 +7,7 @@
         <h5 class="modal-title" id="modalTicketLabel">Ticket</h5>
         <a id="btnFacturarVenta" href="#" data-base-url="{{ route('facturas.create') }}"
            class="btn btn-success btn-sm"><i class="fa fa-file-text-o"></i> Facturar</a>
+        <button type="button" id="btnReimprimir" class="btn btn-primary btn-sm" style="display:none;" onclick="reimprimirTicket()"><i class="fa fa-print"></i> Imprimir</button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="cerrarVenta('{{ route('sale.index') }}')"><i class="fa fa-times"></i> Cerrar</button>
       </div>
       <div class="modal-body col-12">

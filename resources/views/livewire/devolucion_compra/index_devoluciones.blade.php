@@ -50,14 +50,18 @@
                             <td class="text-center">
                                 @if($type == 'sale')
                                 <a href="{{route('devoluciones.showDevSale', $item->id)}}" class="btn btn-info btn-sm"><i class="fa fa-eye"></i></a>
-                                <a href="{{route('ticket.devolution', $item->id)}}" class="btn btn-success btn-sm" data-toggle="tooltip" 
+                                <a href="{{route('ticket.devolution', $item->id)}}" class="btn btn-success btn-sm" data-toggle="tooltip"
                                     target="_blank" data-placement="top" title="Ver ticket">
                                     <i class="fa fa-file"></i></a>
+                                <button onclick="imprimirTicketDevolucion({{$item->id}})" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Imprimir ticket">
+                                    <i class="fa fa-print"></i></button>
                                 @else
                                 <a href="{{route('devoluciones.showDevMatriz', $item->id)}}" class="btn btn-info btn-sm"><i class="fa fa-eye"></i></a>
-                                <a href="{{route('ticketMatriz.devolution', $item->id)}}" class="btn btn-success btn-sm" data-toggle="tooltip" 
+                                <a href="{{route('ticketMatriz.devolution', $item->id)}}" class="btn btn-success btn-sm" data-toggle="tooltip"
                                     target="_blank" data-placement="top" title="Ver ticket">
                                     <i class="fa fa-file"></i></a>
+                                <button onclick="imprimirTicketDevolucionMatriz({{$item->id}})" class="btn btn-primary btn-sm" data-toggle="tooltip" data-placement="top" title="Imprimir ticket">
+                                    <i class="fa fa-print"></i></button>
                                 @endif
                             </td>
                        </tr>
@@ -69,3 +73,12 @@
             </div>
         </div>
   </div>
+
+<script>
+function imprimirTicketDevolucion(id) {
+    fetch('http://127.0.0.1:8100/ticket-devolution/' + id + '/true').then(function(){}).catch(function(){});
+}
+function imprimirTicketDevolucionMatriz(id) {
+    fetch('http://127.0.0.1:8100/ticket-devolution-matriz/' + id + '/true').then(function(){}).catch(function(){});
+}
+</script>
