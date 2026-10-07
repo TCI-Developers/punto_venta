@@ -684,7 +684,8 @@ class RootController extends Controller
         }
 
         Artisan::call('migrate:refresh', [
-            '--force' => true // Necesario para ejecución sin confirmación
+            '--force' => true,
+            '--seed'  => true,
         ]);
 
         return redirect()->back()->with('status', 'Se restauró correctamente.');

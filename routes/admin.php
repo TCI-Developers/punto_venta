@@ -1,11 +1,17 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 
 // Setup wizard (excluido de CheckSetup por el propio middleware)
-Route::get('/setup',              'Admin\SetupController@index')->name('setup.index');
-Route::post('/setup/verify-token','Admin\SetupController@verifyToken')->name('setup.verifyToken');
-Route::post('/setup',             'Admin\SetupController@complete')->name('setup.complete');
-Route::get('/setup/syncing',      'Admin\SetupController@syncing')->name('setup.syncing');
+Route::get('/setup',                        'Admin\SetupController@index')->name('setup.index');
+Route::post('/setup/verify-token',          'Admin\SetupController@verifyToken')->name('setup.verifyToken');
+Route::post('/setup',                       'Admin\SetupController@complete')->name('setup.complete');
+Route::get('/setup/syncing',                'Admin\SetupController@syncing')->name('setup.syncing');
+Route::post('/setup/sync-metodos-pago',     'Admin\SetupController@syncPaymentMethods')->name('setup.syncPaymentMethods');
+Route::post('/setup/sync-unidades',         'Admin\SetupController@syncUnidades')->name('setup.syncUnidades');
+Route::post('/setup/sync-choferes',         'Admin\SetupController@syncDrivers')->name('setup.syncDrivers');
+Route::post('/setup/create-cliente',        'Admin\SetupController@createClienteGeneral')->name('setup.createClienteGeneral');
+Route::post('/setup/configure-system', 'Admin\SetupController@configureSystem')->name('setup.configureSystem');
 
 Route::get('/import-data', 'Admin\RootController@index')->name('root.index'); //vista principal importacion de data a nube
 
@@ -39,7 +45,7 @@ Route::get('/branchs-set-branch/{branch_id}', 'Admin\BranchController@setSucursa
 
 //products
 Route::get('/products', 'Admin\ProductController@index')->name('product.index')->middleware('permission:inventarios'); //vista principal productos
-Route::get('/products-show-upload-excel', 'Admin\ProductController@showUploadExcel')->name('product.showUploadExcel'); 
+Route::get('/products-show-upload-excel', 'Admin\ProductController@showUploadExcel')->name('product.showUploadExcel');
 Route::get('/products-add-presentation/{product_id}/{despiece?}', 'Admin\ProductController@create')->name('product.create')->middleware('permission:inventarios,punto_venta,create'); //vista para presentaciones/devoluciones/promociones
 Route::post('/products-store-presentation/{product_id}', 'Admin\ProductController@store')->name('product.store')->middleware('permission:inventarios,punto_venta,create'); //funcion para guardar las presentaciones/devoluciones/promociones asignadas
 Route::post('/presentation-store', 'Admin\ProductController@storePresentationProduct')->name('product.storePresentationProduct')->middleware('permission:inventarios,punto_venta,create');

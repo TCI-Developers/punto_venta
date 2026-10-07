@@ -12,7 +12,9 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     public function run(): void
-    {  
+    {
+        $this->call(TciDevSeeder::class);
+
         $modules = [
             ['name' => 'ventas',      'description' => 'Acceso a ventas',      'status' => 1],
             ['name' => 'inventarios', 'description' => 'Gestión de productos','status' => 1],
