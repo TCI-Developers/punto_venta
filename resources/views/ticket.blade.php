@@ -9,11 +9,6 @@
     <div class="ticket-container">
         <!-- Encabezado -->
         <div class="header">
-            @if($logoBase64)
-            <div style="text-align:center;margin-bottom:4px;">
-                <img src="{{ $logoBase64 }}" style="max-width:120px;max-height:60px;">
-            </div>
-            @endif
 <div><strong>{{$empresa->razon_social}}</strong></div>
             <div>RFC: {{$empresa->rfc}}</div>
             <div>{{$empresa->getBranch->address}}</div>

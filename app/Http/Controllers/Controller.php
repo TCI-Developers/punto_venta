@@ -556,23 +556,9 @@ class Controller extends BaseController
         return json_decode($db);
     }
 
-    //arma un data URI con el mime real del archivo (no asumido por la extension) -- un logo
-    //guardado como .png que en realidad es un jpg (u otro formato) rompe el render en PDF si
-    //se le pone un mime incorrecto.
-    protected function logoDataUri(string $logoPath): ?string
-    {
-        if (!file_exists($logoPath)) {
-            return null;
-        }
-        $mime = mime_content_type($logoPath) ?: 'image/png';
-        return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($logoPath));
-    }
-
     //generamos tickets
     public function ticket($id, $auto = false){
         $empresa = EmpresaDetail::first();
-        $logoPath = public_path('img/logo_cliente.png');
-        $logoBase64 = $this->logoDataUri($logoPath);
 
         if(request()->is('ticket-sale/'.$id) || request()->is('ticket-sale/'.$id."/".$auto)){
             $dir = 'tickets_sale';
@@ -583,25 +569,25 @@ class Controller extends BaseController
                 $productRows += max(1, count($det->getCantSalesDetail ?? []));
             }
             $lines = $productRows + 20;
-            $pdf = Pdf::loadView('ticket', ['sale' => $sale, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
+            $pdf = Pdf::loadView('ticket', ['sale' => $sale, 'empresa' => $empresa]);
         }else if(request()->is('ticket-devolution/'.$id) || request()->is('ticket-devolution/'.$id."/".$auto)){
             $dir = 'tickets_dev';
             $devolucion = Devolucion::find($id);
             $sale = $devolucion->getSale;
             $products = $devolucion->getSale->getDetailsDev;
             $lines = count($products ?? []) + 20;
-            $pdf = Pdf::loadView('ticket_devolution', ['devolucion' => $devolucion, 'products' => $products, 'sale' => $sale, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
+            $pdf = Pdf::loadView('ticket_devolution', ['devolucion' => $devolucion, 'products' => $products, 'sale' => $sale, 'empresa' => $empresa]);
         }else if(request()->is('ticket-devolution-matriz/'.$id) || request()->is('ticket-devolution-matriz/'.$id."/".$auto)){
             $dir = 'tickets_dev_matriz';
             $devolucion = DevolucionMatriz::find($id);
             $compra = $devolucion->getCompra;
             $lines = 22;
-            $pdf = Pdf::loadView('ticket_devolution_matriz', ['devolucion' => $devolucion, 'compra' => $compra, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
+            $pdf = Pdf::loadView('ticket_devolution_matriz', ['devolucion' => $devolucion, 'compra' => $compra, 'empresa' => $empresa]);
         }else if(request()->is('ticket-gasto/'.$id) || request()->is('ticket-gasto/'.$id."/".$auto)){
             $dir = 'tickets_gasto';
             $gasto = Gasto::find($id);
             $lines = 14;
-            $pdf = Pdf::loadView('ticket_gasto', ['gasto' => $gasto, 'empresa' => $empresa, 'logoBase64' => $logoBase64]);
+            $pdf = Pdf::loadView('ticket_gasto', ['gasto' => $gasto, 'empresa' => $empresa]);
         }else{
             $dir = 'tickets_box';
             $user = User::find($id);
@@ -618,7 +604,7 @@ class Controller extends BaseController
             $lines = 42; // header + secciones de caja + totales + footer
 
             $pdf = Pdf::loadView('ticket_box', [
-                'user' => $user, 'empresa' => $empresa, 'box' => $box, 'number_ventas' => $number_ventas, 'logoBase64' => $logoBase64,
+                'user' => $user, 'empresa' => $empresa, 'box' => $box, 'number_ventas' => $number_ventas,
                 'folio_venta_inicial' => $folio_venta_inicial, 'folio_venta_final' => $folio_venta_final,
                 'folio_factura_inicial' => $folio_factura_inicial, 'folio_factura_final' => $folio_factura_final,
             ]);
