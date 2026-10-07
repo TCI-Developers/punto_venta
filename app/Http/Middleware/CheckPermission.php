@@ -17,9 +17,9 @@ class CheckPermission
     public function handle(Request $request, Closure $next, $module, $submodule = null, $action = null): Response
     {   
         $user = Auth::user();
-        // if ($user && $user->hasRole('root')) {
-        //     return $next($request);
-        // }
+        if ($user && $user->hasRole('root')) {
+            return $next($request);
+        }
 
         $actions = [];
         if (!is_null($action)) {
